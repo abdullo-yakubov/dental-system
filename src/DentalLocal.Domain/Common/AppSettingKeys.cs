@@ -11,4 +11,5 @@ public static class AppSettingKeys
     public const string BackupRetentionDays = "backup_retention_days";
     public const string Language = "language";
     public const string BackupMirrorPath = "backup_mirror_path";
+    public const string AuthTokenSecret = "auth_token_secret";
 }

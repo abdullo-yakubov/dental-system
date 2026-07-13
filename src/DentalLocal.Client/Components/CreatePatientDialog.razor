@@ -1,0 +1,81 @@
+@inject ApiClient Api
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>Новый пациент</TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form" Model="this">
+            <MudTextField @bind-Value="_lastName" Label="Фамилия" Required="true" Class="mb-2" />
+            <MudTextField @bind-Value="_firstName" Label="Имя" Required="true" Class="mb-2" />
+            <MudTextField @bind-Value="_middleName" Label="Отчество" Class="mb-2" />
+            <MudSelect T="Gender" @bind-Value="_gender" Label="Пол" Class="mb-2">
+                <MudSelectItem Value="Gender.Male">Мужской</MudSelectItem>
+                <MudSelectItem Value="Gender.Female">Женский</MudSelectItem>
+            </MudSelect>
+            <MudDatePicker @bind-Date="_birthDate" Label="Дата рождения" Class="mb-2" />
+            <MudTextField @bind-Value="_phone" Label="Телефон" Required="true" Class="mb-2" />
+            <MudTextField @bind-Value="_address" Label="Адрес" Class="mb-2" />
+            <MudTextField @bind-Value="_allergies" Label="Аллергии" Lines="2" Class="mb-2" />
+            <MudTextField @bind-Value="_chronicDiseases" Label="Хронические заболевания" Lines="2" />
+        </MudForm>
+        @if (_errorMessage is not null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-3">@_errorMessage</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Отмена</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SubmitAsync" Disabled="_isBusy">Сохранить</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    private MudForm? _form;
+    private string _lastName = string.Empty;
+    private string _firstName = string.Empty;
+    private string? _middleName;
+    private Gender _gender = Gender.Male;
+    private DateTime? _birthDate;
+    private string _phone = string.Empty;
+    private string? _address;
+    private string? _allergies;
+    private string? _chronicDiseases;
+    private string? _errorMessage;
+    private bool _isBusy;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SubmitAsync()
+    {
+        await _form!.Validate();
+        if (!_form.IsValid || _birthDate is null)
+        {
+            _errorMessage = "Заполните обязательные поля.";
+            return;
+        }
+
+        _isBusy = true;
+        _errorMessage = null;
+
+        try
+        {
+            var request = new CreatePatientRequest(
+                _lastName, _firstName, _middleName, _gender, DateOnly.FromDateTime(_birthDate.Value),
+                _phone, null, _address, _allergies, _chronicDiseases, null, null);
+
+            var patient = await Api.CreatePatientAsync(request);
+            Snackbar.Add($"Пациент «{patient.FullName}» добавлен.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(patient));
+        }
+        catch (ApiException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+}

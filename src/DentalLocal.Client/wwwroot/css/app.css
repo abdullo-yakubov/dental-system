@@ -113,3 +113,27 @@ code {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.login-backdrop {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #eef3fb 0%, #dbe6f6 100%);
+}
+
+.login-card {
+    width: 340px;
+    border-radius: 16px !important;
+    backdrop-filter: blur(6px);
+}
+
+.shake {
+    animation: login-shake 0.4s ease-in-out;
+}
+
+@keyframes login-shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-8px); }
+    40%, 80% { transform: translateX(8px); }
+}

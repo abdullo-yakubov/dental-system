@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DentalLocal.Domain\DentalLocal.Domain.csproj" />
+    <ProjectReference Include="..\DentalLocal.Shared\DentalLocal.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

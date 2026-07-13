@@ -33,11 +33,10 @@ public class PatientRepository(DentalDbContext context) : RepositoryBase<Patient
             }
             else
             {
-                var tsQuery = EF.Functions.PlainToTsQuery("russian", trimmed);
                 var likePattern = $"%{trimmed}%";
 
                 query = query.Where(p =>
-                    EF.Property<NpgsqlTsVector>(p, "SearchVector").Matches(tsQuery) ||
+                    EF.Property<NpgsqlTsVector>(p, "SearchVector").Matches(EF.Functions.PlainToTsQuery("russian", trimmed)) ||
                     EF.Functions.ILike(p.Phone, likePattern) ||
                     EF.Functions.ILike(p.LastName, likePattern) ||
                     EF.Functions.ILike(p.FirstName, likePattern));

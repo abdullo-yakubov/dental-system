@@ -1,6 +1,48 @@
+using DentalLocal.Application;
+using DentalLocal.Infrastructure;
+using DentalLocal.Persistence;
+using DentalLocal.Server.Endpoints;
+using DentalLocal.Server.Middleware;
+using Serilog;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// TODO(Фаза 6): при переходе на итоговую раскладку лаунчера (см. п.19 ТЗ) путь логов должен указывать
+// на Data/Logs относительно корня установки, а не ContentRootPath разработческого запуска.
+builder.Host.UseSerilog((context, services, configuration) => configuration
+    .ReadFrom.Configuration(context.Configuration)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File(
+        Path.Combine(context.HostingEnvironment.ContentRootPath, "Logs", "log-.txt"),
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 30));
+
+const string ClientOrigin = "ClientDevServer";
+builder.Services.AddCors(options => options.AddPolicy(ClientOrigin, policy => policy
+    .WithOrigins("http://localhost:5171", "https://localhost:7046")
+    .AllowAnyHeader()
+    .AllowAnyMethod()));
+
+var connectionString = builder.Configuration.GetConnectionString("Default")
+    ?? throw new InvalidOperationException("Не задана строка подключения ConnectionStrings:Default.");
+
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure();
+builder.Services.AddPersistence(connectionString);
+
 var app = builder.Build();
 
-app.MapGet("/", () => "Hello World!");
+await app.Services.MigrateDatabaseAsync();
+
+app.UseSerilogRequestLogging();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseCors(ClientOrigin);
+app.UseMiddleware<BearerAuthMiddleware>();
+
+app.MapAuthEndpoints();
+app.MapPatientsEndpoints();
+
+app.MapGet(DentalLocal.Shared.Common.ApiRoutes.System.Health, () => Results.Ok(new { status = "ok" }));
 
 app.Run();

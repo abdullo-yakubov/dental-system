@@ -12,6 +12,8 @@ public class DbSeeder(DentalDbContext context, ILogger<DbSeeder> logger)
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
         await SeedProcedureCategoriesAsync(cancellationToken);
+        await context.SaveChangesAsync(cancellationToken);
+
         await SeedProceduresAsync(cancellationToken);
         await SeedAppSettingsAsync(cancellationToken);
 

@@ -1,0 +1,149 @@
+@page "/login"
+@attribute [AllowAnonymous]
+@implements IDisposable
+@inject ApiClient Api
+@inject AuthState AuthState
+@inject NavigationManager Navigation
+
+<PageTitle>Вход — DentalLocal</PageTitle>
+
+<div class="login-backdrop">
+    <MudPaper Class="@CardCssClass" Elevation="8">
+        <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-1">DentalLocal</MudText>
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="mb-6" Color="Color.Secondary">
+            Введите код доступа
+        </MudText>
+
+        <MudTextField @ref="_codeField"
+                       @bind-Value="_code"
+                       InputType="InputType.Password"
+                       Immediate="true"
+                       ReadOnly="true"
+                       TextAlign="TextAlign.Center"
+                       Class="mb-4"
+                       Variant="Variant.Outlined" />
+
+        @if (_errorMessage is not null)
+        {
+            <MudText Color="Color.Error" Align="Align.Center" Class="mb-2">@_errorMessage</MudText>
+        }
+
+        <MudGrid Spacing="2" Class="mb-4">
+            @foreach (var digit in new[] { "1", "2", "3", "4", "5", "6", "7", "8", "9" })
+            {
+                <MudItem xs="4">
+                    <MudButton FullWidth="true" Variant="Variant.Outlined" OnClick="() => AppendDigit(digit)" Disabled="_isLockedOut">@digit</MudButton>
+                </MudItem>
+            }
+            <MudItem xs="4">
+                <MudButton FullWidth="true" Variant="Variant.Text" OnClick="RemoveLastDigit" Disabled="_isLockedOut">
+                    <MudIcon Icon="@Icons.Material.Filled.Backspace" />
+                </MudButton>
+            </MudItem>
+            <MudItem xs="4">
+                <MudButton FullWidth="true" Variant="Variant.Outlined" OnClick="AppendZero" Disabled="_isLockedOut">0</MudButton>
+            </MudItem>
+            <MudItem xs="4">
+                <MudButton FullWidth="true" Variant="Variant.Text" OnClick="ClearCode" Disabled="_isLockedOut">
+                    <MudIcon Icon="@Icons.Material.Filled.Clear" />
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+
+        <MudButton FullWidth="true" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large"
+                    OnClick="SubmitAsync" Disabled="@(_isLockedOut || string.IsNullOrEmpty(_code) || _isBusy)">
+            @(_isLockedOut ? $"Повторите через {_lockoutSecondsRemaining} сек" : "Войти")
+        </MudButton>
+    </MudPaper>
+</div>
+
+@code {
+    private string _code = string.Empty;
+    private string? _errorMessage;
+    private bool _isBusy;
+    private bool _shake;
+    private bool _isLockedOut;
+    private int _lockoutSecondsRemaining;
+    private MudTextField<string>? _codeField;
+    private System.Threading.Timer? _lockoutTimer;
+
+    private string CardCssClass => _shake ? "login-card pa-8 shake" : "login-card pa-8";
+
+    private void AppendDigit(string digit) => _code += digit;
+
+    private void AppendZero() => AppendDigit("0");
+
+    private void RemoveLastDigit()
+    {
+        if (_code.Length > 0)
+            _code = _code[..^1];
+    }
+
+    private void ClearCode() => _code = string.Empty;
+
+    private async Task SubmitAsync()
+    {
+        _isBusy = true;
+        _errorMessage = null;
+
+        try
+        {
+            var response = await Api.LoginAsync(_code);
+            AuthState.SetSession(response.Token, response.ExpiresAt);
+            Navigation.NavigateTo("/", forceLoad: false);
+        }
+        catch (ApiException ex) when (ex.StatusCode == 403)
+        {
+            _errorMessage = ex.Message;
+            StartLockoutCountdown(ExtractSeconds(ex.Message));
+            await TriggerShakeAsync();
+        }
+        catch (ApiException ex)
+        {
+            _errorMessage = ex.Message;
+            _code = string.Empty;
+            await TriggerShakeAsync();
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private static int ExtractSeconds(string message)
+    {
+        var digits = new string(message.Where(char.IsDigit).ToArray());
+        return int.TryParse(digits, out var seconds) ? seconds : 30;
+    }
+
+    private void StartLockoutCountdown(int seconds)
+    {
+        _isLockedOut = true;
+        _lockoutSecondsRemaining = seconds;
+        _code = string.Empty;
+
+        _lockoutTimer?.Dispose();
+        _lockoutTimer = new System.Threading.Timer(_ =>
+        {
+            _lockoutSecondsRemaining--;
+            if (_lockoutSecondsRemaining <= 0)
+            {
+                _isLockedOut = false;
+                _errorMessage = null;
+                _lockoutTimer?.Dispose();
+            }
+
+            InvokeAsync(StateHasChanged);
+        }, null, 1000, 1000);
+    }
+
+    private async Task TriggerShakeAsync()
+    {
+        _shake = true;
+        StateHasChanged();
+        await Task.Delay(400);
+        _shake = false;
+    }
+
+    public void Dispose() => _lockoutTimer?.Dispose();
+}

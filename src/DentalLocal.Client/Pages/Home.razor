@@ -1,7 +1,11 @@
-﻿@page "/"
+@page "/"
+@attribute [Authorize]
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Дашборд — DentalLocal</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Дашборд</h1>
 
-Welcome to your new app.
+<MudAlert Severity="Severity.Info" Class="mt-4">
+    Дашборд появится в одной из следующих фаз. Пока доступен раздел
+    <MudLink Href="patients">«Пациенты»</MudLink>.
+</MudAlert>
