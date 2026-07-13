@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DentalLocal.Application/DentalLocal.Application.csproj" />
+    <Project Path="src/DentalLocal.Client/DentalLocal.Client.csproj" />
+    <Project Path="src/DentalLocal.Domain/DentalLocal.Domain.csproj" />
+    <Project Path="src/DentalLocal.Infrastructure/DentalLocal.Infrastructure.csproj" />
+    <Project Path="src/DentalLocal.Launcher/DentalLocal.Launcher.csproj" />
+    <Project Path="src/DentalLocal.Persistence/DentalLocal.Persistence.csproj" />
+    <Project Path="src/DentalLocal.Server/DentalLocal.Server.csproj" />
+    <Project Path="src/DentalLocal.Shared/DentalLocal.Shared.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DentalLocal.Application.Tests/DentalLocal.Application.Tests.csproj" />
+    <Project Path="tests/DentalLocal.Domain.Tests/DentalLocal.Domain.Tests.csproj" />
+    <Project Path="tests/DentalLocal.Integration.Tests/DentalLocal.Integration.Tests.csproj" />
+  </Folder>
+</Solution>

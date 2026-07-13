@@ -1,0 +1,10 @@
+bin/
+obj/
+*.user
+.vs/
+Data/
+Logs/
+Backups/
+Files/
+node_modules/
+*.received.*

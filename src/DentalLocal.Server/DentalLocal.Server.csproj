@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\DentalLocal.Application\DentalLocal.Application.csproj" />
+    <ProjectReference Include="..\DentalLocal.Infrastructure\DentalLocal.Infrastructure.csproj" />
+    <ProjectReference Include="..\DentalLocal.Persistence\DentalLocal.Persistence.csproj" />
+    <ProjectReference Include="..\DentalLocal.Shared\DentalLocal.Shared.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>
