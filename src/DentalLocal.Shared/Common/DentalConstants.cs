@@ -17,7 +17,7 @@ public static class DentalConstants
             .ToList();
 
     public const string DefaultCurrency = "TJS";
-    public const string DefaultAccessCode = "1998";
+    public const string DefaultAccessCode = "111111";
     public const int MinAccessCodeLength = 4;
     public const int MaxLoginAttempts = 5;
     public const int LoginLockoutSeconds = 30;
