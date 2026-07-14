@@ -14,7 +14,8 @@ public sealed record UpdateVisitCommand(
     string DoctorName,
     string? Notes,
     string? Prescriptions,
-    string? MaterialsUsed) : ICommand<VisitDto>;
+    string? MaterialsUsed,
+    string? Diagnosis = null) : ICommand<VisitDto>;
 
 public sealed class UpdateVisitCommandValidator : AbstractValidator<UpdateVisitCommand>
 {
@@ -35,6 +36,9 @@ public sealed class UpdateVisitCommandHandler(IUnitOfWork unitOfWork, IMapper ma
             return Result.Failure<VisitDto>(Error.NotFound("Visit.NotFound", "Визит не найден."));
 
         visit.UpdateNotes(request.Notes, request.Prescriptions, request.MaterialsUsed);
+
+        if (request.Diagnosis is not null)
+            visit.SetDiagnosis(request.Diagnosis);
 
         await unitOfWork.AuditLogs.AddAsync(
             Domain.Entities.AuditLog.Create("VISIT_UPDATED", "Visit", visit.Id, null), cancellationToken);

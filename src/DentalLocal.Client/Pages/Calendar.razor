@@ -3,7 +3,6 @@
 @inject ApiClient Api
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
-@inject NavigationManager Navigation
 
 <PageTitle>Календарь приемов — DentalLocal</PageTitle>
 
@@ -73,10 +72,24 @@
                                     {
                                         @foreach (var visit in cellVisits)
                                         {
-                                            <div class="appointment-block @GetVisitStatusClass(visit.Status)" @onclick:stopPropagation="true" @onclick="() => ViewVisitDetail(visit.PatientId)">
-                                                <div class="font-weight-bold font-size-12 text-truncate">@visit.PatientFullName</div>
+                                            <div class="appointment-block @GetVisitStatusClass(visit.Status)" @onclick:stopPropagation="true" @onclick="() => OpenVisitCardAsync(visit.Id)">
+                                                @if (visit.Status == VisitStatus.Cancelled)
+                                                {
+                                                    <MudIcon Icon="@Icons.Material.Filled.Block" Size="Size.Small" Class="status-icon" />
+                                                }
+                                                else if (visit.Status == VisitStatus.Confirmed || visit.Status == VisitStatus.Completed)
+                                                {
+                                                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Size="Size.Small" Class="status-icon" />
+                                                }
+                                                else
+                                                {
+                                                    <MudIcon Icon="@Icons.Material.Filled.AccessTime" Size="Size.Small" Class="status-icon" />
+                                                }
+                                                <div class="font-weight-bold font-size-12 text-truncate">@visit.PatientFullName.ToUpperInvariant()</div>
+                                                <div class="font-size-11 text-truncate" style="opacity: 0.85;">
+                                                    @visit.VisitTime.ToString("HH:mm")–@GetEndTime(visit).ToString("HH:mm")
+                                                </div>
                                                 <div class="font-size-11 text-truncate" style="opacity: 0.85;">Врач: @visit.DoctorName</div>
-                                                <div class="font-size-11 text-truncate" style="opacity: 0.85;">@visit.VisitTime.ToString("HH:mm") • @visit.TotalCost.ToString("N0") сум</div>
                                             </div>
                                         }
                                     }
@@ -160,13 +173,18 @@
         box-shadow: var(--mud-elevation-3);
     }
     .status-planned {
-        background-color: var(--mud-palette-primary);
+        background-color: var(--mud-palette-warning);
     }
-    .status-completed {
+    .status-confirmed, .status-completed {
         background-color: var(--mud-palette-success);
     }
     .status-cancelled {
-        background-color: var(--mud-palette-error);
+        background-color: var(--mud-palette-dark);
+        opacity: 0.7;
+    }
+    .status-icon {
+        float: right;
+        opacity: 0.9;
     }
     .cell-hover-plus {
         display: none;
@@ -269,14 +287,29 @@
     private string GetVisitStatusClass(VisitStatus status) => status switch
     {
         VisitStatus.Planned => "status-planned",
+        VisitStatus.Confirmed => "status-confirmed",
         VisitStatus.Completed => "status-completed",
         VisitStatus.Cancelled => "status-cancelled",
         _ => "status-planned"
     };
 
-    private void ViewVisitDetail(Guid patientId)
+    private static TimeOnly GetEndTime(VisitListItemDto visit)
     {
-        Navigation.NavigateTo($"/patients/{patientId}");
+        var durationMinutes = visit.DurationMinutes > 0 ? visit.DurationMinutes : 30;
+        return visit.VisitTime.AddMinutes(durationMinutes);
+    }
+
+    private async Task OpenVisitCardAsync(Guid visitId)
+    {
+        var parameters = new DialogParameters<Components.VisitCardDialog> { { x => x.VisitId, visitId } };
+        var options = new DialogOptions { MaxWidth = MaxWidth.Small, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<Components.VisitCardDialog>("Визит", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            await LoadWeekDataAsync();
+        }
     }
 
     private async Task CellClickedAsync(DateTime date, TimeSpan timeSlot)

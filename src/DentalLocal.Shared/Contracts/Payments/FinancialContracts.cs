@@ -31,6 +31,7 @@ public sealed record DebtListItemDto(
     Guid PatientId,
     string PatientFullName,
     string PatientPhone,
+    DateOnly PatientBirthDate,
     decimal OriginalAmount,
     decimal RemainingAmount,
     DateTimeOffset AroseAt,

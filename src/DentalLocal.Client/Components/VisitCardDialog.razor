@@ -1,0 +1,254 @@
+@inject ApiClient Api
+@inject ISnackbar Snackbar
+@inject IJSRuntime JsRuntime
+
+<MudDialog>
+    <TitleContent>
+        @if (_visit is not null)
+        {
+            <MudText Typo="Typo.h6" Class="font-weight-bold">@_visit.PatientFullName.ToUpperInvariant()</MudText>
+            <MudText Typo="Typo.body2" Class="text-secondary">@_patientPhone</MudText>
+        }
+    </TitleContent>
+    <DialogContent>
+        @if (_isLoading)
+        {
+            <MudProgressCircular Indeterminate="true" />
+        }
+        else if (_visit is not null)
+        {
+            <MudStack Spacing="3">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <MudStack Spacing="0">
+                        <MudText Typo="Typo.caption" Class="text-secondary">Дата</MudText>
+                        <MudText Typo="Typo.body1" Class="font-weight-bold">@_visit.VisitDate.ToString("dd.MM.yyyy")</MudText>
+                    </MudStack>
+                    <MudStack Spacing="0">
+                        <MudText Typo="Typo.caption" Class="text-secondary">Время</MudText>
+                        <MudText Typo="Typo.body1" Class="font-weight-bold">@_visit.VisitTime.ToString("HH:mm")–@_endTime.ToString("HH:mm")</MudText>
+                    </MudStack>
+                    <MudStack Row="true" Spacing="1">
+                        <MudIconButton Icon="@Icons.Material.Filled.Call" Color="Color.Success" Href="@($"tel:{_patientPhone}")" title="Позвонить" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Chat" Style="color:#25D366;" Href="@WhatsAppLink" Target="_blank" title="WhatsApp" />
+                    </MudStack>
+                </MudStack>
+
+                <MudChip T="string" Color="@StatusColor" Size="Size.Small">@StatusLabel</MudChip>
+
+                <MudTextField @bind-Value="_notes" Label="Комментарий" Lines="3" Variant="Variant.Outlined" />
+
+                <MudText Typo="Typo.subtitle2" Class="font-weight-bold">Процедуры:</MudText>
+                @foreach (var item in _visit.Items)
+                {
+                    <div class="d-flex justify-space-between py-1 font-size-14">
+                        <span>@item.ProcedureName @(item.ToothNumber.HasValue ? $"(Зуб {item.ToothNumber})" : "") x @item.Quantity</span>
+                        <span class="font-weight-bold">@((item.Price * item.Quantity).ToString("N0")) сум</span>
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(_visit.Diagnosis))
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">Диагноз: @_visit.Diagnosis</MudAlert>
+                }
+
+                <MudDivider />
+
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.subtitle1" Class="font-weight-bold">Итого:</MudText>
+                    <MudText Typo="Typo.h6">@_visit.TotalCost.ToString("N0") сум</MudText>
+                </MudStack>
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.body2">Долг:</MudText>
+                    <MudText Typo="Typo.body1" Class="font-weight-bold" Color="@(_visit.RemainingAmount > 0 ? Color.Error : Color.Success)">
+                        @_visit.RemainingAmount.ToString("N2") сум
+                    </MudText>
+                </MudStack>
+
+                <MudExpansionPanels Elevation="0">
+                    <MudExpansionPanel Text="Напомнить" @bind-Expanded="_reminderExpanded">
+                        <MudStack Spacing="2">
+                            <MudTextField @bind-Value="_reminderTitle" Label="Текст напоминания" Variant="Variant.Outlined" />
+                            <MudDatePicker @bind-Date="_reminderDate" Label="Дата напоминания" Variant="Variant.Outlined" />
+                            <MudButton Variant="Variant.Filled" Color="Color.Info" OnClick="CreateReminderAsync" Disabled="_isBusy">
+                                Сохранить напоминание
+                            </MudButton>
+                        </MudStack>
+                    </MudExpansionPanel>
+                </MudExpansionPanels>
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <div class="d-flex w-full px-4 pb-4 align-center flex-wrap ga-2">
+            <MudButton Variant="Variant.Outlined" OnClick="Cancel">Назад</MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Description"
+                       OnClick="DownloadInvoiceAsync" Disabled="_isBusy">
+                Чек на оплату
+            </MudButton>
+            <MudSpacer />
+            <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="@(() => _reminderExpanded = true)">
+                Напомнить
+            </MudButton>
+            @if (_visit?.Status == VisitStatus.Planned)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Tertiary" OnClick="ConfirmAsync" Disabled="_isBusy">
+                    Подтвердить
+                </MudButton>
+            }
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveNotesAsync" Disabled="_isBusy">
+                Сохранить
+            </MudButton>
+        </div>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Guid VisitId { get; set; }
+
+    private VisitDto? _visit;
+    private string _patientPhone = string.Empty;
+    private string _notes = string.Empty;
+    private TimeOnly _endTime;
+    private bool _isLoading = true;
+    private bool _isBusy;
+    private bool _changed;
+
+    private bool _reminderExpanded;
+    private string _reminderTitle = "Напомнить пациенту о визите";
+    private DateTime? _reminderDate = DateTime.Today.AddDays(1);
+
+    private string WhatsAppLink => $"https://wa.me/{new string(_patientPhone.Where(char.IsDigit).ToArray())}";
+
+    private Color StatusColor => _visit?.Status switch
+    {
+        VisitStatus.Planned => Color.Warning,
+        VisitStatus.Confirmed => Color.Success,
+        VisitStatus.Completed => Color.Success,
+        VisitStatus.Cancelled => Color.Default,
+        _ => Color.Default
+    };
+
+    private string StatusLabel => _visit?.Status switch
+    {
+        VisitStatus.Planned => "Запланирован",
+        VisitStatus.Confirmed => "Подтверждён",
+        VisitStatus.Completed => "Завершён",
+        VisitStatus.Cancelled => "Отменён",
+        _ => ""
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _visit = await Api.GetVisitAsync(VisitId);
+            _notes = _visit.Notes ?? string.Empty;
+            var durationMinutes = _visit.Items.Count > 0 ? 30 * _visit.Items.Count : 30;
+            _endTime = _visit.VisitTime.AddMinutes(durationMinutes);
+
+            var patient = await Api.GetPatientAsync(_visit.PatientId);
+            _patientPhone = patient.Phone;
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось загрузить визит: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task SaveNotesAsync()
+    {
+        if (_visit is null)
+            return;
+
+        _isBusy = true;
+        try
+        {
+            _visit = await Api.UpdateVisitAsync(_visit.Id, new UpdateVisitRequest(
+                _visit.VisitDate, _visit.VisitTime, _visit.DoctorName, _notes, _visit.Prescriptions, _visit.MaterialsUsed, _visit.Diagnosis));
+            _changed = true;
+            Snackbar.Add("Комментарий сохранён.", Severity.Success);
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось сохранить: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task ConfirmAsync()
+    {
+        if (_visit is null)
+            return;
+
+        _isBusy = true;
+        try
+        {
+            _visit = await Api.ConfirmVisitAsync(_visit.Id);
+            _changed = true;
+            Snackbar.Add("Визит подтверждён.", Severity.Success);
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось подтвердить визит: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task CreateReminderAsync()
+    {
+        if (_visit is null || string.IsNullOrWhiteSpace(_reminderTitle) || _reminderDate is null)
+            return;
+
+        _isBusy = true;
+        try
+        {
+            await Api.CreateReminderAsync(new CreateReminderRequest(
+                _visit.PatientId, _visit.Id, _reminderTitle, new DateTimeOffset(_reminderDate.Value), ReminderType.FollowUp, null));
+            Snackbar.Add("Напоминание создано.", Severity.Success);
+            _reminderExpanded = false;
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось создать напоминание: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task DownloadInvoiceAsync()
+    {
+        if (_visit is null)
+            return;
+
+        _isBusy = true;
+        try
+        {
+            var bytes = await Api.GetVisitInvoicePdfAsync(_visit.Id);
+            var base64 = Convert.ToBase64String(bytes);
+            await JsRuntime.InvokeVoidAsync("dentalLocal.openPdfFromBytes", base64, $"Чек_{_visit.PatientFullName}.pdf");
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось сформировать чек: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private void Cancel() => MudDialog.Close(_changed ? DialogResult.Ok(true) : DialogResult.Cancel());
+}

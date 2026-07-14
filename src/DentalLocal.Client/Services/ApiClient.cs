@@ -11,6 +11,8 @@ using DentalLocal.Shared.Contracts.Analytics;
 using DentalLocal.Shared.Contracts.Materials;
 using DentalLocal.Shared.Contracts.Backups;
 using DentalLocal.Shared.Contracts.Settings;
+using DentalLocal.Shared.Contracts.Reminders;
+using DentalLocal.Shared.Contracts.TreatmentPlans;
 using DentalLocal.Shared.Enums;
 
 namespace DentalLocal.Client.Services;
@@ -114,6 +116,47 @@ public sealed class ApiClient(HttpClient http)
 
     public Task<VisitDto> UpdateVisitAsync(Guid id, UpdateVisitRequest request, CancellationToken ct = default) =>
         SendAsync<VisitDto>(() => http.PutAsJsonAsync($"{ApiRoutes.Visits.Base}/{id}", request, ct));
+
+    public Task<VisitDto> ConfirmVisitAsync(Guid id, CancellationToken ct = default) =>
+        SendAsync<VisitDto>(() => http.PostAsync($"{ApiRoutes.Visits.Base}/{id}/confirm", null, ct));
+
+    public async Task<byte[]> GetVisitInvoicePdfAsync(Guid visitId, CancellationToken ct = default)
+    {
+        using var response = await http.GetAsync($"{ApiRoutes.Reports.Base}/visits/{visitId}/invoice", ct);
+        await EnsureSuccessAsync(response);
+        return await response.Content.ReadAsByteArrayAsync(ct);
+    }
+
+    // ── Reminders ────────────────────────────────────────────────────────────
+
+    public Task<ReminderDto> CreateReminderAsync(CreateReminderRequest request, CancellationToken ct = default) =>
+        SendAsync<ReminderDto>(() => http.PostAsJsonAsync(ApiRoutes.Reminders.Base, request, ct));
+
+    // ── Treatment Plans ──────────────────────────────────────────────────────
+
+    public Task<IReadOnlyList<TreatmentPlanDto>> GetPatientTreatmentPlansAsync(Guid patientId, CancellationToken ct = default) =>
+        SendAsync<IReadOnlyList<TreatmentPlanDto>>(() => http.GetAsync($"{ApiRoutes.TreatmentPlans.Base}?patientId={patientId}", ct));
+
+    public Task<TreatmentPlanDto> GetTreatmentPlanAsync(Guid id, CancellationToken ct = default) =>
+        SendAsync<TreatmentPlanDto>(() => http.GetAsync($"{ApiRoutes.TreatmentPlans.Base}/{id}", ct));
+
+    public Task<TreatmentPlanDto> CreateTreatmentPlanAsync(CreateTreatmentPlanRequest request, CancellationToken ct = default) =>
+        SendAsync<TreatmentPlanDto>(() => http.PostAsJsonAsync(ApiRoutes.TreatmentPlans.Base, request, ct));
+
+    public Task<TreatmentPlanDto> UpdateTreatmentPlanAsync(Guid id, UpdateTreatmentPlanRequest request, CancellationToken ct = default) =>
+        SendAsync<TreatmentPlanDto>(() => http.PutAsJsonAsync($"{ApiRoutes.TreatmentPlans.Base}/{id}", request, ct));
+
+    public Task<TreatmentPlanDto> AddTreatmentPlanItemAsync(Guid id, AddTreatmentPlanItemRequest request, CancellationToken ct = default) =>
+        SendAsync<TreatmentPlanDto>(() => http.PostAsJsonAsync($"{ApiRoutes.TreatmentPlans.Base}/{id}/items", request, ct));
+
+    public Task<TreatmentPlanDto> ActivateTreatmentPlanAsync(Guid id, CancellationToken ct = default) =>
+        SendAsync<TreatmentPlanDto>(() => http.PostAsync($"{ApiRoutes.TreatmentPlans.Base}/{id}/activate", null, ct));
+
+    public Task<TreatmentPlanDto> CancelTreatmentPlanAsync(Guid id, CancellationToken ct = default) =>
+        SendAsync<TreatmentPlanDto>(() => http.PostAsync($"{ApiRoutes.TreatmentPlans.Base}/{id}/cancel", null, ct));
+
+    public Task<TreatmentPlanDto> CompleteTreatmentPlanItemAsync(Guid id, Guid itemId, CompleteTreatmentPlanItemRequest request, CancellationToken ct = default) =>
+        SendAsync<TreatmentPlanDto>(() => http.PostAsJsonAsync($"{ApiRoutes.TreatmentPlans.Base}/{id}/items/{itemId}/complete", request, ct));
 
     // ── Procedures ───────────────────────────────────────────────────────────
 

@@ -16,7 +16,8 @@ public sealed record CreateVisitCommand(
     string? Notes,
     string? Prescriptions,
     string? MaterialsUsed,
-    IReadOnlyList<CreateVisitItemCommand> Items) : ICommand<VisitDto>;
+    IReadOnlyList<CreateVisitItemCommand> Items,
+    string? Diagnosis = null) : ICommand<VisitDto>;
 
 public sealed record CreateVisitItemCommand(
     Guid ProcedureId,
@@ -31,8 +32,6 @@ public sealed class CreateVisitCommandValidator : AbstractValidator<CreateVisitC
     {
         RuleFor(x => x.PatientId).NotEmpty().WithMessage("Укажите пациента.");
         RuleFor(x => x.DoctorName).NotEmpty().MaximumLength(200).WithMessage("Укажите имя врача.");
-        RuleFor(x => x.VisitDate).LessThanOrEqualTo(_ => DateOnly.FromDateTime(DateTime.UtcNow.AddDays(1)))
-            .WithMessage("Дата визита не может быть позже чем завтра.");
         RuleForEach(x => x.Items).ChildRules(item =>
         {
             item.RuleFor(i => i.ProcedureId).NotEmpty().WithMessage("Укажите процедуру.");
@@ -61,7 +60,8 @@ public sealed class CreateVisitCommandHandler(IUnitOfWork unitOfWork, IMapper ma
                 request.DoctorName,
                 request.Notes,
                 request.Prescriptions,
-                request.MaterialsUsed);
+                request.MaterialsUsed,
+                request.Diagnosis);
 
             foreach (var item in request.Items)
             {

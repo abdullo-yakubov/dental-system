@@ -17,6 +17,7 @@ public class VisitConfiguration : IEntityTypeConfiguration<Visit>
         builder.Property(v => v.DoctorName).HasMaxLength(150).IsRequired();
 
         builder.Property(v => v.Notes).HasColumnType("text");
+        builder.Property(v => v.Diagnosis).HasColumnType("text");
         builder.Property(v => v.Prescriptions).HasColumnType("text");
         builder.Property(v => v.MaterialsUsed).HasColumnType("text");
 

@@ -13,4 +13,5 @@ public sealed record VisitListItemDto(
     decimal TotalPaid,
     decimal RemainingAmount,
     VisitStatus Status,
-    int ProcedureCount);
+    int ProcedureCount,
+    int DurationMinutes);

@@ -5,8 +5,7 @@
     <TitleContent>Новый визит</TitleContent>
     <DialogContent>
         <MudForm @ref="_form">
-            <MudDatePicker @bind-Date="_visitDate" Label="Дата визита" Required="true" Class="mb-2"
-                           MaxDate="DateTime.Today.AddDays(1)" />
+            <MudDatePicker @bind-Date="_visitDate" Label="Дата визита" Required="true" Class="mb-2" />
             <MudTimePicker @bind-Time="_visitTime" Label="Время" Class="mb-2" AmPm="false" />
             <MudTextField @bind-Value="_doctorName" Label="Врач" Required="true" Class="mb-3" />
 

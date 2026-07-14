@@ -16,6 +16,7 @@ public class Visit : Entity, IImmutableRecord
     public TimeOnly VisitTime { get; private set; }
     public string DoctorName { get; private set; } = null!;
     public string? Notes { get; private set; }
+    public string? Diagnosis { get; private set; }
     public string? Prescriptions { get; private set; }
     public string? MaterialsUsed { get; private set; }
     public decimal TotalCost { get; private set; }
@@ -36,10 +37,14 @@ public class Visit : Entity, IImmutableRecord
         string doctorName,
         string? notes,
         string? prescriptions,
-        string? materialsUsed)
+        string? materialsUsed,
+        string? diagnosis = null)
     {
         if (string.IsNullOrWhiteSpace(doctorName))
             throw new ArgumentException("Имя врача обязательно.", nameof(doctorName));
+
+        var visitMoment = new DateTimeOffset(visitDate, visitTime, TimeSpan.Zero);
+        var status = visitMoment > DateTimeOffset.UtcNow ? VisitStatus.Planned : VisitStatus.Completed;
 
         return new Visit
         {
@@ -48,9 +53,10 @@ public class Visit : Entity, IImmutableRecord
             VisitTime = visitTime,
             DoctorName = doctorName.Trim(),
             Notes = notes,
+            Diagnosis = diagnosis,
             Prescriptions = prescriptions,
             MaterialsUsed = materialsUsed,
-            Status = VisitStatus.Completed,
+            Status = status,
             TotalCost = 0m,
             TotalPaid = 0m,
         };
@@ -70,12 +76,28 @@ public class Visit : Entity, IImmutableRecord
         Touch();
     }
 
-    /// <summary>Только текстовые поля — финансовые поля меняются исключительно через оплаты/позиции.</summary>
+    /// <summary>Только текстовые поля — финансовые поля меняются исключительно через оплаты/позиции. Диагноз не трогает — см. <see cref="SetDiagnosis"/>.</summary>
     public void UpdateNotes(string? notes, string? prescriptions, string? materialsUsed)
     {
         Notes = notes;
         Prescriptions = prescriptions;
         MaterialsUsed = materialsUsed;
+        Touch();
+    }
+
+    public void SetDiagnosis(string? diagnosis)
+    {
+        Diagnosis = diagnosis;
+        Touch();
+    }
+
+    /// <summary>Подтверждение записи врачом (см. п. 19.3 ТЗ) — переводит визит из «Запланирован» в «Подтверждён».</summary>
+    public void Confirm()
+    {
+        if (Status != VisitStatus.Planned)
+            throw new DomainException("Подтвердить можно только запланированный визит.");
+
+        Status = VisitStatus.Confirmed;
         Touch();
     }
 

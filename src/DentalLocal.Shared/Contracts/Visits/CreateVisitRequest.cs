@@ -15,4 +15,5 @@ public sealed record CreateVisitRequest(
     string? Notes,
     string? Prescriptions,
     string? MaterialsUsed,
-    IReadOnlyList<CreateTreatmentItemRequest> Items);
+    IReadOnlyList<CreateTreatmentItemRequest> Items,
+    string? Diagnosis = null);

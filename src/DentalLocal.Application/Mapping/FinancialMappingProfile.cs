@@ -28,6 +28,8 @@ public sealed class FinancialMappingProfile : Profile
                 opt => opt.MapFrom(d => d.Patient != null ? d.Patient.FullName : string.Empty))
             .ForCtorParam(nameof(DebtListItemDto.PatientPhone),
                 opt => opt.MapFrom(d => d.Patient != null ? d.Patient.Phone : string.Empty))
+            .ForCtorParam(nameof(DebtListItemDto.PatientBirthDate),
+                opt => opt.MapFrom(d => d.Patient != null ? d.Patient.BirthDate : default))
             .ForCtorParam(nameof(DebtListItemDto.Status),
                 opt => opt.MapFrom(d => (DebtStatus)(short)d.Status))
             .ForCtorParam(nameof(DebtListItemDto.VisitDate),

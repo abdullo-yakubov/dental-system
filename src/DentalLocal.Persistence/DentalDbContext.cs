@@ -22,6 +22,9 @@ public class DentalDbContext(DbContextOptions<DentalDbContext> options) : DbCont
     public DbSet<BackupRecord> BackupRecords => Set<BackupRecord>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<AppSetting> AppSettings => Set<AppSetting>();
+    public DbSet<Reminder> Reminders => Set<Reminder>();
+    public DbSet<TreatmentPlan> TreatmentPlans => Set<TreatmentPlan>();
+    public DbSet<TreatmentPlanItem> TreatmentPlanItems => Set<TreatmentPlanItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

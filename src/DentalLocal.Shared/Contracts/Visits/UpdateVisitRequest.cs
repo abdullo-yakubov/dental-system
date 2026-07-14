@@ -6,4 +6,5 @@ public sealed record UpdateVisitRequest(
     string DoctorName,
     string? Notes,
     string? Prescriptions,
-    string? MaterialsUsed);
+    string? MaterialsUsed,
+    string? Diagnosis = null);

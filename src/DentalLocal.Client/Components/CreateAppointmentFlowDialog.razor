@@ -3,7 +3,7 @@
 
 <MudDialog>
     <TitleContent>
-        <MudText Typo="Typo.h6" Class="font-weight-bold">Запись на прием (Шаг @_currentStep из 4)</MudText>
+        <MudText Typo="Typo.h6" Class="font-weight-bold">Запись на прием (Шаг @_currentStep из 5)</MudText>
     </TitleContent>
     <DialogContent>
         <!-- Stepper Indicator -->
@@ -22,6 +22,10 @@
             </div>
             <div class="d-flex flex-column align-center">
                 <MudAvatar Color="@(_currentStep >= 4 ? Color.Primary : Color.Default)" Size="Size.Small">4</MudAvatar>
+                <MudText Typo="Typo.caption" Class="mt-1">Диагноз</MudText>
+            </div>
+            <div class="d-flex flex-column align-center">
+                <MudAvatar Color="@(_currentStep >= 5 ? Color.Primary : Color.Default)" Size="Size.Small">5</MudAvatar>
                 <MudText Typo="Typo.caption" Class="mt-1">Проверка</MudText>
             </div>
         </MudStack>
@@ -107,13 +111,21 @@
         {
             <!-- STEP 3: PROCEDURES & NOTES -->
             <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-3">Шаг 3: Выберите процедуры</MudText>
-            
+
+            <MudSelect T="Guid?" Value="_selectedCategoryId" ValueChanged="OnCategoryChanged" Label="Специальность / категория лечения" Dense="true" Class="mb-4">
+                <MudSelectItem Value="((Guid?)null)">Все категории</MudSelectItem>
+                @foreach (var c in _procedureCategories)
+                {
+                    <MudSelectItem Value="@((Guid?)c.Id)">@c.Name</MudSelectItem>
+                }
+            </MudSelect>
+
             @foreach (var item in _items)
             {
                 <MudGrid Spacing="2" Class="mb-3 align-center">
                     <MudItem xs="5">
                         <MudSelect T="Guid" @bind-Value="item.ProcedureId" Label="Процедура" Dense="true" SelectedValuesChanged="() => ProcedureChanged(item)">
-                            @foreach (var p in _procedures)
+                            @foreach (var p in FilteredProcedures)
                             {
                                 <MudSelectItem Value="@p.Id">@p.Name (@p.Price.ToString("N0") сум)</MudSelectItem>
                             }
@@ -142,8 +154,27 @@
         }
         else if (_currentStep == 4)
         {
-            <!-- STEP 4: REVIEW & CONFIRM -->
-            <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-3">Шаг 4: Проверьте и подтвердите запись</MudText>
+            <!-- STEP 4: DIAGNOSIS -->
+            <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-3">Поставить диагноз</MudText>
+
+            <MudText Typo="Typo.subtitle2" Class="font-weight-bold mb-2">Лечение:</MudText>
+            <MudList T="string" ReadOnly="true" Dense="true" Class="mb-4">
+                @{ var index = 0; }
+                @foreach (var item in _items.Where(i => i.ProcedureId != Guid.Empty))
+                {
+                    index++;
+                    var procName = _procedures.FirstOrDefault(p => p.Id == item.ProcedureId)?.Name ?? "Неизвестная услуга";
+                    <MudListItem T="string">@index. @procName @(item.ToothNumber.HasValue ? $"(Зуб {item.ToothNumber})" : "")</MudListItem>
+                }
+            </MudList>
+
+            <MudTextField @bind-Value="_diagnosis" Label="Диагноз" Required="true" RequiredError="Диагноз обязателен для заполнения."
+                          Lines="3" Variant="Variant.Outlined" HelperText="Впишите диагноз своими словами (при необходимости — с кодом МКБ-10/11)." />
+        }
+        else if (_currentStep == 5)
+        {
+            <!-- STEP 5: REVIEW & CONFIRM -->
+            <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-3">Шаг 5: Проверьте и подтвердите запись</MudText>
             
             <MudPaper Class="pa-4 bg-light border-radius-12" Elevation="0">
                 <MudGrid>
@@ -185,6 +216,11 @@
                     <MudText Typo="Typo.subtitle1">Итоговая стоимость:</MudText>
                     <MudText Typo="Typo.h6" Color="Color.Success">@CalculateTotal().ToString("N0") сум</MudText>
                 </div>
+
+                <MudDivider Class="my-3" />
+
+                <MudText Typo="Typo.caption" Class="text-secondary">Диагноз</MudText>
+                <MudText Typo="Typo.body1">@_diagnosis</MudText>
             </MudPaper>
         }
 
@@ -201,7 +237,7 @@
             }
             <MudSpacer />
             <MudButton Variant="Variant.Text" OnClick="Cancel" Class="mr-2">Отмена</MudButton>
-            @if (_currentStep < 4)
+            @if (_currentStep < 5)
             {
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="NextStep" Disabled="@(!CanGoNext())">Далее</MudButton>
             }
@@ -242,8 +278,16 @@
 
     // Step 3 variables
     private List<ProcedureDto> _procedures = [];
+    private List<ProcedureCategoryDto> _procedureCategories = [];
+    private Guid? _selectedCategoryId;
     private List<VisitItemModel> _items = [new()];
     private string? _notes;
+
+    // Step 4 variables
+    private string _diagnosis = "";
+
+    private IEnumerable<ProcedureDto> FilteredProcedures =>
+        _selectedCategoryId is null ? _procedures : _procedures.Where(p => p.CategoryId == _selectedCategoryId);
 
     private sealed class VisitItemModel
     {
@@ -262,12 +306,15 @@
         try
         {
             _procedures = (await Api.GetProceduresAsync()).ToList();
+            _procedureCategories = (await Api.GetProcedureCategoriesAsync()).ToList();
         }
         catch (ApiException ex)
         {
             _errorMessage = $"Не удалось загрузить процедуры: {ex.Message}";
         }
     }
+
+    private void OnCategoryChanged(Guid? categoryId) => _selectedCategoryId = categoryId;
 
     private async Task<IEnumerable<PatientListItemDto>> SearchPatientsAsync(string search, CancellationToken cancellationToken)
     {
@@ -347,6 +394,7 @@
         1 => _selectedPatient != null,
         2 => _visitDate != null && _visitTime != null && !string.IsNullOrWhiteSpace(_doctorName),
         3 => _items.Any(i => i.ProcedureId != Guid.Empty),
+        4 => !string.IsNullOrWhiteSpace(_diagnosis),
         _ => true
     };
 
@@ -387,7 +435,8 @@
                 _notes,
                 null,
                 null,
-                treatmentItems);
+                treatmentItems,
+                _diagnosis);
 
             var visit = await Api.CreateVisitAsync(req);
             Snackbar.Add("Визит успешно запланирован.", Severity.Success);

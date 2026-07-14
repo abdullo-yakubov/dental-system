@@ -70,6 +70,21 @@ public static class ApiRoutes
         public const string Base = $"{Prefix}/materials";
     }
 
+    public static class Reminders
+    {
+        public const string Base = $"{Prefix}/reminders";
+    }
+
+    public static class TreatmentPlans
+    {
+        public const string Base = $"{Prefix}/treatment-plans";
+    }
+
+    public static class Reports
+    {
+        public const string Base = $"{Prefix}/reports";
+    }
+
     public static class Backups
     {
         public const string Base = $"{Prefix}/backups";

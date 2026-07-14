@@ -35,6 +35,8 @@ public sealed class VisitMappingProfile : Profile
             .ForCtorParam(nameof(VisitListItemDto.RemainingAmount),
                 opt => opt.MapFrom(v => v.RemainingAmount))
             .ForCtorParam(nameof(VisitListItemDto.ProcedureCount),
-                opt => opt.MapFrom(v => v.Items.Count));
+                opt => opt.MapFrom(v => v.Items.Count))
+            .ForCtorParam(nameof(VisitListItemDto.DurationMinutes),
+                opt => opt.MapFrom(v => v.Items.Sum(i => i.Procedure != null ? i.Procedure.DurationMinutes : 0)));
     }
 }

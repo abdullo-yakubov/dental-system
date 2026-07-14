@@ -45,7 +45,8 @@ public static class VisitsEndpoints
                 request.Prescriptions,
                 request.MaterialsUsed,
                 request.Items.Select(i => new CreateVisitItemCommand(
-                    i.ProcedureId, i.ToothNumber, i.Price, i.Quantity, i.Comment)).ToList());
+                    i.ProcedureId, i.ToothNumber, i.Price, i.Quantity, i.Comment)).ToList(),
+                request.Diagnosis);
 
             var result = await sender.Send(command, ct);
             return result.ToCreatedResult(dto => $"{ApiRoutes.Visits.Base}/{dto.Id}");
@@ -61,9 +62,17 @@ public static class VisitsEndpoints
                 request.DoctorName,
                 request.Notes,
                 request.Prescriptions,
-                request.MaterialsUsed);
+                request.MaterialsUsed,
+                request.Diagnosis);
 
             var result = await sender.Send(command, ct);
+            return result.ToApiResult();
+        });
+
+        // POST /api/v1/visits/{id}/confirm
+        group.MapPost("/{id:guid}/confirm", async (Guid id, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new ConfirmVisitCommand(id), ct);
             return result.ToApiResult();
         });
     }

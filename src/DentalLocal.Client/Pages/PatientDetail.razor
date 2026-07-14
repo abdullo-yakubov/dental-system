@@ -62,7 +62,13 @@ else
                         </MudText>
                         <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="4" Class="mt-2 text-secondary">
                             <MudText Typo="Typo.body1"><MudIcon Icon="@Icons.Material.Filled.Badge" Size="Size.Small" Class="mr-1" /> Карта: <b>@_patient.CardNumberDisplay</b></MudText>
-                            <MudText Typo="Typo.body1"><MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" Class="mr-1" /> Телефон: <b>@_patient.Phone</b></MudText>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                <MudText Typo="Typo.body1"><MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" Class="mr-1" /> Телефон: <b>@_patient.Phone</b></MudText>
+                                <MudIconButton Icon="@Icons.Material.Filled.Call" Color="Color.Primary" Size="Size.Small"
+                                               Href="@($"tel:{_patient.Phone}")" title="Позвонить" />
+                                <MudIconButton Icon="@Icons.Custom.Brands.WhatsApp" Color="Color.Success" Size="Size.Small"
+                                               Href="@($"https://wa.me/{GetWhatsAppPhone(_patient.Phone)}")" Target="_blank" title="Написать в WhatsApp" />
+                            </MudStack>
                             <MudText Typo="Typo.body1"><MudIcon Icon="@Icons.Material.Filled.Cake" Size="Size.Small" Class="mr-1" /> Возраст: <b>@_patient.Age</b> (@_patient.BirthDate.ToString("dd.MM.yyyy"))</MudText>
                             <MudText Typo="Typo.body1"><MudIcon Icon="@Icons.Material.Filled.Event" Size="Size.Small" Class="mr-1" /> Последний визит: <b>@(_patient.LastVisitAt?.ToString("dd.MM.yyyy") ?? "—")</b></MudText>
                         </MudStack>
@@ -219,6 +225,11 @@ else
             </MudStack>
         </MudTabPanel>
 
+        <!-- Treatment Plans Tab -->
+        <MudTabPanel Text="План лечения" Icon="@Icons.Material.Filled.Checklist">
+            <TreatmentPlansTab PatientId="_patient.Id" />
+        </MudTabPanel>
+
         <!-- Finances Tab -->
         <MudTabPanel Text="Финансы" Icon="@Icons.Material.Filled.Payments">
             <MudGrid Spacing="4">
@@ -304,6 +315,8 @@ else
     private decimal _totalDebt;
 
     private bool _loading = true;
+
+    private static string GetWhatsAppPhone(string phone) => new(phone.Where(char.IsDigit).ToArray());
 
     protected override async Task OnInitializedAsync()
     {

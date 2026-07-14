@@ -1,0 +1,62 @@
+@inject ApiClient Api
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>Новый план лечения</TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form">
+            <MudTextField T="string" @bind-Value="_title" Label="Название плана" Required="true" Class="mb-3" />
+            <MudTextField T="string" @bind-Value="_notes" Label="Заметки" Lines="3" Class="mb-3" />
+        </MudForm>
+
+        @if (_errorMessage is not null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-3">@_errorMessage</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Отмена</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SubmitAsync" Disabled="_isBusy">
+            @(_isBusy ? "Сохранение..." : "Создать")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Guid PatientId { get; set; }
+
+    private MudForm? _form;
+    private string _title = string.Empty;
+    private string? _notes;
+
+    private string? _errorMessage;
+    private bool _isBusy;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SubmitAsync()
+    {
+        await _form!.Validate();
+        if (!_form.IsValid) return;
+
+        _isBusy = true;
+        _errorMessage = null;
+
+        try
+        {
+            var request = new CreateTreatmentPlanRequest(PatientId, _title, _notes);
+            var result = await Api.CreateTreatmentPlanAsync(request);
+            Snackbar.Add($"План лечения «{result.Title}» создан.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(result));
+        }
+        catch (ApiException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+}

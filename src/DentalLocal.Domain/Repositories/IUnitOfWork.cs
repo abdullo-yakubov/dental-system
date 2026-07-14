@@ -17,6 +17,8 @@ public interface IUnitOfWork
     IAppSettingRepository AppSettings { get; }
     IMaterialRepository Materials { get; }
     IMaterialUsageRepository MaterialUsages { get; }
+    IReminderRepository Reminders { get; }
+    ITreatmentPlanRepository TreatmentPlans { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 

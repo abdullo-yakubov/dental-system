@@ -30,6 +30,8 @@ public static class DependencyInjection
         services.AddScoped<IAppSettingRepository, AppSettingRepository>();
         services.AddScoped<IMaterialRepository, MaterialRepository>();
         services.AddScoped<IMaterialUsageRepository, MaterialUsageRepository>();
+        services.AddScoped<IReminderRepository, ReminderRepository>();
+        services.AddScoped<ITreatmentPlanRepository, TreatmentPlanRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<DentalLocal.Application.Interfaces.IDashboardService, Services.DashboardService>();
 

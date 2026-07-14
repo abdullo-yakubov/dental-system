@@ -1,0 +1,81 @@
+@inject ApiClient Api
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>Добавить позицию плана</TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form">
+            <MudSelect T="Guid" @bind-Value="_procedureId" Label="Процедура" Required="true" Class="mb-3">
+                @foreach (var procedure in Procedures.Where(p => p.IsActive))
+                {
+                    <MudSelectItem Value="procedure.Id">@procedure.Name (@procedure.Price.ToString("N0") сум)</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudNumericField T="short?" @bind-Value="_toothNumber" Label="Зуб (FDI, необязательно)" Dense="true" Class="mb-3" />
+            <MudNumericField T="decimal" @bind-Value="_estimatedPrice" Label="Ориентировочная цена (сум)" Required="true" Min="0" Format="N0" Class="mb-3" />
+        </MudForm>
+
+        @if (_errorMessage is not null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-3">@_errorMessage</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Отмена</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SubmitAsync" Disabled="_isBusy">
+            @(_isBusy ? "Сохранение..." : "Добавить")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Guid TreatmentPlanId { get; set; }
+    [Parameter] public List<ProcedureDto> Procedures { get; set; } = [];
+    [Parameter] public int NextOrderIndex { get; set; }
+
+    private MudForm? _form;
+    private Guid _procedureId;
+    private short? _toothNumber;
+    private decimal _estimatedPrice;
+
+    private string? _errorMessage;
+    private bool _isBusy;
+
+    protected override void OnParametersSet()
+    {
+        if (_procedureId == Guid.Empty && Procedures.Count > 0)
+        {
+            _procedureId = Procedures[0].Id;
+            _estimatedPrice = Procedures[0].Price;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SubmitAsync()
+    {
+        await _form!.Validate();
+        if (!_form.IsValid || _procedureId == Guid.Empty) return;
+
+        _isBusy = true;
+        _errorMessage = null;
+
+        try
+        {
+            var request = new AddTreatmentPlanItemRequest(_procedureId, _toothNumber, _estimatedPrice, NextOrderIndex);
+            var result = await Api.AddTreatmentPlanItemAsync(TreatmentPlanId, request);
+            Snackbar.Add("Позиция добавлена в план лечения.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(result));
+        }
+        catch (ApiException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+}

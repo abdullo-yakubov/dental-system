@@ -3,11 +3,15 @@
 @inject ApiClient Api
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject NavigationManager Navigation
 
 <PageTitle>Долги и Оплаты — DentalLocal</PageTitle>
 
 <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
     <MudText Typo="Typo.h5">Должники</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenCreatePatientDialogAsync">
+        Добавить пациента
+    </MudButton>
 </MudStack>
 
 <MudStack Row="true" Spacing="4" Class="mb-4">
@@ -25,36 +29,46 @@
     <HeaderContent>
         <MudTh>Пациент</MudTh>
         <MudTh>Телефон</MudTh>
-        <MudTh>Дата визита</MudTh>
+        <MudTh>Дата рождения</MudTh>
         <MudTh>Сумма долга</MudTh>
-        <MudTh>Остаток</MudTh>
+        <MudTh>Давность</MudTh>
         <MudTh>Статус</MudTh>
-        <MudTh></MudTh>
+        <MudTh>Подробнее</MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Пациент">@context.PatientFullName</MudTd>
         <MudTd DataLabel="Телефон">@context.PatientPhone</MudTd>
-        <MudTd DataLabel="Дата визита">@context.VisitDate.ToString("dd.MM.yyyy")</MudTd>
-        <MudTd DataLabel="Сумма долга">@context.OriginalAmount.ToString("N0") сум</MudTd>
-        <MudTd DataLabel="Остаток">
+        <MudTd DataLabel="Дата рождения">@context.PatientBirthDate.ToString("dd.MM.yyyy")</MudTd>
+        <MudTd DataLabel="Сумма долга">
             <span class="@(context.RemainingAmount > 0 ? "text-danger font-weight-bold" : "text-success")">
                 @context.RemainingAmount.ToString("N0") сум
             </span>
+        </MudTd>
+        <MudTd DataLabel="Давность">
+            <MudChip T="string" Color="@GetAgeColor(context.AroseAt)" Size="Size.Small">
+                @GetAgeDays(context.AroseAt) дн.
+            </MudChip>
         </MudTd>
         <MudTd DataLabel="Статус">
             <MudChip T="string" Color="@(context.Status == DebtStatus.Open ? Color.Error : Color.Success)" Size="Size.Small">
                 @(context.Status == DebtStatus.Open ? "Открыт" : "Погашен")
             </MudChip>
         </MudTd>
-        <MudTd>
-            @if (context.Status == DebtStatus.Open)
-            {
-                <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small"
-                           StartIcon="@Icons.Material.Filled.Payments"
-                           OnClick="@(() => PayDebtAsync(context))">
-                    Оплатить
+        <MudTd DataLabel="Подробнее">
+            <MudStack Row="true" Spacing="1">
+                <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small"
+                           OnClick="@(() => OpenPatient(context.PatientId))">
+                    Подробнее
                 </MudButton>
-            }
+                @if (context.Status == DebtStatus.Open)
+                {
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small"
+                               StartIcon="@Icons.Material.Filled.Payments"
+                               OnClick="@(() => PayDebtAsync(context))">
+                        Оплатить
+                    </MudButton>
+                }
+            </MudStack>
         </MudTd>
     </RowTemplate>
     <NoRecordsContent>
@@ -122,5 +136,32 @@
         {
             await ReloadAsync();
         }
+    }
+
+    private void OpenPatient(Guid patientId) => Navigation.NavigateTo($"/patients/{patientId}");
+
+    private async Task OpenCreatePatientDialogAsync()
+    {
+        var dialog = await DialogService.ShowAsync<Components.CreatePatientDialog>("Новый пациент");
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            await ReloadAsync();
+        }
+    }
+
+    private static int GetAgeDays(DateTimeOffset aroseAt) =>
+        Math.Max(0, (int)(DateTimeOffset.UtcNow - aroseAt).TotalDays);
+
+    private static Color GetAgeColor(DateTimeOffset aroseAt)
+    {
+        var days = GetAgeDays(aroseAt);
+        return days switch
+        {
+            <= 30 => Color.Warning,
+            > 90 => Color.Error,
+            _ => Color.Default
+        };
     }
 }

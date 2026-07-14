@@ -10,6 +10,7 @@ public sealed record VisitDto(
     TimeOnly VisitTime,
     string DoctorName,
     string? Notes,
+    string? Diagnosis,
     string? Prescriptions,
     string? MaterialsUsed,
     decimal TotalCost,
