@@ -158,6 +158,76 @@ else
             </GlassCard>
         </MudItem>
     </MudGrid>
+
+    <GlassCard Title="Загрузка врача (последние 30 дней)" Class="mt-6">
+        @if (_workload is null)
+        {
+            <EmptyState Icon="@Icons.Material.Filled.Insights" Title="Нет данных о загрузке" />
+        }
+        else
+        {
+            <MudGrid>
+                <MudItem xs="12" md="4">
+                    <MudText Typo="Typo.subtitle2" Class="text-secondary">Визитов за период</MudText>
+                    <MudText Typo="Typo.h5" Class="font-weight-bold">@_workload.TotalVisits</MudText>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudText Typo="Typo.subtitle2" Class="text-secondary">Отменено, %</MudText>
+                    <MudText Typo="Typo.h5" Class="font-weight-bold text-danger">@_workload.CancelledOrNoShowPercent.ToString("N1")</MudText>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudText Typo="Typo.subtitle2" Class="text-secondary">Простой относительно графика, %</MudText>
+                    <MudText Typo="Typo.h5" Class="font-weight-bold">@_workload.IdlePercent.ToString("N1")</MudText>
+                </MudItem>
+            </MudGrid>
+
+            @if (_workload.Heatmap.Count > 0)
+            {
+                <MudText Typo="Typo.subtitle2" Class="mt-4 mb-2">Тепловая карта по дням/часам</MudText>
+                <div style="overflow-x:auto;">
+                    <table class="workload-heatmap">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                @foreach (var hour in _heatmapHours)
+                                {
+                                    <th>@hour</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var day in _heatmapDays)
+                            {
+                                <tr>
+                                    <td>@GetShortDayLabel(day)</td>
+                                    @foreach (var hour in _heatmapHours)
+                                    {
+                                        var count = GetHeatmapCount(day, hour);
+                                        <td style="@GetHeatmapCellStyle(count)">@(count > 0 ? count.ToString() : "")</td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            @if (_workload.AverageDurationByProcedure.Count > 0)
+            {
+                <MudText Typo="Typo.subtitle2" Class="mt-4 mb-2">Средняя длительность по типам процедур</MudText>
+                <MudTable Items="_workload.AverageDurationByProcedure" Hover="true" Dense="true" Elevation="0" Class="glass-table">
+                    <HeaderContent>
+                        <MudTh>Процедура</MudTh>
+                        <MudTh>Средняя длительность, мин</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.ProcedureName</MudTd>
+                        <MudTd>@context.AverageDurationMinutes.ToString("N0")</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        }
+    </GlassCard>
     </div>
 }
 
@@ -176,6 +246,39 @@ else
     private double[] _donutData = [];
     private string[] _donutLabels = [];
     private string _greeting = "Добро пожаловать";
+    private DoctorWorkloadStatsDto? _workload;
+
+    private static readonly DayOfWeek[] _heatmapDays =
+    [
+        DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday,
+        DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday
+    ];
+
+    private static readonly int[] _heatmapHours = Enumerable.Range(8, 12).ToArray(); // 08:00 - 19:00
+
+    private int GetHeatmapCount(DayOfWeek day, int hour) =>
+        _workload?.Heatmap.FirstOrDefault(c => c.DayOfWeek == day && c.Hour == hour)?.VisitCount ?? 0;
+
+    private string GetHeatmapCellStyle(int count)
+    {
+        if (count == 0)
+            return "background: transparent;";
+
+        var maxCount = _workload?.Heatmap.Count > 0 ? _workload!.Heatmap.Max(c => c.VisitCount) : 1;
+        var intensity = Math.Clamp((double)count / Math.Max(1, maxCount), 0.15, 1.0);
+        return $"background: rgba(var(--mud-palette-primary-rgb), {intensity.ToString(System.Globalization.CultureInfo.InvariantCulture)});";
+    }
+
+    private static string GetShortDayLabel(DayOfWeek day) => day switch
+    {
+        DayOfWeek.Monday => "ПН",
+        DayOfWeek.Tuesday => "ВТ",
+        DayOfWeek.Wednesday => "СР",
+        DayOfWeek.Thursday => "ЧТ",
+        DayOfWeek.Friday => "ПТ",
+        DayOfWeek.Saturday => "СБ",
+        _ => "ВС"
+    };
 
     private static string BuildGreeting(string? doctorName)
     {
@@ -199,14 +302,16 @@ else
             var procTask = Api.GetTopProceduresAsync();
             var visitTask = Api.GetUpcomingVisitsAsync(7);
             var settingsTask = Api.GetSettingsAsync();
+            var workloadTask = Api.GetDoctorWorkloadStatsAsync();
 
-            await Task.WhenAll(summaryTask, chartTask, procTask, visitTask, settingsTask);
+            await Task.WhenAll(summaryTask, chartTask, procTask, visitTask, settingsTask, workloadTask);
 
             _summary = await summaryTask;
             _chartPoints = (await chartTask).ToList();
             _topProcedures = (await procTask).ToList();
             _upcomingVisits = (await visitTask).ToList();
             _greeting = BuildGreeting((await settingsTask).DoctorName);
+            _workload = await workloadTask;
 
             // Prepare Bar Chart
             if (_chartPoints.Count > 0)

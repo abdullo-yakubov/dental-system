@@ -40,6 +40,7 @@ public static class DependencyInjection
         services.AddScoped<IWaitingListRepository, WaitingListRepository>();
         services.AddScoped<IPrescriptionRepository, PrescriptionRepository>();
         services.AddScoped<IWarrantyRepository, WarrantyRepository>();
+        services.AddScoped<IDoctorScheduleRepository, DoctorScheduleRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<DentalLocal.Application.Interfaces.IDashboardService, Services.DashboardService>();
 

@@ -14,6 +14,9 @@ public class Procedure : Entity
     public string? Specialty { get; private set; }
     public bool RequiresConsent { get; private set; }
     public int WarrantyMonths { get; private set; }
+
+    /// <summary>Через сколько дней после визита предложить контрольный визит (0/null — не предлагать). См. п.17.13 ТЗ.</summary>
+    public int? FollowUpDays { get; private set; }
     public int DurationMinutes { get; private set; }
     public bool IsActive { get; private set; }
     public bool RequiresTooth { get; private set; }
@@ -33,7 +36,8 @@ public class Procedure : Entity
         decimal priceMax = 0,
         string? specialty = null,
         bool requiresConsent = false,
-        int warrantyMonths = 0)
+        int warrantyMonths = 0,
+        int? followUpDays = null)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Название процедуры обязательно.", nameof(name));
@@ -55,6 +59,7 @@ public class Procedure : Entity
             Specialty = specialty,
             RequiresConsent = requiresConsent,
             WarrantyMonths = warrantyMonths,
+            FollowUpDays = followUpDays,
             DurationMinutes = durationMinutes,
             RequiresTooth = requiresTooth,
             IsActive = true,
@@ -72,7 +77,8 @@ public class Procedure : Entity
         decimal priceMax = 0,
         string? specialty = null,
         bool requiresConsent = false,
-        int warrantyMonths = 0)
+        int warrantyMonths = 0,
+        int? followUpDays = null)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Название процедуры обязательно.", nameof(name));
@@ -89,6 +95,7 @@ public class Procedure : Entity
         Specialty = specialty;
         RequiresConsent = requiresConsent;
         WarrantyMonths = warrantyMonths;
+        FollowUpDays = followUpDays;
         DurationMinutes = durationMinutes;
         RequiresTooth = requiresTooth;
         Touch();

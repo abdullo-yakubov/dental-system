@@ -969,6 +969,10 @@ namespace DentalLocal.Persistence.Migrations
                         .HasDefaultValue(30)
                         .HasColumnName("duration_minutes");
 
+                    b.Property<int?>("FollowUpDays")
+                        .HasColumnType("integer")
+                        .HasColumnName("follow_up_days");
+
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -1490,6 +1494,12 @@ namespace DentalLocal.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("notes");
 
+                    b.Property<NpgsqlTsVector>("NotesSearchVector")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("tsvector")
+                        .HasColumnName("notes_search_vector")
+                        .HasComputedColumnSql("to_tsvector('russian', coalesce(notes, '') || ' ' || coalesce(diagnosis, ''))", true);
+
                     b.Property<Guid>("PatientId")
                         .HasColumnType("uuid")
                         .HasColumnName("patient_id");
@@ -1524,6 +1534,11 @@ namespace DentalLocal.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_visits");
+
+                    b.HasIndex("NotesSearchVector")
+                        .HasDatabaseName("ix_visits_notes_search_vector");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("NotesSearchVector"), "GIN");
 
                     b.HasIndex("PatientId")
                         .HasDatabaseName("ix_visits_patient_id");

@@ -6,6 +6,12 @@
 <MudDialog>
     <TitleContent>Новый визит</TitleContent>
     <DialogContent>
+        @if (!string.IsNullOrWhiteSpace(_patientAllergies))
+        {
+            <MudAlert Severity="Severity.Warning" Icon="@Icons.Material.Filled.WarningAmber" Class="mb-3">
+                <b>Аллергии пациента:</b> @_patientAllergies
+            </MudAlert>
+        }
         <MudForm @ref="_form">
             <MudDatePicker @bind-Date="_visitDate" Label="Дата визита" Required="true" Class="mb-2" />
             <MudTimePicker @bind-Time="_visitTime" Label="Время" Class="mb-2" AmPm="false" />
@@ -76,6 +82,7 @@
     private List<VisitItemModel> _items = [new()];
     private DraftAutosaveTimer? _autosaveTimer;
     private string DraftKey => $"new-visit-{PatientId}";
+    private string? _patientAllergies;
 
     private sealed class VisitItemModel
     {
@@ -98,6 +105,16 @@
         catch (ApiException ex)
         {
             _errorMessage = $"Не удалось загрузить процедуры: {ex.Message}";
+        }
+
+        try
+        {
+            var patient = await Api.GetPatientAsync(PatientId);
+            _patientAllergies = patient.Allergies;
+        }
+        catch (ApiException)
+        {
+            // Не критично для создания визита — просто не покажем бейдж аллергий.
         }
 
         var draft = await Drafts.LoadAsync<Draft>(DraftKey);

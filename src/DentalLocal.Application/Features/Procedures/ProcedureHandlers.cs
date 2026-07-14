@@ -5,6 +5,7 @@ using DentalLocal.Domain.Repositories;
 using DentalLocal.Shared.Contracts.Procedures;
 using FluentValidation;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace DentalLocal.Application.Features.Procedures;
 
@@ -12,13 +13,20 @@ namespace DentalLocal.Application.Features.Procedures;
 
 public sealed record GetProceduresQuery(bool IncludeInactive = false) : IQuery<IReadOnlyList<ProcedureDto>>;
 
-public sealed class GetProceduresQueryHandler(IUnitOfWork unitOfWork, IMapper mapper)
+public sealed class GetProceduresQueryHandler(IUnitOfWork unitOfWork, IMapper mapper, IMemoryCache cache)
     : IRequestHandler<GetProceduresQuery, Result<IReadOnlyList<ProcedureDto>>>
 {
     public async Task<Result<IReadOnlyList<ProcedureDto>>> Handle(
         GetProceduresQuery request, CancellationToken cancellationToken)
     {
-        var procedures = await unitOfWork.Procedures.GetAllAsync(request.IncludeInactive, cancellationToken);
+        var cacheKey = $"{CacheKeys.Procedures}:{request.IncludeInactive}";
+
+        var procedures = await cache.GetOrCreateAsync(cacheKey, async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15);
+            return await unitOfWork.Procedures.GetAllAsync(request.IncludeInactive, cancellationToken);
+        });
+
         return Result.Success(mapper.Map<IReadOnlyList<ProcedureDto>>(procedures));
     }
 }
@@ -44,13 +52,18 @@ public sealed class GetProcedureByIdQueryHandler(IUnitOfWork unitOfWork, IMapper
 
 public sealed record GetProcedureCategoriesQuery : IQuery<IReadOnlyList<ProcedureCategoryDto>>;
 
-public sealed class GetProcedureCategoriesQueryHandler(IUnitOfWork unitOfWork, IMapper mapper)
+public sealed class GetProcedureCategoriesQueryHandler(IUnitOfWork unitOfWork, IMapper mapper, IMemoryCache cache)
     : IRequestHandler<GetProcedureCategoriesQuery, Result<IReadOnlyList<ProcedureCategoryDto>>>
 {
     public async Task<Result<IReadOnlyList<ProcedureCategoryDto>>> Handle(
         GetProcedureCategoriesQuery request, CancellationToken cancellationToken)
     {
-        var categories = await unitOfWork.ProcedureCategories.GetAllAsync(cancellationToken);
+        var categories = await cache.GetOrCreateAsync(CacheKeys.ProcedureCategories, async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15);
+            return await unitOfWork.ProcedureCategories.GetAllAsync(cancellationToken);
+        });
+
         return Result.Success(mapper.Map<IReadOnlyList<ProcedureCategoryDto>>(categories));
     }
 }
@@ -77,7 +90,7 @@ public sealed class CreateProcedureCommandValidator : AbstractValidator<CreatePr
     }
 }
 
-public sealed class CreateProcedureCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+public sealed class CreateProcedureCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IMemoryCache cache)
     : IRequestHandler<CreateProcedureCommand, Result<ProcedureDto>>
 {
     public async Task<Result<ProcedureDto>> Handle(CreateProcedureCommand request, CancellationToken cancellationToken)
@@ -101,6 +114,9 @@ public sealed class CreateProcedureCommandHandler(IUnitOfWork unitOfWork, IMappe
         await unitOfWork.Procedures.AddAsync(procedure, cancellationToken);
         await unitOfWork.AuditLogs.AddAsync(
             AuditLog.Create("PROCEDURE_CREATED", "Procedure", procedure.Id, null), cancellationToken);
+
+        cache.Remove($"{CacheKeys.Procedures}:{true}");
+        cache.Remove($"{CacheKeys.Procedures}:{false}");
 
         return Result.Success(mapper.Map<ProcedureDto>(procedure));
     }
@@ -128,7 +144,7 @@ public sealed class UpdateProcedureCommandValidator : AbstractValidator<UpdatePr
     }
 }
 
-public sealed class UpdateProcedureCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+public sealed class UpdateProcedureCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IMemoryCache cache)
     : IRequestHandler<UpdateProcedureCommand, Result<ProcedureDto>>
 {
     public async Task<Result<ProcedureDto>> Handle(UpdateProcedureCommand request, CancellationToken cancellationToken)
@@ -150,6 +166,9 @@ public sealed class UpdateProcedureCommandHandler(IUnitOfWork unitOfWork, IMappe
             return Result.Failure<ProcedureDto>(Error.Validation("Procedure.InvalidData", ex.Message));
         }
 
+        cache.Remove($"{CacheKeys.Procedures}:{true}");
+        cache.Remove($"{CacheKeys.Procedures}:{false}");
+
         return Result.Success(mapper.Map<ProcedureDto>(procedure));
     }
 }
@@ -170,7 +189,7 @@ public sealed class CreateProcedureCategoryCommandValidator : AbstractValidator<
     }
 }
 
-public sealed class CreateProcedureCategoryCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+public sealed class CreateProcedureCategoryCommandHandler(IUnitOfWork unitOfWork, IMapper mapper, IMemoryCache cache)
     : IRequestHandler<CreateProcedureCategoryCommand, Result<ProcedureCategoryDto>>
 {
     public async Task<Result<ProcedureCategoryDto>> Handle(
@@ -189,6 +208,8 @@ public sealed class CreateProcedureCategoryCommandHandler(IUnitOfWork unitOfWork
         await unitOfWork.ProcedureCategories.AddAsync(category, cancellationToken);
         await unitOfWork.AuditLogs.AddAsync(
             AuditLog.Create("PROCEDURE_CATEGORY_CREATED", "ProcedureCategory", category.Id, null), cancellationToken);
+
+        cache.Remove(CacheKeys.ProcedureCategories);
 
         return Result.Success(mapper.Map<ProcedureCategoryDto>(category));
     }

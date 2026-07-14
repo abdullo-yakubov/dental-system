@@ -10,10 +10,23 @@
     {
         <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
             <MudText Typo="Typo.h6">Одонтограмма</MudText>
-            <MudChipSet T="bool" @bind-SelectedValues="_modeSelection">
-                <MudChip T="bool" Value="false" Variant="Variant.Outlined" Size="Size.Small">Взрослые</MudChip>
-                <MudChip T="bool" Value="true" Variant="Variant.Outlined" Size="Size.Small">Молочные</MudChip>
-            </MudChipSet>
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                @if (_multiSelectMode && _multiSelectedTeeth.Count > 0)
+                {
+                    <MudButton Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary" OnClick="OpenMultiSelectPanel">
+                        Применить ко всем выбранным (@_multiSelectedTeeth.Count)
+                    </MudButton>
+                }
+                <MudButton Size="Size.Small" Variant="@(_multiSelectMode ? Variant.Filled : Variant.Outlined)"
+                           Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ChecklistRtl"
+                           OnClick="ToggleMultiSelectMode">
+                    Режим мультивыбора
+                </MudButton>
+                <MudChipSet T="bool" @bind-SelectedValues="_modeSelection">
+                    <MudChip T="bool" Value="false" Variant="Variant.Outlined" Size="Size.Small">Взрослые</MudChip>
+                    <MudChip T="bool" Value="true" Variant="Variant.Outlined" Size="Size.Small">Молочные</MudChip>
+                </MudChipSet>
+            </MudStack>
         </MudStack>
 
         <div class="odontogram-wrapper">
@@ -22,7 +35,8 @@
             <div class="jaw-row">
                 @foreach (var n in (_isDeciduous ? UpperDeciduous : UpperAdult))
                 {
-                    <div class="tooth-cell @GetToothClass(n)" @onclick="() => OnToothClick(n)" title="@GetToothLabel(n)">
+                    <div class="tooth-cell @GetToothClass(n) @(_multiSelectedTeeth.Contains(n) ? "tooth-multi-selected" : "")"
+                         @onclick="() => OnToothClick(n)" title="@GetToothLabel(n)">
                         <SvgTooth ToothNumber="@n" State="GetToothState(n)" SurfaceStates="GetSurfaceStates(n)" OnSurfaceClick="OnSurfaceClick" />
                         <span class="tooth-number">@n</span>
                     </div>
@@ -33,7 +47,8 @@
             <div class="jaw-row lower">
                 @foreach (var n in (_isDeciduous ? LowerDeciduous : LowerAdult))
                 {
-                    <div class="tooth-cell @GetToothClass(n)" @onclick="() => OnToothClick(n)" title="@GetToothLabel(n)">
+                    <div class="tooth-cell @GetToothClass(n) @(_multiSelectedTeeth.Contains(n) ? "tooth-multi-selected" : "")"
+                         @onclick="() => OnToothClick(n)" title="@GetToothLabel(n)">
                         <SvgTooth ToothNumber="@n" State="GetToothState(n)" SurfaceStates="GetSurfaceStates(n)" OnSurfaceClick="OnSurfaceClick" />
                         <span class="tooth-number">@n</span>
                     </div>
@@ -66,6 +81,20 @@
                 ToothNumber="_selectedToothNumber.Value"
                 OnClose="() => _selectedToothNumber = null" />
         }
+
+        <!-- Мультивыбор: общий диагноз на несколько зубов сразу (п.17.13 ТЗ) -->
+        @if (_showMultiSelectPanel && _multiSelectedTeeth.Count > 0)
+        {
+            <ToothDetailPanel
+                PatientId="PatientId"
+                ToothNumber="_multiSelectedTeeth.First()"
+                SurfaceCode="O"
+                CurrentState="GetToothState(_multiSelectedTeeth.First())"
+                MultiToothNumbers="_multiSelectedTeeth.ToList()"
+                VisitId="VisitId"
+                OnStateSaved="OnMultiStateSaved"
+                OnClose="() => _showMultiSelectPanel = false" />
+        }
     }
 </div>
 
@@ -79,6 +108,9 @@
     private (int ToothNumber, string SurfaceCode)? _selectedSurface;
     private bool _isDeciduous;
     private IReadOnlyCollection<bool> _modeSelection = [];
+    private bool _multiSelectMode;
+    private readonly HashSet<int> _multiSelectedTeeth = [];
+    private bool _showMultiSelectPanel;
 
     // FDI adult tooth numbers
     private static readonly int[] UpperAdult = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
@@ -148,12 +180,48 @@
 
     private void OnToothClick(int toothNumber)
     {
+        if (_multiSelectMode)
+        {
+            if (!_multiSelectedTeeth.Remove(toothNumber))
+                _multiSelectedTeeth.Add(toothNumber);
+            return;
+        }
+
         _selectedSurface = null;
         _selectedToothNumber = _selectedToothNumber == toothNumber ? null : toothNumber;
     }
 
+    private void ToggleMultiSelectMode()
+    {
+        _multiSelectMode = !_multiSelectMode;
+        _multiSelectedTeeth.Clear();
+        _showMultiSelectPanel = false;
+        if (_multiSelectMode)
+        {
+            _selectedToothNumber = null;
+            _selectedSurface = null;
+        }
+    }
+
+    private void OpenMultiSelectPanel() => _showMultiSelectPanel = true;
+
+    private async Task OnMultiStateSaved()
+    {
+        _odontogram = await Api.GetOdontogramAsync(PatientId);
+        _showMultiSelectPanel = false;
+        _multiSelectedTeeth.Clear();
+        _multiSelectMode = false;
+        StateHasChanged();
+    }
+
     private void OnSurfaceClick(int toothNumber, string surfaceCode)
     {
+        if (_multiSelectMode)
+        {
+            OnToothClick(toothNumber);
+            return;
+        }
+
         _selectedToothNumber = null;
         _selectedSurface = (toothNumber, surfaceCode);
     }

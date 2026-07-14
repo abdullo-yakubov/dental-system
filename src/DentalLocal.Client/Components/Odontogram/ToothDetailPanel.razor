@@ -5,7 +5,14 @@
 <MudCard Class="mt-3 pa-3" Elevation="3">
     <MudCardHeader>
         <CardHeaderContent>
-            <MudText Typo="Typo.subtitle1">Зуб @ToothNumber, поверхность «@GetSurfaceName(SurfaceCode)»</MudText>
+            @if (MultiToothNumbers is { Count: > 1 })
+            {
+                <MudText Typo="Typo.subtitle1">Зубы @string.Join(", ", MultiToothNumbers) — общий диагноз</MudText>
+            }
+            else
+            {
+                <MudText Typo="Typo.subtitle1">Зуб @ToothNumber, поверхность «@GetSurfaceName(SurfaceCode)»</MudText>
+            }
         </CardHeaderContent>
         <CardHeaderActions>
             <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="() => OnClose?.Invoke()" />
@@ -44,6 +51,7 @@
     [Parameter] public string SurfaceCode { get; set; } = "O";
     [Parameter] public ToothStateType CurrentState { get; set; }
     [Parameter] public Guid? VisitId { get; set; }
+    [Parameter] public IReadOnlyList<int>? MultiToothNumbers { get; set; }
     [Parameter] public Func<Task>? OnStateSaved { get; set; }
     [Parameter] public Action? OnClose { get; set; }
 
@@ -80,8 +88,20 @@
         {
             var request = new AddToothSurfaceRecordRequest(
                 SurfaceCode, _status, _diagnosis, _icd10?.Code, _icd11?.Code, VisitId, _comment);
-            await Api.AddToothSurfaceRecordAsync(PatientId, (short)ToothNumber, request);
-            Snackbar.Add($"Зуб {ToothNumber} ({GetSurfaceName(SurfaceCode)}) обновлён.", Severity.Success);
+
+            if (MultiToothNumbers is { Count: > 1 })
+            {
+                foreach (var toothNumber in MultiToothNumbers)
+                    await Api.AddToothSurfaceRecordAsync(PatientId, (short)toothNumber, request);
+
+                Snackbar.Add($"Диагноз применён к {MultiToothNumbers.Count} зубам.", Severity.Success);
+            }
+            else
+            {
+                await Api.AddToothSurfaceRecordAsync(PatientId, (short)ToothNumber, request);
+                Snackbar.Add($"Зуб {ToothNumber} ({GetSurfaceName(SurfaceCode)}) обновлён.", Severity.Success);
+            }
+
             if (OnStateSaved != null) await OnStateSaved();
         }
         catch (ApiException ex)

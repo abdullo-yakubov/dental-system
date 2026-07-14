@@ -23,6 +23,7 @@ builder.Services.AddTransient<BearerTokenHandler>();
 builder.Services.AddMudServices();
 builder.Services.AddScoped<ThemeService>();
 builder.Services.AddScoped<DraftAutosaveService>();
+builder.Services.AddScoped<SessionLockService>();
 
 builder.Services.AddHttpClient<ApiClient>(client => client.BaseAddress = new Uri(ApiBaseAddress))
     .AddHttpMessageHandler<BearerTokenHandler>();

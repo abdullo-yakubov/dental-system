@@ -2,7 +2,10 @@
 @inject AuthState AuthState
 @inject NavigationManager Navigation
 @inject ThemeService ThemeService
-@implements IDisposable
+@inject SessionLockService SessionLock
+@inject ApiClient Api
+@inject IJSRuntime JsRuntime
+@implements IAsyncDisposable
 
 <MudThemeProvider Theme="ThemeService.CurrentTheme" IsDarkMode="ThemeService.IsDark" />
 <MudPopoverProvider />
@@ -40,6 +43,30 @@
             </MudContainer>
         </MudMainContent>
     </MudLayout>
+
+    @if (SessionLock.IsLocked)
+    {
+        <div class="lock-screen-overlay">
+            <MudPaper Class="pa-8 lock-screen-card" Elevation="0">
+                <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-1">Экран заблокирован</MudText>
+                <MudText Typo="Typo.body2" Align="Align.Center" Class="mb-6" Color="Color.Secondary">
+                    Введите код доступа, чтобы продолжить
+                </MudText>
+
+                @if (_unlockError is not null)
+                {
+                    <MudText Color="Color.Error" Align="Align.Center" Class="mb-2">@_unlockError</MudText>
+                }
+
+                <PinKeypad @bind-Code="_unlockCode" Disabled="_isUnlocking" />
+
+                <MudButton FullWidth="true" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" Class="mt-4"
+                           OnClick="UnlockAsync" Disabled="@(string.IsNullOrEmpty(_unlockCode) || _isUnlocking)">
+                    Разблокировать
+                </MudButton>
+            </MudPaper>
+        </div>
+    }
 }
 else
 {
@@ -51,11 +78,16 @@ else
 @code {
     private DateTime _now = DateTime.Now;
     private System.Threading.Timer? _clockTimer;
+    private string _unlockCode = string.Empty;
+    private string? _unlockError;
+    private bool _isUnlocking;
+    private DotNetObjectReference<MainLayout>? _idleRef;
 
     protected override async Task OnInitializedAsync()
     {
         ThemeService.Changed += OnThemeChanged;
         AuthState.Changed += OnThemeChanged;
+        SessionLock.Changed += OnThemeChanged;
         await ThemeService.InitializeAsync();
 
         _clockTimer = new System.Threading.Timer(_ =>
@@ -63,6 +95,52 @@ else
             _now = DateTime.Now;
             InvokeAsync(StateHasChanged);
         }, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+
+        if (AuthState.IsAuthenticated)
+            await StartIdleTrackingAsync();
+    }
+
+    private async Task StartIdleTrackingAsync()
+    {
+        try
+        {
+            var settings = await Api.GetSettingsAsync();
+            var timeoutMs = Math.Max(1, settings.AutoLockMinutes) * 60_000;
+
+            _idleRef = DotNetObjectReference.Create(this);
+            await JsRuntime.InvokeVoidAsync("dentalIdle.start", _idleRef, timeoutMs);
+        }
+        catch (ApiException)
+        {
+            // Настройки ещё недоступны (например, только что вошли) — автоблокировка включится при следующей навигации.
+        }
+    }
+
+    [JSInvokable]
+    public void OnIdleTimeout() => SessionLock.Lock();
+
+    private async Task UnlockAsync()
+    {
+        _isUnlocking = true;
+        _unlockError = null;
+
+        try
+        {
+            var response = await Api.LoginAsync(_unlockCode);
+            AuthState.SetSession(response.Token, response.ExpiresAt);
+            SessionLock.Unlock();
+            _unlockCode = string.Empty;
+            await JsRuntime.InvokeVoidAsync("dentalIdle.reset");
+        }
+        catch (ApiException ex)
+        {
+            _unlockError = ex.Message;
+            _unlockCode = string.Empty;
+        }
+        finally
+        {
+            _isUnlocking = false;
+        }
     }
 
     private void OnThemeChanged() => InvokeAsync(StateHasChanged);
@@ -78,10 +156,25 @@ else
         Navigation.NavigateTo("/login", forceLoad: false);
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
         ThemeService.Changed -= OnThemeChanged;
         AuthState.Changed -= OnThemeChanged;
+        SessionLock.Changed -= OnThemeChanged;
         _clockTimer?.Dispose();
+
+        if (_idleRef is not null)
+        {
+            try
+            {
+                await JsRuntime.InvokeVoidAsync("dentalIdle.stop");
+            }
+            catch (JSDisconnectedException)
+            {
+                // Circuit уже закрыт — интероп недоступен, ничего страшного.
+            }
+
+            _idleRef.Dispose();
+        }
     }
 }

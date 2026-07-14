@@ -1,6 +1,7 @@
 @inject ApiClient Api
 @inject ISnackbar Snackbar
 @inject DraftAutosaveService Drafts
+@inject IDialogService DialogService
 @implements IAsyncDisposable
 
 <MudDialog>
@@ -105,6 +106,32 @@
             await _autosaveTimer.DisposeAsync();
     }
 
+    private async Task<bool> ConfirmNoDuplicateAsync()
+    {
+        if (_birthDate is null || string.IsNullOrWhiteSpace(_lastName) || string.IsNullOrWhiteSpace(_firstName))
+            return true;
+
+        try
+        {
+            var duplicates = await Api.CheckPatientDuplicateAsync(_lastName, _firstName, DateOnly.FromDateTime(_birthDate.Value));
+            if (duplicates.Count == 0)
+                return true;
+
+            var names = string.Join(", ", duplicates.Select(d => $"{d.FullName} ({d.BirthDate:dd.MM.yyyy})"));
+            var result = await DialogService.ShowMessageBoxAsync(
+                "Возможно, такой пациент уже есть",
+                $"Найдены похожие карты пациентов: {names}. Всё равно создать новую карту?",
+                yesText: "Создать всё равно", cancelText: "Отмена");
+
+            return result == true;
+        }
+        catch (ApiException)
+        {
+            // Если проверка недоступна — не блокируем создание пациента.
+            return true;
+        }
+    }
+
     private async Task SubmitAsync()
     {
         await _form!.Validate();
@@ -112,6 +139,14 @@
         {
             _errorMessage = "Заполните обязательные поля.";
             return;
+        }
+
+        // Защита от задвоения карт (п.17.13 ТЗ) — только при создании нового пациента.
+        if (Patient is null)
+        {
+            var confirmed = await ConfirmNoDuplicateAsync();
+            if (!confirmed)
+                return;
         }
 
         _isBusy = true;

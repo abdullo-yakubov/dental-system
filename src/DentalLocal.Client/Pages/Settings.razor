@@ -39,6 +39,7 @@
                 </MudSelect>
                 <MudTextField @bind-Value="_backupTime" Label="Время автобэкапа (HH:mm)" Variant="Variant.Outlined" />
                 <MudNumericField @bind-Value="_backupRetentionDays" Label="Хранить бэкапы, дней" Variant="Variant.Outlined" Min="1" />
+                <MudNumericField @bind-Value="_autoLockMinutes" Label="Автоблокировка через, мин" Variant="Variant.Outlined" Min="1" />
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSettingsAsync" Disabled="_isSavingSettings">
                     Сохранить
                 </MudButton>
@@ -170,6 +171,42 @@
             </NoRecordsContent>
         </MudTable>
     </MudTabPanel>
+
+    <MudTabPanel Text="График работы" Icon="@Icons.Material.Filled.Schedule">
+        <MudText Typo="Typo.body2" Class="text-secondary mb-4">
+            Рабочие часы врача по дням недели. При записи вне графика система только предупредит, но не заблокирует создание визита.
+        </MudText>
+        @if (_isLoadingSchedule)
+        {
+            <MudProgressCircular Indeterminate="true" />
+        }
+        else
+        {
+            @foreach (var day in _weekDays)
+            {
+                var entry = _scheduleByDay[day];
+                <MudPaper Class="pa-3 mb-2" Elevation="0" Style="background: var(--app-surface-alt, transparent);">
+                    <MudGrid AlignItems="AlignItems.Center">
+                        <MudItem xs="3">
+                            <MudCheckBox T="bool" Value="entry.IsActive" ValueChanged="@(v => OnScheduleActiveChanged(day, v))" Label="@GetDayLabel(day)" />
+                        </MudItem>
+                        <MudItem xs="4">
+                            <MudTimePicker Label="Начало" Time="entry.StartTime.ToTimeSpan()" TimeChanged="@(t => OnScheduleTimeChanged(day, t, isStart: true))"
+                                           Disabled="!entry.IsActive" />
+                        </MudItem>
+                        <MudItem xs="4">
+                            <MudTimePicker Label="Конец" Time="entry.EndTime.ToTimeSpan()" TimeChanged="@(t => OnScheduleTimeChanged(day, t, isStart: false))"
+                                           Disabled="!entry.IsActive" />
+                        </MudItem>
+                        <MudItem xs="1">
+                            <MudIconButton Icon="@Icons.Material.Filled.Save" Size="Size.Small" Color="Color.Primary"
+                                           OnClick="@(() => SaveScheduleDayAsync(day))" />
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+            }
+        }
+    </MudTabPanel>
 </MudTabs>
 </div>
 
@@ -184,6 +221,7 @@
     private string _language = "ru";
     private string _backupTime = string.Empty;
     private int _backupRetentionDays = 30;
+    private int _autoLockMinutes = 10;
 
     private string _oldCode = string.Empty;
     private string _newCode = string.Empty;
@@ -199,9 +237,99 @@
     private List<CurrencyDto> _currencies = [];
     private bool _isLoadingCurrencies = true;
 
+    private sealed class ScheduleDayEntry
+    {
+        public bool IsActive { get; set; }
+        public TimeOnly StartTime { get; set; } = new(9, 0);
+        public TimeOnly EndTime { get; set; } = new(18, 0);
+    }
+
+    private static readonly DayOfWeek[] _weekDays =
+    [
+        DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday,
+        DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday
+    ];
+
+    private readonly Dictionary<DayOfWeek, ScheduleDayEntry> _scheduleByDay =
+        _weekDays.ToDictionary(d => d, _ => new ScheduleDayEntry());
+
+    private bool _isLoadingSchedule = true;
+
     protected override async Task OnInitializedAsync()
     {
-        await Task.WhenAll(LoadSettingsAsync(), LoadBackupsAsync(), LoadAuditLogsAsync(), LoadCurrenciesAsync());
+        await Task.WhenAll(LoadSettingsAsync(), LoadBackupsAsync(), LoadAuditLogsAsync(), LoadCurrenciesAsync(), LoadScheduleAsync());
+    }
+
+    private static string GetDayLabel(DayOfWeek day) => day switch
+    {
+        DayOfWeek.Monday => "Понедельник",
+        DayOfWeek.Tuesday => "Вторник",
+        DayOfWeek.Wednesday => "Среда",
+        DayOfWeek.Thursday => "Четверг",
+        DayOfWeek.Friday => "Пятница",
+        DayOfWeek.Saturday => "Суббота",
+        _ => "Воскресенье"
+    };
+
+    private async Task LoadScheduleAsync()
+    {
+        _isLoadingSchedule = true;
+        try
+        {
+            var schedule = await Api.GetDoctorScheduleAsync();
+            foreach (var s in schedule)
+            {
+                _scheduleByDay[s.DayOfWeek] = new ScheduleDayEntry
+                {
+                    IsActive = s.IsActive,
+                    StartTime = s.StartTime,
+                    EndTime = s.EndTime
+                };
+            }
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось загрузить график врача: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoadingSchedule = false;
+        }
+    }
+
+    private void OnScheduleActiveChanged(DayOfWeek day, bool isActive) => _scheduleByDay[day].IsActive = isActive;
+
+    private void OnScheduleTimeChanged(DayOfWeek day, TimeSpan? time, bool isStart)
+    {
+        if (time is null)
+            return;
+
+        var timeOnly = TimeOnly.FromTimeSpan(time.Value);
+        if (isStart)
+            _scheduleByDay[day].StartTime = timeOnly;
+        else
+            _scheduleByDay[day].EndTime = timeOnly;
+    }
+
+    private async Task SaveScheduleDayAsync(DayOfWeek day)
+    {
+        var entry = _scheduleByDay[day];
+        if (entry.EndTime <= entry.StartTime)
+        {
+            Snackbar.Add("Время окончания должно быть позже времени начала.", Severity.Error);
+            return;
+        }
+
+        try
+        {
+            var request = new UpsertDoctorScheduleRequest(_doctorName, day, entry.StartTime, entry.EndTime, entry.IsActive);
+            await Api.UpsertDoctorScheduleAsync(request);
+            Snackbar.Add($"График на {GetDayLabel(day).ToLower()} сохранён.", Severity.Success);
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
     }
 
     private async Task LoadCurrenciesAsync()
@@ -250,6 +378,7 @@
             _language = settings.Language;
             _backupTime = settings.BackupTime;
             _backupRetentionDays = settings.BackupRetentionDays;
+            _autoLockMinutes = settings.AutoLockMinutes;
             _settingsLoaded = true;
         }
         catch (ApiException ex)
@@ -285,7 +414,8 @@
         {
             _theme = $"{(ThemeService.IsDark ? "dark" : "light")}-{(ThemeService.Accent == AppAccent.Teal ? "teal" : "blue")}";
             var request = new UpdateSettingsRequest(
-                _doctorName, _clinicName, _currency, _theme, _language, _backupTime, _backupRetentionDays);
+                _doctorName, _clinicName, _currency, _theme, _language, _backupTime, _backupRetentionDays,
+                _autoLockMinutes);
 
             var settings = await Api.UpdateSettingsAsync(request);
             _doctorName = settings.DoctorName;
@@ -295,6 +425,7 @@
             _language = settings.Language;
             _backupTime = settings.BackupTime;
             _backupRetentionDays = settings.BackupRetentionDays;
+            _autoLockMinutes = settings.AutoLockMinutes;
             Snackbar.Add("Настройки сохранены.", Severity.Success);
         }
         catch (ApiException ex)

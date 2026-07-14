@@ -22,7 +22,8 @@ public static class SettingsEndpoints
         {
             var command = new UpdateSettingsCommand(
                 request.DoctorName, request.ClinicName, request.Currency,
-                request.Theme, request.Language, request.BackupTime, request.BackupRetentionDays);
+                request.Theme, request.Language, request.BackupTime, request.BackupRetentionDays,
+                request.AutoLockMinutes);
 
             var result = await sender.Send(command, ct);
             return result.ToApiResult();

@@ -14,6 +14,19 @@ public sealed class FakeUnitOfWork : IUnitOfWork
     public readonly List<Payment> PaymentsData = [];
     public readonly List<Debt> DebtsData = [];
     public readonly List<AuditLog> AuditLogsData = [];
+    public readonly List<Procedure> ProceduresData = [];
+    public readonly List<ToothState> ToothStatesData = [];
+    public readonly List<ToothStateHistory> ToothStateHistoryData = [];
+    public readonly List<ToothSurfaceHistory> ToothSurfaceHistoryData = [];
+    public readonly List<Material> MaterialsData = [];
+    public readonly List<MaterialUsage> MaterialUsagesData = [];
+    public readonly List<Reminder> RemindersData = [];
+    public readonly List<TreatmentPlan> TreatmentPlansData = [];
+    public readonly List<Currency> CurrenciesData = [];
+    public readonly List<DiscountHistory> DiscountHistoryData = [];
+    public readonly List<WaitingList> WaitingListData = [];
+    public readonly List<Prescription> PrescriptionsData = [];
+    public readonly List<Warranty> WarrantiesData = [];
 
     public IPatientRepository Patients => new FakePatientRepository(PatientsData);
     public IVisitRepository Visits => new FakeVisitRepository(VisitsData);
@@ -22,25 +35,26 @@ public sealed class FakeUnitOfWork : IUnitOfWork
     public IAuditLogRepository AuditLogs => new FakeAuditLogRepository(AuditLogsData);
 
     public IProcedureCategoryRepository ProcedureCategories => throw new NotImplementedException();
-    public IProcedureRepository Procedures => throw new NotImplementedException();
-    public IToothStateRepository ToothStates => throw new NotImplementedException();
-    public IToothStateHistoryRepository ToothStateHistory => throw new NotImplementedException();
-    public IToothSurfaceHistoryRepository ToothSurfaceHistory => throw new NotImplementedException();
+    public IProcedureRepository Procedures => new FakeProcedureRepository(ProceduresData);
+    public IToothStateRepository ToothStates => new FakeToothStateRepository(ToothStatesData);
+    public IToothStateHistoryRepository ToothStateHistory => new FakeToothStateHistoryRepository(ToothStateHistoryData);
+    public IToothSurfaceHistoryRepository ToothSurfaceHistory => new FakeToothSurfaceHistoryRepository(ToothSurfaceHistoryData);
     public IIcd10CodeRepository Icd10Codes => throw new NotImplementedException();
     public IIcd11CodeRepository Icd11Codes => throw new NotImplementedException();
     public IPatientFileRepository PatientFiles => throw new NotImplementedException();
     public IAppointmentRepository Appointments => throw new NotImplementedException();
     public IBackupRecordRepository BackupRecords => throw new NotImplementedException();
     public IAppSettingRepository AppSettings => throw new NotImplementedException();
-    public IMaterialRepository Materials => throw new NotImplementedException();
-    public IMaterialUsageRepository MaterialUsages => throw new NotImplementedException();
-    public IReminderRepository Reminders => throw new NotImplementedException();
-    public ITreatmentPlanRepository TreatmentPlans => throw new NotImplementedException();
-    public ICurrencyRepository Currencies => throw new NotImplementedException();
-    public IDiscountHistoryRepository DiscountHistory => throw new NotImplementedException();
-    public IWaitingListRepository WaitingList => throw new NotImplementedException();
-    public IPrescriptionRepository Prescriptions => throw new NotImplementedException();
-    public IWarrantyRepository Warranties => throw new NotImplementedException();
+    public IMaterialRepository Materials => new FakeMaterialRepository(MaterialsData);
+    public IMaterialUsageRepository MaterialUsages => new FakeMaterialUsageRepository(MaterialUsagesData);
+    public IReminderRepository Reminders => new FakeReminderRepository(RemindersData);
+    public ITreatmentPlanRepository TreatmentPlans => new FakeTreatmentPlanRepository(TreatmentPlansData);
+    public ICurrencyRepository Currencies => new FakeCurrencyRepository(CurrenciesData);
+    public IDiscountHistoryRepository DiscountHistory => new FakeDiscountHistoryRepository(DiscountHistoryData);
+    public IWaitingListRepository WaitingList => new FakeWaitingListRepository(WaitingListData);
+    public IPrescriptionRepository Prescriptions => new FakePrescriptionRepository(PrescriptionsData);
+    public IWarrantyRepository Warranties => new FakeWarrantyRepository(WarrantiesData);
+    public IDoctorScheduleRepository DoctorSchedules => throw new NotImplementedException();
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) => Task.FromResult(0);
 
@@ -68,6 +82,13 @@ public sealed class FakeUnitOfWork : IUnitOfWork
         public Task<IReadOnlyList<Visit>> GetUpcomingAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<Visit>>([]);
 
+        public Task<(IReadOnlyList<Visit> Items, int TotalCount)> SearchByNotesAsync(
+            string searchText, int page, int pageSize, CancellationToken cancellationToken = default) =>
+            Task.FromResult<(IReadOnlyList<Visit>, int)>(([], 0));
+
+        public Task<IReadOnlyList<Visit>> GetByDateRangeAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Visit>>([]);
+
         public Task AddAsync(Visit entity, CancellationToken cancellationToken = default)
         {
             store.Add(entity);
@@ -89,6 +110,13 @@ public sealed class FakeUnitOfWork : IUnitOfWork
 
         public Task<bool> PhoneExistsAsync(string normalizedPhone, Guid? excludePatientId = null, CancellationToken cancellationToken = default) =>
             Task.FromResult(false);
+
+        public Task<IReadOnlyList<Patient>> FindPossibleDuplicatesAsync(
+            string lastName, string firstName, DateOnly birthDate, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Patient>>([]);
+
+        public Task<IReadOnlyList<Patient>> GetInactiveAsync(int monthsThreshold, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Patient>>([]);
 
         public Task AddAsync(Patient entity, CancellationToken cancellationToken = default)
         {
@@ -147,6 +175,234 @@ public sealed class FakeUnitOfWork : IUnitOfWork
             Task.FromResult<(IReadOnlyList<AuditLog>, int)>(([], 0));
 
         public Task AddAsync(AuditLog entity, CancellationToken cancellationToken = default)
+        {
+            store.Add(entity);
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeProcedureRepository(List<Procedure> store) : IProcedureRepository
+    {
+        public Task<Procedure?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(store.FirstOrDefault(p => p.Id == id));
+
+        public Task<IReadOnlyList<Procedure>> GetAllAsync(bool includeInactive, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Procedure>>(store.Where(p => includeInactive || p.IsActive).ToList());
+
+        public Task<bool> IsUsedInTreatmentAsync(Guid procedureId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(false);
+
+        public Task AddAsync(Procedure entity, CancellationToken cancellationToken = default)
+        {
+            store.Add(entity);
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeToothStateRepository(List<ToothState> store) : IToothStateRepository
+    {
+        public Task<ToothState?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(store.FirstOrDefault(t => t.Id == id));
+
+        public Task<IReadOnlyList<ToothState>> GetByPatientIdAsync(Guid patientId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<ToothState>>(store.Where(t => t.PatientId == patientId).ToList());
+
+        public Task<ToothState?> GetAsync(Guid patientId, short toothNumber, CancellationToken cancellationToken = default) =>
+            Task.FromResult(store.FirstOrDefault(t => t.PatientId == patientId && t.ToothNumber == toothNumber));
+
+        public Task AddAsync(ToothState entity, CancellationToken cancellationToken = default)
+        {
+            store.Add(entity);
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeToothStateHistoryRepository(List<ToothStateHistory> store) : IToothStateHistoryRepository
+    {
+        public Task<ToothStateHistory?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(store.FirstOrDefault(h => h.Id == id));
+
+        public Task<IReadOnlyList<ToothStateHistory>> GetByPatientIdAsync(Guid patientId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<ToothStateHistory>>(store.Where(h => h.PatientId == patientId).ToList());
+
+        public Task<IReadOnlyList<ToothStateHistory>> GetByToothAsync(Guid patientId, short toothNumber, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<ToothStateHistory>>(
+                store.Where(h => h.PatientId == patientId && h.ToothNumber == toothNumber).ToList());
+
+        public Task AddAsync(ToothStateHistory entity, CancellationToken cancellationToken = default)
+        {
+            store.Add(entity);
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeToothSurfaceHistoryRepository(List<ToothSurfaceHistory> store) : IToothSurfaceHistoryRepository
+    {
+        public Task<ToothSurfaceHistory?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(store.FirstOrDefault(h => h.Id == id));
+
+        public Task<IReadOnlyList<ToothSurfaceHistory>> GetByToothIdAsync(Guid toothId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<ToothSurfaceHistory>>(store.Where(h => h.ToothId == toothId).ToList());
+
+        public Task<IReadOnlyList<ToothSurfaceHistory>> GetByPatientIdAsync(Guid patientId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<ToothSurfaceHistory>>([]);
+
+        public Task AddAsync(ToothSurfaceHistory entity, CancellationToken cancellationToken = default)
+        {
+            store.Add(entity);
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeMaterialRepository(List<Material> store) : IMaterialRepository
+    {
+        public Task<Material?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(store.FirstOrDefault(m => m.Id == id));
+
+        public Task<IReadOnlyList<Material>> GetAllAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Material>>(store.ToList());
+
+        public Task<IReadOnlyList<Material>> GetLowStockAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Material>>(store.Where(m => m.QuantityInStock <= m.MinStockThreshold).ToList());
+
+        public Task AddAsync(Material entity, CancellationToken cancellationToken = default)
+        {
+            store.Add(entity);
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeMaterialUsageRepository(List<MaterialUsage> store) : IMaterialUsageRepository
+    {
+        public Task<MaterialUsage?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(store.FirstOrDefault(u => u.Id == id));
+
+        public Task<IReadOnlyList<MaterialUsage>> GetByVisitIdAsync(Guid visitId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<MaterialUsage>>(store.Where(u => u.VisitId == visitId).ToList());
+
+        public Task AddAsync(MaterialUsage entity, CancellationToken cancellationToken = default)
+        {
+            store.Add(entity);
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeReminderRepository(List<Reminder> store) : IReminderRepository
+    {
+        public Task<Reminder?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(store.FirstOrDefault(r => r.Id == id));
+
+        public Task AddAsync(Reminder entity, CancellationToken cancellationToken = default)
+        {
+            store.Add(entity);
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeTreatmentPlanRepository(List<TreatmentPlan> store) : ITreatmentPlanRepository
+    {
+        public Task<TreatmentPlan?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(store.FirstOrDefault(p => p.Id == id));
+
+        public Task<TreatmentPlan?> GetByIdWithItemsAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(store.FirstOrDefault(p => p.Id == id));
+
+        public Task<IReadOnlyList<TreatmentPlan>> GetByPatientIdAsync(Guid patientId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<TreatmentPlan>>(store.Where(p => p.PatientId == patientId).ToList());
+
+        public Task AddAsync(TreatmentPlan entity, CancellationToken cancellationToken = default)
+        {
+            store.Add(entity);
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeCurrencyRepository(List<Currency> store) : ICurrencyRepository
+    {
+        public Task<Currency?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(store.FirstOrDefault(c => c.Id == id));
+
+        public Task<IReadOnlyList<Currency>> GetAllAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Currency>>(store.ToList());
+
+        public Task<Currency?> GetByCodeAsync(string code, CancellationToken cancellationToken = default) =>
+            Task.FromResult(store.FirstOrDefault(c => c.Code == code));
+
+        public Task AddAsync(Currency entity, CancellationToken cancellationToken = default)
+        {
+            store.Add(entity);
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeDiscountHistoryRepository(List<DiscountHistory> store) : IDiscountHistoryRepository
+    {
+        public Task<DiscountHistory?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(store.FirstOrDefault(d => d.Id == id));
+
+        public Task<IReadOnlyList<DiscountHistory>> GetByPatientIdAsync(Guid patientId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<DiscountHistory>>(store.Where(d => d.PatientId == patientId).ToList());
+
+        public Task AddAsync(DiscountHistory entity, CancellationToken cancellationToken = default)
+        {
+            store.Add(entity);
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeWaitingListRepository(List<WaitingList> store) : IWaitingListRepository
+    {
+        public Task<WaitingList?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(store.FirstOrDefault(w => w.Id == id));
+
+        public Task<IReadOnlyList<WaitingList>> GetAllAsync(string? status, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<WaitingList>>(
+                (string.IsNullOrWhiteSpace(status) ? store : store.Where(w => w.Status == status)).ToList());
+
+        public Task<IReadOnlyList<WaitingList>> GetByPatientIdAsync(Guid patientId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<WaitingList>>(store.Where(w => w.PatientId == patientId).ToList());
+
+        public Task AddAsync(WaitingList entity, CancellationToken cancellationToken = default)
+        {
+            store.Add(entity);
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakePrescriptionRepository(List<Prescription> store) : IPrescriptionRepository
+    {
+        public Task<Prescription?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(store.FirstOrDefault(p => p.Id == id));
+
+        public Task<IReadOnlyList<Prescription>> GetByVisitIdAsync(Guid visitId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Prescription>>(store.Where(p => p.VisitId == visitId).ToList());
+
+        public Task DeleteAsync(Prescription prescription, CancellationToken cancellationToken = default)
+        {
+            store.Remove(prescription);
+            return Task.CompletedTask;
+        }
+
+        public Task AddAsync(Prescription entity, CancellationToken cancellationToken = default)
+        {
+            store.Add(entity);
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeWarrantyRepository(List<Warranty> store) : IWarrantyRepository
+    {
+        public Task<Warranty?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+            Task.FromResult(store.FirstOrDefault(w => w.Id == id));
+
+        public Task<IReadOnlyList<Warranty>> GetByPatientIdAsync(Guid patientId, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Warranty>>(store.Where(w => w.PatientId == patientId).ToList());
+
+        public Task<IReadOnlyList<Warranty>> GetByToothNumberAsync(Guid patientId, short toothNumber, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Warranty>>(
+                store.Where(w => w.PatientId == patientId && w.ToothNumber == toothNumber).ToList());
+
+        public Task AddAsync(Warranty entity, CancellationToken cancellationToken = default)
         {
             store.Add(entity);
             return Task.CompletedTask;

@@ -1,6 +1,7 @@
 using DentalLocal.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using NpgsqlTypes;
 
 namespace DentalLocal.Persistence.Configurations;
 
@@ -37,5 +38,13 @@ public class VisitConfiguration : IEntityTypeConfiguration<Visit>
 
         builder.HasIndex(v => v.PatientId);
         builder.HasIndex(v => v.VisitDate);
+
+        // Полнотекстовый поиск по заметкам врача и диагнозу (раздел 17.6 ТЗ).
+        builder.Property<NpgsqlTsVector>("NotesSearchVector")
+            .HasComputedColumnSql(
+                "to_tsvector('russian', coalesce(notes, '') || ' ' || coalesce(diagnosis, ''))",
+                stored: true);
+
+        builder.HasIndex("NotesSearchVector").HasMethod("GIN").HasDatabaseName("ix_visits_notes_search_vector");
     }
 }

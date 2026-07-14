@@ -5,9 +5,15 @@
     <TitleContent>Принять оплату</TitleContent>
     <DialogContent>
         <MudForm @ref="_form">
-            <MudNumericField T="decimal" @bind-Value="_amount" Label="Сумма оплаты (сум)" 
-                             Required="true" Min="1" Max="RemainingAmount" Format="N0" Class="mb-3" />
-            
+            <MudNumericField T="decimal" @bind-Value="_amount" Label="Сумма оплаты (сум)"
+                             Required="true" Min="1" Max="RemainingAmount" Format="N0" Class="mb-2" />
+
+            <MudStack Row="true" Spacing="2" Class="mb-3">
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => SetAmount(0.5m))">50%</MudButton>
+                <MudButton Variant="Variant.Outlined" Size="Size.Small" OnClick="@(() => SetAmount(1m))">Полностью</MudButton>
+                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => SetAmount(null))">Другая сумма</MudButton>
+            </MudStack>
+
             <MudSelect T="PaymentMethod" @bind-Value="_method" Label="Способ оплаты" Class="mb-3">
                 <MudSelectItem Value="PaymentMethod.Cash">Наличные</MudSelectItem>
                 <MudSelectItem Value="PaymentMethod.Card">Карта</MudSelectItem>
@@ -55,6 +61,9 @@
         _amount = RemainingAmount;
         _kind = InitialKind;
     }
+
+    private void SetAmount(decimal? fraction) =>
+        _amount = fraction is null ? 0 : Math.Round(RemainingAmount * fraction.Value, MidpointRounding.AwayFromZero);
 
     private void Cancel() => MudDialog.Cancel();
 

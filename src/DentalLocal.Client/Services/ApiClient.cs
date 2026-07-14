@@ -19,6 +19,7 @@ using DentalLocal.Shared.Contracts.Discounts;
 using DentalLocal.Shared.Contracts.WaitingList;
 using DentalLocal.Shared.Contracts.Prescriptions;
 using DentalLocal.Shared.Contracts.Warranties;
+using DentalLocal.Shared.Contracts.DoctorSchedule;
 using DentalLocal.Shared.Enums;
 
 namespace DentalLocal.Client.Services;
@@ -48,8 +49,19 @@ public sealed class ApiClient(HttpClient http)
     public Task<PatientDto> GetPatientAsync(Guid id, CancellationToken ct = default) =>
         SendAsync<PatientDto>(() => http.GetAsync($"{ApiRoutes.Patients.Base}/{id}", ct));
 
+    public Task<IReadOnlyList<PossibleDuplicatePatientDto>> CheckPatientDuplicateAsync(
+        string lastName, string firstName, DateOnly birthDate, CancellationToken ct = default)
+    {
+        var query = $"?lastName={Uri.EscapeDataString(lastName)}&firstName={Uri.EscapeDataString(firstName)}&birthDate={birthDate:yyyy-MM-dd}";
+        return SendAsync<IReadOnlyList<PossibleDuplicatePatientDto>>(
+            () => http.GetAsync($"{ApiRoutes.Patients.Base}/check-duplicate{query}", ct));
+    }
+
     public Task<IReadOnlyList<PatientTimelineEventDto>> GetPatientTimelineAsync(Guid patientId, CancellationToken ct = default) =>
         SendAsync<IReadOnlyList<PatientTimelineEventDto>>(() => http.GetAsync($"{ApiRoutes.Patients.Base}/{patientId}/timeline", ct));
+
+    public Task<IReadOnlyList<PatientListItemDto>> GetInactivePatientsAsync(int monthsThreshold = 6, CancellationToken ct = default) =>
+        SendAsync<IReadOnlyList<PatientListItemDto>>(() => http.GetAsync($"{ApiRoutes.Patients.Base}/inactive?monthsThreshold={monthsThreshold}", ct));
 
     public Task<PatientDto> CreatePatientAsync(CreatePatientRequest request, CancellationToken ct = default) =>
         SendAsync<PatientDto>(() => http.PostAsJsonAsync(ApiRoutes.Patients.Base, request, ct));
@@ -112,6 +124,13 @@ public sealed class ApiClient(HttpClient http)
     {
         var query = $"?daysAhead={daysAhead}" + (fromDate.HasValue ? $"&fromDate={fromDate.Value:yyyy-MM-dd}" : "");
         return SendAsync<IReadOnlyList<VisitListItemDto>>(() => http.GetAsync($"{ApiRoutes.Visits.Base}/upcoming{query}", ct));
+    }
+
+    public Task<PagedResult<VisitListItemDto>> SearchVisitsByNotesAsync(
+        string searchText, int page = 1, int pageSize = 20, CancellationToken ct = default)
+    {
+        var query = $"?text={Uri.EscapeDataString(searchText)}&page={page}&pageSize={pageSize}";
+        return SendAsync<PagedResult<VisitListItemDto>>(() => http.GetAsync($"{ApiRoutes.Visits.Base}/search-notes{query}", ct));
     }
 
     public Task<VisitDto> GetVisitAsync(Guid id, CancellationToken ct = default) =>
@@ -338,6 +357,25 @@ public sealed class ApiClient(HttpClient http)
 
     public Task<IReadOnlyList<WarrantyDto>> GetToothWarrantiesAsync(Guid patientId, short toothNumber, CancellationToken ct = default) =>
         SendAsync<IReadOnlyList<WarrantyDto>>(() => http.GetAsync($"{ApiRoutes.Warranties.Base}/patients/{patientId}/teeth/{toothNumber}", ct));
+
+    // ── DoctorSchedule ───────────────────────────────────────────────────────
+
+    public Task<IReadOnlyList<DoctorScheduleDto>> GetDoctorScheduleAsync(CancellationToken ct = default) =>
+        SendAsync<IReadOnlyList<DoctorScheduleDto>>(() => http.GetAsync(ApiRoutes.DoctorSchedule.Base, ct));
+
+    public Task<DoctorScheduleDto> UpsertDoctorScheduleAsync(UpsertDoctorScheduleRequest request, CancellationToken ct = default) =>
+        SendAsync<DoctorScheduleDto>(() => http.PutAsJsonAsync(ApiRoutes.DoctorSchedule.Base, request, ct));
+
+    // ── Analytics: workload ──────────────────────────────────────────────────
+
+    public Task<DoctorWorkloadStatsDto> GetDoctorWorkloadStatsAsync(DateOnly? from = null, DateOnly? to = null, CancellationToken ct = default)
+    {
+        var query = "";
+        if (from.HasValue && to.HasValue)
+            query = $"?from={from.Value:yyyy-MM-dd}&to={to.Value:yyyy-MM-dd}";
+
+        return SendAsync<DoctorWorkloadStatsDto>(() => http.GetAsync($"{ApiRoutes.Analytics.Base}/workload{query}", ct));
+    }
 
     private static async Task<T> SendAsync<T>(Func<Task<HttpResponseMessage>> send)
     {

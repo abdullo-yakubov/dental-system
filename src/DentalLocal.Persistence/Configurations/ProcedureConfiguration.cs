@@ -39,6 +39,8 @@ public class ProcedureConfiguration : IEntityTypeConfiguration<Procedure>
         builder.Property(p => p.WarrantyMonths)
             .HasDefaultValue(0);
 
+        builder.Property(p => p.FollowUpDays);
+
         builder.Property(p => p.DurationMinutes)
             .HasDefaultValue(30)
             .IsRequired();

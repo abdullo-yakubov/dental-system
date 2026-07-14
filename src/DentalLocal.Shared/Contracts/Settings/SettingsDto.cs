@@ -7,7 +7,8 @@ public sealed record SettingsDto(
     string Theme,
     string Language,
     string BackupTime,
-    int BackupRetentionDays);
+    int BackupRetentionDays,
+    int AutoLockMinutes);
 
 public sealed record UpdateSettingsRequest(
     string DoctorName,
@@ -16,4 +17,5 @@ public sealed record UpdateSettingsRequest(
     string Theme,
     string Language,
     string BackupTime,
-    int BackupRetentionDays);
+    int BackupRetentionDays,
+    int AutoLockMinutes);

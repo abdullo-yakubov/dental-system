@@ -1,6 +1,7 @@
 using AutoMapper;
 using DentalLocal.Application.Common;
 using DentalLocal.Domain.Repositories;
+using DentalLocal.Shared.Common;
 using DentalLocal.Shared.Contracts.Visits;
 using MediatR;
 
@@ -64,5 +65,32 @@ public sealed class GetUpcomingVisitsQueryHandler(IUnitOfWork unitOfWork, IMappe
 
         var visits = await unitOfWork.Visits.GetUpcomingAsync(from, to, cancellationToken);
         return Result.Success(mapper.Map<IReadOnlyList<VisitListItemDto>>(visits));
+    }
+}
+
+// ---------------------------------------------------------------------------
+
+/// <summary>Полнотекстовый поиск по заметкам врача и диагнозу визитов (раздел 17.6 ТЗ).</summary>
+public sealed record SearchVisitsByNotesQuery(string SearchText, int? Page, int? PageSize)
+    : IQuery<PagedResult<VisitListItemDto>>;
+
+public sealed class SearchVisitsByNotesQueryHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    : IRequestHandler<SearchVisitsByNotesQuery, Result<PagedResult<VisitListItemDto>>>
+{
+    public async Task<Result<PagedResult<VisitListItemDto>>> Handle(
+        SearchVisitsByNotesQuery request, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.SearchText))
+            return PagedResult<VisitListItemDto>.Create([], 0, 1, PaginationDefaults.NormalizePageSize(request.PageSize));
+
+        var page = PaginationDefaults.NormalizePage(request.Page);
+        var pageSize = PaginationDefaults.NormalizePageSize(request.PageSize);
+
+        var (items, totalCount) = await unitOfWork.Visits.SearchByNotesAsync(
+            request.SearchText.Trim(), page, pageSize, cancellationToken);
+
+        var dtoItems = mapper.Map<IReadOnlyList<VisitListItemDto>>(items);
+
+        return PagedResult<VisitListItemDto>.Create(dtoItems, totalCount, page, pageSize);
     }
 }

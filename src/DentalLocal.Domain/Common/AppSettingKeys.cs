@@ -12,4 +12,5 @@ public static class AppSettingKeys
     public const string Language = "language";
     public const string BackupMirrorPath = "backup_mirror_path";
     public const string AuthTokenSecret = "auth_token_secret";
+    public const string AutoLockMinutes = "auto_lock_minutes";
 }

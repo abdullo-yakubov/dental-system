@@ -17,6 +17,7 @@ public static class DependencyInjection
         services.AddAutoMapper(cfg => cfg.AddMaps(assembly));
 
         services.AddSingleton<ILoginAttemptTracker, InMemoryLoginAttemptTracker>();
+        services.AddMemoryCache();
 
         services.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
         services.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(ValidationBehavior<,>));

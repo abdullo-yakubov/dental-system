@@ -20,10 +20,43 @@
         <MudStack Row="true" Spacing="4" AlignItems="AlignItems.Center">
             <SearchBox Value="_search" OnSearch="OnSearchChanged" Placeholder="Поиск по ФИО, телефону, № карты" Class="flex-grow-1" />
             <MudCheckBox T="bool" Value="_includeArchived" ValueChanged="OnIncludeArchivedChanged" Label="Показать архивных" />
+            <MudButton Variant="@(_showInactiveOnly ? Variant.Filled : Variant.Outlined)" Color="Color.Warning"
+                       StartIcon="@Icons.Material.Filled.EventBusy" OnClick="ToggleInactiveFilterAsync">
+                Отвалившиеся (6+ мес.)
+            </MudButton>
         </MudStack>
     </GlassCard>
 
     <GlassCard Class="pa-0">
+        @if (_showInactiveOnly)
+        {
+            <MudTable Items="_inactivePatients" Hover="true" Loading="_isLoading" Elevation="0" Class="glass-table">
+                <HeaderContent>
+                    <MudTh>№ карты</MudTh>
+                    <MudTh>ФИО</MudTh>
+                    <MudTh>Возраст</MudTh>
+                    <MudTh>Телефон</MudTh>
+                    <MudTh>Последний визит</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="№ карты">@context.CardNumberDisplay</MudTd>
+                    <MudTd DataLabel="ФИО">@context.FullName</MudTd>
+                    <MudTd DataLabel="Возраст">@context.Age</MudTd>
+                    <MudTd DataLabel="Телефон">@context.Phone</MudTd>
+                    <MudTd DataLabel="Последний визит">@(context.LastVisitAt?.ToString("dd.MM.yyyy") ?? "Не было визитов")</MudTd>
+                    <MudTd>
+                        <MudButton Size="Size.Small" OnClick="@(() => OpenPatient(context.Id))">Открыть</MudButton>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <EmptyState Icon="@Icons.Material.Filled.CheckCircleOutline" Title="Отвалившихся пациентов нет"
+                                Description="Все пациенты были на приёме в последние 6 месяцев." />
+                </NoRecordsContent>
+            </MudTable>
+        }
+        else
+        {
         <MudTable ServerData="LoadPatientsAsync" @ref="_table" Hover="true" Loading="_isLoading" Elevation="0" Class="glass-table">
             <HeaderContent>
                 <MudTh>№ карты</MudTh>
@@ -50,6 +83,7 @@
                 <MudTablePager RowsPerPageString="На странице:" InfoFormat="{first_item}-{last_item} из {all_items}" />
             </PagerContent>
         </MudTable>
+        }
     </GlassCard>
 </div>
 
@@ -58,6 +92,8 @@
     private string _search = string.Empty;
     private bool _includeArchived;
     private bool _isLoading;
+    private bool _showInactiveOnly;
+    private List<PatientListItemDto> _inactivePatients = [];
 
     private async Task<TableData<PatientListItemDto>> LoadPatientsAsync(TableState state, CancellationToken ct)
     {
@@ -91,6 +127,29 @@
     }
 
     private Task ReloadAsync() => _table?.ReloadServerData() ?? Task.CompletedTask;
+
+    private async Task ToggleInactiveFilterAsync()
+    {
+        _showInactiveOnly = !_showInactiveOnly;
+
+        if (_showInactiveOnly)
+        {
+            _isLoading = true;
+            try
+            {
+                _inactivePatients = (await Api.GetInactivePatientsAsync(6)).ToList();
+            }
+            catch (ApiException ex)
+            {
+                Snackbar.Add(ex.Message, Severity.Error);
+                _inactivePatients = [];
+            }
+            finally
+            {
+                _isLoading = false;
+            }
+        }
+    }
 
     private void OpenPatient(Guid id) => Navigation.NavigateTo($"/patients/{id}");
 

@@ -27,6 +27,7 @@ public interface IUnitOfWork
     IWaitingListRepository WaitingList { get; }
     IPrescriptionRepository Prescriptions { get; }
     IWarrantyRepository Warranties { get; }
+    IDoctorScheduleRepository DoctorSchedules { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 

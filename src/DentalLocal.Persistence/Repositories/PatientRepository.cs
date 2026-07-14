@@ -63,4 +63,23 @@ public class PatientRepository(DentalDbContext context) : RepositoryBase<Patient
 
         return await query.AnyAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<Patient>> FindPossibleDuplicatesAsync(
+        string lastName, string firstName, DateOnly birthDate, CancellationToken cancellationToken = default) =>
+        await Set.AsNoTracking()
+            .Where(p => !p.IsArchived &&
+                        ((EF.Functions.ILike(p.LastName, lastName) && EF.Functions.ILike(p.FirstName, firstName)) ||
+                         p.BirthDate == birthDate))
+            .Take(5)
+            .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<Patient>> GetInactiveAsync(int monthsThreshold, CancellationToken cancellationToken = default)
+    {
+        var cutoff = DateTimeOffset.UtcNow.AddMonths(-monthsThreshold);
+
+        return await Set.AsNoTracking()
+            .Where(p => !p.IsArchived && (p.LastVisitAt == null || p.LastVisitAt < cutoff))
+            .OrderBy(p => p.LastVisitAt ?? DateTimeOffset.MinValue)
+            .ToListAsync(cancellationToken);
+    }
 }

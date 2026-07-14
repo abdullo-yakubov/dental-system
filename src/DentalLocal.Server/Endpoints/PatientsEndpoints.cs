@@ -25,6 +25,20 @@ public static class PatientsEndpoints
             return result.ToApiResult();
         });
 
+        // GET /api/v1/patients/check-duplicate?lastName=...&firstName=...&birthDate=...
+        group.MapGet("/check-duplicate", async (string lastName, string firstName, DateOnly birthDate, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new CheckPatientDuplicateQuery(lastName, firstName, birthDate), ct);
+            return result.ToApiResult();
+        });
+
+        // GET /api/v1/patients/inactive?monthsThreshold=6
+        group.MapGet("/inactive", async (int? monthsThreshold, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetInactivePatientsQuery(monthsThreshold ?? 6), ct);
+            return result.ToApiResult();
+        });
+
         group.MapPost("", async (CreatePatientRequest request, ISender sender, CancellationToken ct) =>
         {
             var command = new CreatePatientCommand(

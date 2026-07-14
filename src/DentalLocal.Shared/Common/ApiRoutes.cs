@@ -116,6 +116,11 @@ public static class ApiRoutes
         public const string Base = $"{Prefix}/currencies";
     }
 
+    public static class DoctorSchedule
+    {
+        public const string Base = $"{Prefix}/doctor-schedule";
+    }
+
     public static class Discounts
     {
         public const string Base = $"{Prefix}/discounts";

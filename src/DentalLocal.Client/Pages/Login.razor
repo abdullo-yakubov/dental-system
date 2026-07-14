@@ -21,40 +21,14 @@
             Введите код доступа
         </MudText>
 
-        <div class="d-flex justify-center mb-4" style="gap:10px;">
-            @for (var i = 0; i < 6; i++)
-            {
-                var filled = i < _code.Length;
-                <div style="width:14px;height:14px;border-radius:50%;background:@(filled ? "var(--mud-palette-primary)" : "var(--app-glass-border)");transition:background var(--app-transition);"></div>
-            }
-        </div>
-
         @if (_errorMessage is not null)
         {
             <MudText Color="Color.Error" Align="Align.Center" Class="mb-2">@_errorMessage</MudText>
         }
 
-        <MudGrid Spacing="2" Class="mb-4">
-            @foreach (var digit in new[] { "1", "2", "3", "4", "5", "6", "7", "8", "9" })
-            {
-                <MudItem xs="4">
-                    <MudButton FullWidth="true" Variant="Variant.Outlined" Class="login-keypad-btn" OnClick="() => AppendDigit(digit)" Disabled="_isLockedOut">@digit</MudButton>
-                </MudItem>
-            }
-            <MudItem xs="4">
-                <MudButton FullWidth="true" Variant="Variant.Text" Class="login-keypad-btn" OnClick="RemoveLastDigit" Disabled="_isLockedOut">
-                    <MudIcon Icon="@Icons.Material.Filled.Backspace" />
-                </MudButton>
-            </MudItem>
-            <MudItem xs="4">
-                <MudButton FullWidth="true" Variant="Variant.Outlined" Class="login-keypad-btn" OnClick="AppendZero" Disabled="_isLockedOut">0</MudButton>
-            </MudItem>
-            <MudItem xs="4">
-                <MudButton FullWidth="true" Variant="Variant.Text" Class="login-keypad-btn" OnClick="ClearCode" Disabled="_isLockedOut">
-                    <MudIcon Icon="@Icons.Material.Filled.Clear" />
-                </MudButton>
-            </MudItem>
-        </MudGrid>
+        <div class="mb-4">
+            <PinKeypad @bind-Code="_code" Disabled="_isLockedOut" />
+        </div>
 
         <MudButton FullWidth="true" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large"
                     OnClick="SubmitAsync" Disabled="@(_isLockedOut || string.IsNullOrEmpty(_code) || _isBusy)">
@@ -115,8 +89,6 @@
     }
 
     private void AppendDigit(string digit) => _code += digit;
-
-    private void AppendZero() => AppendDigit("0");
 
     private void RemoveLastDigit()
     {

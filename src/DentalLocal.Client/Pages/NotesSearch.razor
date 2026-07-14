@@ -1,0 +1,80 @@
+@page "/notes-search"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Поиск по заметкам — DentalLocal</PageTitle>
+
+<PageHeader Title="Поиск по заметкам врача" Icon="@Icons.Material.Filled.Search"
+            Subtitle="Полнотекстовый поиск по заметкам и диагнозам визитов" />
+
+<GlassCard Class="mb-4">
+    <SearchBox Value="_search" OnSearch="OnSearchChanged" Placeholder="Например: пульпит, коронка, аллергия..." />
+</GlassCard>
+
+<GlassCard Class="pa-0">
+    <MudTable Items="_results" Hover="true" Loading="_isLoading" Elevation="0" Class="glass-table">
+        <HeaderContent>
+            <MudTh>Дата</MudTh>
+            <MudTh>Пациент</MudTh>
+            <MudTh>Врач</MudTh>
+            <MudTh>Статус</MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Дата">@context.VisitDate.ToString("dd.MM.yyyy")</MudTd>
+            <MudTd DataLabel="Пациент">
+                <MudLink OnClick="@(() => Navigation.NavigateTo($"/patients/{context.PatientId}"))">
+                    @context.PatientFullName
+                </MudLink>
+            </MudTd>
+            <MudTd DataLabel="Врач">@context.DoctorName</MudTd>
+            <MudTd DataLabel="Статус">@context.Status</MudTd>
+            <MudTd>
+                <MudButton Variant="Variant.Text" Size="Size.Small" Color="Color.Primary"
+                           OnClick="@(() => Navigation.NavigateTo($"/patients/{context.PatientId}"))">
+                    Открыть
+                </MudButton>
+            </MudTd>
+        </RowTemplate>
+        <NoRecordsContent>
+            <EmptyState Icon="@Icons.Material.Filled.Search" Title="@(_hasSearched ? "Ничего не найдено" : "Введите текст для поиска")"
+                        Description="Поиск ведётся по заметкам врача и диагнозу визита." />
+        </NoRecordsContent>
+    </MudTable>
+</GlassCard>
+
+@code {
+    private string _search = string.Empty;
+    private List<VisitListItemDto> _results = [];
+    private bool _isLoading;
+    private bool _hasSearched;
+
+    private async Task OnSearchChanged(string value)
+    {
+        _search = value;
+        _hasSearched = true;
+
+        if (string.IsNullOrWhiteSpace(_search))
+        {
+            _results = [];
+            return;
+        }
+
+        _isLoading = true;
+        try
+        {
+            var result = await Api.SearchVisitsByNotesAsync(_search);
+            _results = result.Items.ToList();
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}

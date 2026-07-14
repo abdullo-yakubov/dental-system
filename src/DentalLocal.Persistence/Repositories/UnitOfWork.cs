@@ -32,7 +32,8 @@ public class UnitOfWork : IUnitOfWork
         IDiscountHistoryRepository discountHistory,
         IWaitingListRepository waitingList,
         IPrescriptionRepository prescriptions,
-        IWarrantyRepository warranties)
+        IWarrantyRepository warranties,
+        IDoctorScheduleRepository doctorSchedules)
     {
         _context = context;
         Patients = patients;
@@ -60,6 +61,7 @@ public class UnitOfWork : IUnitOfWork
         WaitingList = waitingList;
         Prescriptions = prescriptions;
         Warranties = warranties;
+        DoctorSchedules = doctorSchedules;
     }
 
     public IPatientRepository Patients { get; }
@@ -87,6 +89,7 @@ public class UnitOfWork : IUnitOfWork
     public IWaitingListRepository WaitingList { get; }
     public IPrescriptionRepository Prescriptions { get; }
     public IWarrantyRepository Warranties { get; }
+    public IDoctorScheduleRepository DoctorSchedules { get; }
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
         _context.SaveChangesAsync(cancellationToken);

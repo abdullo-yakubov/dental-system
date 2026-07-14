@@ -80,6 +80,8 @@ app.MapDiscountsEndpoints();
 app.MapWaitingListEndpoints();
 app.MapPrescriptionsEndpoints();
 app.MapWarrantiesEndpoints();
+app.MapDoctorScheduleEndpoints();
+app.MapAnalyticsEndpoints();
 
 app.MapGet(DentalLocal.Shared.Common.ApiRoutes.System.Health, () => Results.Ok(new { status = "ok" }));
 

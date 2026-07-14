@@ -19,6 +19,13 @@ public static class VisitsEndpoints
             return result.ToApiResult();
         });
 
+        // GET /api/v1/visits/search-notes?text=...&page=1&pageSize=20
+        group.MapGet("/search-notes", async (string text, int? page, int? pageSize, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new SearchVisitsByNotesQuery(text, page, pageSize), ct);
+            return result.ToApiResult();
+        });
+
         // GET /api/v1/visits/{id}
         group.MapGet("/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
         {

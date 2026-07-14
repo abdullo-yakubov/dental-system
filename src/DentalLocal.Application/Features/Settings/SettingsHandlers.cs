@@ -5,33 +5,42 @@ using DentalLocal.Domain.Repositories;
 using DentalLocal.Shared.Contracts.Settings;
 using FluentValidation;
 using MediatR;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace DentalLocal.Application.Features.Settings;
 
 // 1. Get Settings Query
 public sealed record GetSettingsQuery : IQuery<SettingsDto>;
 
-public sealed class GetSettingsQueryHandler(IUnitOfWork unitOfWork) : IRequestHandler<GetSettingsQuery, Result<SettingsDto>>
+public sealed class GetSettingsQueryHandler(IUnitOfWork unitOfWork, IMemoryCache cache) : IRequestHandler<GetSettingsQuery, Result<SettingsDto>>
 {
     public async Task<Result<SettingsDto>> Handle(GetSettingsQuery request, CancellationToken cancellationToken)
     {
-        var settings = (await unitOfWork.AppSettings.GetAllAsync(cancellationToken))
-            .ToDictionary(x => x.Key, x => x.Value);
+        var dto = await cache.GetOrCreateAsync(CacheKeys.Settings, async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15);
 
-        string Get(string key, string fallback) => settings.TryGetValue(key, out var value) && value is not null ? value : fallback;
+            var settings = (await unitOfWork.AppSettings.GetAllAsync(cancellationToken))
+                .ToDictionary(x => x.Key, x => x.Value);
 
-        var dto = new SettingsDto(
-            Get(AppSettingKeys.DoctorName, "Врач-администратор"),
-            Get(AppSettingKeys.ClinicName, "DentalLocal"),
-            Get(AppSettingKeys.Currency, DentalDefaults.Currency),
-            Get(AppSettingKeys.Theme, "system"),
-            Get(AppSettingKeys.Language, "ru"),
-            Get(AppSettingKeys.BackupTime, DentalDefaults.BackupTime),
-            int.TryParse(Get(AppSettingKeys.BackupRetentionDays, DentalDefaults.BackupRetentionDays.ToString()), out var days)
-                ? days
-                : DentalDefaults.BackupRetentionDays);
+            string Get(string key, string fallback) => settings.TryGetValue(key, out var value) && value is not null ? value : fallback;
 
-        return Result.Success(dto);
+            return new SettingsDto(
+                Get(AppSettingKeys.DoctorName, "Врач-администратор"),
+                Get(AppSettingKeys.ClinicName, "DentalLocal"),
+                Get(AppSettingKeys.Currency, DentalDefaults.Currency),
+                Get(AppSettingKeys.Theme, "system"),
+                Get(AppSettingKeys.Language, "ru"),
+                Get(AppSettingKeys.BackupTime, DentalDefaults.BackupTime),
+                int.TryParse(Get(AppSettingKeys.BackupRetentionDays, DentalDefaults.BackupRetentionDays.ToString()), out var days)
+                    ? days
+                    : DentalDefaults.BackupRetentionDays,
+                int.TryParse(Get(AppSettingKeys.AutoLockMinutes, DentalDefaults.AutoLockMinutes.ToString()), out var lockMinutes)
+                    ? lockMinutes
+                    : DentalDefaults.AutoLockMinutes);
+        });
+
+        return Result.Success(dto!);
     }
 }
 
@@ -43,7 +52,8 @@ public sealed record UpdateSettingsCommand(
     string Theme,
     string Language,
     string BackupTime,
-    int BackupRetentionDays) : ICommand<SettingsDto>;
+    int BackupRetentionDays,
+    int AutoLockMinutes) : ICommand<SettingsDto>;
 
 public sealed class UpdateSettingsCommandValidator : AbstractValidator<UpdateSettingsCommand>
 {
@@ -53,10 +63,11 @@ public sealed class UpdateSettingsCommandValidator : AbstractValidator<UpdateSet
         RuleFor(x => x.ClinicName).NotEmpty().WithMessage("Укажите название клиники.");
         RuleFor(x => x.Currency).NotEmpty().WithMessage("Укажите валюту.");
         RuleFor(x => x.BackupRetentionDays).GreaterThan(0).WithMessage("Срок хранения бэкапов должен быть положительным.");
+        RuleFor(x => x.AutoLockMinutes).GreaterThan(0).WithMessage("Время автоблокировки должно быть положительным.");
     }
 }
 
-public sealed class UpdateSettingsCommandHandler(IUnitOfWork unitOfWork) : IRequestHandler<UpdateSettingsCommand, Result<SettingsDto>>
+public sealed class UpdateSettingsCommandHandler(IUnitOfWork unitOfWork, IMemoryCache cache) : IRequestHandler<UpdateSettingsCommand, Result<SettingsDto>>
 {
     public async Task<Result<SettingsDto>> Handle(UpdateSettingsCommand request, CancellationToken cancellationToken)
     {
@@ -67,12 +78,15 @@ public sealed class UpdateSettingsCommandHandler(IUnitOfWork unitOfWork) : IRequ
         await unitOfWork.AppSettings.UpsertAsync(AppSettingKeys.Language, request.Language, cancellationToken);
         await unitOfWork.AppSettings.UpsertAsync(AppSettingKeys.BackupTime, request.BackupTime, cancellationToken);
         await unitOfWork.AppSettings.UpsertAsync(AppSettingKeys.BackupRetentionDays, request.BackupRetentionDays.ToString(), cancellationToken);
+        await unitOfWork.AppSettings.UpsertAsync(AppSettingKeys.AutoLockMinutes, request.AutoLockMinutes.ToString(), cancellationToken);
 
         await unitOfWork.AuditLogs.AddAsync(AuditLog.Create("SETTINGS_CHANGED", "AppSetting", null, null), cancellationToken);
 
+        cache.Remove(CacheKeys.Settings);
+
         var dto = new SettingsDto(
             request.DoctorName, request.ClinicName, request.Currency,
-            request.Theme, request.Language, request.BackupTime, request.BackupRetentionDays);
+            request.Theme, request.Language, request.BackupTime, request.BackupRetentionDays, request.AutoLockMinutes);
 
         return Result.Success(dto);
     }

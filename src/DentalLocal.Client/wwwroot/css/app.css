@@ -137,6 +137,28 @@ code {
     transition: transform var(--app-transition);
 }
 
+.lock-screen-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.lock-screen-card {
+    width: 360px;
+    border-radius: var(--app-radius-lg) !important;
+    background: var(--app-glass-bg) !important;
+    backdrop-filter: blur(var(--app-glass-blur));
+    -webkit-backdrop-filter: blur(var(--app-glass-blur));
+    border: 1px solid var(--app-glass-border);
+    box-shadow: var(--app-glass-shadow);
+}
+
 .login-keypad-btn:active {
     transform: scale(0.94);
 }
@@ -205,6 +227,12 @@ code {
 .tooth-cell:hover {
     transform: translateY(-4px);
     background-color: var(--mud-palette-background-hover);
+}
+
+.tooth-multi-selected {
+    background-color: var(--mud-palette-primary-hover);
+    outline: 2px solid var(--mud-palette-primary);
+    border-radius: 4px;
 }
 
 .tooth-number {
@@ -423,4 +451,23 @@ html, body {
 .glass-table .mud-table-toolbar,
 .glass-table table {
     background: transparent !important;
+}
+
+.workload-heatmap {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.workload-heatmap th,
+.workload-heatmap td {
+    text-align: center;
+    padding: 4px 6px;
+    font-size: 0.75rem;
+    min-width: 32px;
+    border: 1px solid rgba(128, 128, 128, 0.15);
+}
+
+.workload-heatmap th {
+    font-weight: 600;
+    opacity: 0.7;
 }

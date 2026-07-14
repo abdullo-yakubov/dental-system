@@ -1,6 +1,7 @@
 using AutoMapper;
 using DentalLocal.Application.Common;
 using DentalLocal.Domain.Entities;
+using DentalLocal.Domain.Enums;
 using DentalLocal.Domain.Repositories;
 using DentalLocal.Shared.Contracts.Visits;
 using FluentValidation;
@@ -52,6 +53,7 @@ public sealed class CreateVisitCommandHandler(IUnitOfWork unitOfWork, IMapper ma
 
         Visit visit;
         var warranties = new List<Warranty>();
+        var followUpReminders = new List<Reminder>();
         try
         {
             visit = Visit.Create(
@@ -63,6 +65,8 @@ public sealed class CreateVisitCommandHandler(IUnitOfWork unitOfWork, IMapper ma
                 request.Prescriptions,
                 request.MaterialsUsed,
                 request.Diagnosis);
+
+            var earliestFollowUpDays = (int?)null;
 
             foreach (var item in request.Items)
             {
@@ -77,6 +81,20 @@ public sealed class CreateVisitCommandHandler(IUnitOfWork unitOfWork, IMapper ma
                     warranties.Add(Warranty.Create(
                         request.PatientId, visit.Id, item.ProcedureId, item.ToothNumber, request.VisitDate, procedure.WarrantyMonths, null));
                 }
+
+                // Авто-триггер контрольного визита после процедур с заданным интервалом (п.17.13 ТЗ).
+                if (procedure.FollowUpDays is > 0 && (earliestFollowUpDays is null || procedure.FollowUpDays < earliestFollowUpDays))
+                    earliestFollowUpDays = procedure.FollowUpDays;
+            }
+
+            if (earliestFollowUpDays is > 0)
+            {
+                var reminderDate = new DateTimeOffset(
+                    request.VisitDate.Year, request.VisitDate.Month, request.VisitDate.Day,
+                    request.VisitTime.Hour, request.VisitTime.Minute, 0, TimeSpan.Zero).AddDays(earliestFollowUpDays.Value);
+
+                followUpReminders.Add(Reminder.Create(
+                    request.PatientId, visit.Id, "Контрольный визит после лечения", reminderDate, ReminderType.FollowUp, null));
             }
         }
         catch (ArgumentException ex)
@@ -93,6 +111,9 @@ public sealed class CreateVisitCommandHandler(IUnitOfWork unitOfWork, IMapper ma
         foreach (var warranty in warranties)
             await unitOfWork.Warranties.AddAsync(warranty, cancellationToken);
 
+        foreach (var reminder in followUpReminders)
+            await unitOfWork.Reminders.AddAsync(reminder, cancellationToken);
+
         if (visit.RemainingAmount > 0)
         {
             var debt = Debt.Create(visit.Id, visit.PatientId, visit.RemainingAmount);
@@ -105,6 +126,32 @@ public sealed class CreateVisitCommandHandler(IUnitOfWork unitOfWork, IMapper ma
             AuditLog.Create("VISIT_CREATED", "Visit", visit.Id, null), cancellationToken);
 
         var createdVisit = await unitOfWork.Visits.GetByIdWithItemsAsync(visit.Id, cancellationToken);
-        return Result.Success(mapper.Map<VisitDto>(createdVisit));
+        var dto = mapper.Map<VisitDto>(createdVisit);
+
+        var scheduleWarning = await GetScheduleWarningAsync(request.DoctorName, request.VisitDate, request.VisitTime, cancellationToken);
+        if (scheduleWarning is not null)
+            dto = dto with { ScheduleWarning = scheduleWarning };
+
+        return Result.Success(dto);
+    }
+
+    /// <summary>Предупреждение (не блокировка) при записи вне рабочего графика врача (раздел 17.8 ТЗ).
+    /// Если график ещё не настроен вовсе (нет ни одной активной записи) — не предупреждаем.</summary>
+    private async Task<string?> GetScheduleWarningAsync(
+        string doctorName, DateOnly visitDate, TimeOnly visitTime, CancellationToken cancellationToken)
+    {
+        var allSchedules = await unitOfWork.DoctorSchedules.GetAllAsync(cancellationToken);
+        if (!allSchedules.Any(s => s.IsActive))
+            return null;
+
+        var todaySchedule = allSchedules.FirstOrDefault(s => s.DoctorName == doctorName && s.DayOfWeek == visitDate.DayOfWeek);
+
+        if (todaySchedule is null || !todaySchedule.IsActive)
+            return "Для врача не задан рабочий график на этот день недели.";
+
+        if (visitTime < todaySchedule.StartTime || visitTime > todaySchedule.EndTime)
+            return $"Время визита ({visitTime:HH:mm}) вне рабочего графика ({todaySchedule.StartTime:HH:mm}–{todaySchedule.EndTime:HH:mm}).";
+
+        return null;
     }
 }

@@ -19,4 +19,5 @@ public sealed record VisitDto(
     VisitStatus Status,
     IReadOnlyList<TreatmentItemDto> Items,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    string? ScheduleWarning = null);
