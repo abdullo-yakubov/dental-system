@@ -1,0 +1,52 @@
+@* Переиспользуемое поле поиска с debounce и иконкой очистки *@
+@implements IDisposable
+
+<MudTextField T="string"
+              Value="Value"
+              ValueChanged="OnValueChanged"
+              Placeholder="@Placeholder"
+              Variant="Variant.Outlined"
+              Adornment="Adornment.Start"
+              AdornmentIcon="@Icons.Material.Filled.Search"
+              Immediate="true"
+              Clearable="true"
+              Class="@Class" />
+
+@code {
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public EventCallback<string?> OnSearch { get; set; }
+    [Parameter] public string Placeholder { get; set; } = "Поиск...";
+    [Parameter] public int DebounceMs { get; set; } = 350;
+    [Parameter] public string Class { get; set; } = string.Empty;
+
+    private CancellationTokenSource? _cts;
+
+    private async Task OnValueChanged(string? value)
+    {
+        Value = value;
+        await ValueChanged.InvokeAsync(value);
+
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = new CancellationTokenSource();
+        var token = _cts.Token;
+
+        try
+        {
+            await Task.Delay(DebounceMs, token);
+            if (!token.IsCancellationRequested)
+                await OnSearch.InvokeAsync(value);
+        }
+        catch (TaskCanceledException)
+        {
+            // новый ввод отменил предыдущий поиск — это ожидаемо
+        }
+    }
+
+    public void Dispose()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+    }
+}

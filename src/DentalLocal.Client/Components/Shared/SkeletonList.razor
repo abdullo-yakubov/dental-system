@@ -1,0 +1,12 @@
+@* Плейсхолдеры-скелетоны на время первичной загрузки списков/таблиц *@
+
+<div class="d-flex flex-column gap-2">
+    @for (var i = 0; i < Rows; i++)
+    {
+        <div class="skeleton skeleton-card" style="animation-delay: @(i * 40)ms"></div>
+    }
+</div>
+
+@code {
+    [Parameter] public int Rows { get; set; } = 5;
+}

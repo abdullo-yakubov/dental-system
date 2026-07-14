@@ -1,0 +1,169 @@
+@inject ApiClient Api
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        Лист ожидания
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3" Style="min-width: 500px;">
+            <GlassCard Title="Добавить в лист ожидания" Class="pa-3">
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudAutocomplete T="PatientListItemDto"
+                                         Label="Начните вводить ФИО пациента..."
+                                         @bind-Value="_selectedPatient"
+                                         SearchFunc="SearchPatientsAsync"
+                                         ToStringFunc="@(x => x == null ? "" : x.FullName)"
+                                         ResetValueOnEmptyText="true"
+                                         CoerceText="true"
+                                         CoerceValue="false"
+                                         AdornmentIcon="@Icons.Material.Filled.Search" />
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudDatePicker @bind-Date="_dateFrom" Label="Желаемая дата с" />
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudDatePicker @bind-Date="_dateTo" Label="Желаемая дата по" />
+                    </MudItem>
+                    <MudItem xs="12">
+                        <MudTextField T="string" @bind-Value="_notes" Label="Заметки" Lines="2" />
+                    </MudItem>
+                    <MudItem xs="12" Class="d-flex justify-end">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddEntryAsync" Disabled="_isBusy">
+                            Добавить
+                        </MudButton>
+                    </MudItem>
+                </MudGrid>
+            </GlassCard>
+
+            <MudTable Items="_entries" Hover="true" Loading="_isLoading" Elevation="0" Dense="true">
+                <HeaderContent>
+                    <MudTh>Пациент</MudTh>
+                    <MudTh>Желаемый период</MudTh>
+                    <MudTh>Заметки</MudTh>
+                    <MudTh>Статус</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd>@context.PatientFullName</MudTd>
+                    <MudTd>@context.DesiredDateFrom.ToString("dd.MM.yyyy") — @context.DesiredDateTo.ToString("dd.MM.yyyy")</MudTd>
+                    <MudTd>@context.Notes</MudTd>
+                    <MudTd>
+                        <MudChip T="string" Size="Size.Small" Color="@(context.Status == "Waiting" ? Color.Warning : context.Status == "Scheduled" ? Color.Success : Color.Default)">
+                            @context.Status
+                        </MudChip>
+                    </MudTd>
+                    <MudTd>
+                        @if (context.Status == "Waiting")
+                        {
+                            <MudButton Size="Size.Small" OnClick="@(() => UpdateStatusAsync(context.Id, "Scheduled"))">Записан</MudButton>
+                            <MudButton Size="Size.Small" Color="Color.Error" OnClick="@(() => UpdateStatusAsync(context.Id, "Cancelled"))">Отменить</MudButton>
+                        }
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <EmptyState Icon="@Icons.Material.Filled.HourglassEmpty" Title="Лист ожидания пуст" />
+                </NoRecordsContent>
+            </MudTable>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close">Закрыть</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    private List<WaitingListEntryDto> _entries = [];
+    private bool _isLoading = true;
+    private bool _isBusy;
+
+    private PatientListItemDto? _selectedPatient;
+    private DateTime? _dateFrom = DateTime.Today;
+    private DateTime? _dateTo = DateTime.Today.AddDays(7);
+    private string _notes = string.Empty;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _isLoading = true;
+        try
+        {
+            _entries = (await Api.GetWaitingListAsync()).ToList();
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось загрузить лист ожидания: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task<IEnumerable<PatientListItemDto>> SearchPatientsAsync(string search, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(search)) return [];
+        try
+        {
+            var result = await Api.SearchPatientsAsync(search, false, 1, 10, cancellationToken);
+            return result.Items;
+        }
+        catch (ApiException)
+        {
+            return [];
+        }
+    }
+
+    private async Task AddEntryAsync()
+    {
+        if (_selectedPatient is null || _dateFrom is null || _dateTo is null)
+        {
+            Snackbar.Add("Укажите пациента и период.", Severity.Warning);
+            return;
+        }
+
+        _isBusy = true;
+        try
+        {
+            var request = new CreateWaitingListEntryRequest(
+                _selectedPatient.Id,
+                DateOnly.FromDateTime(_dateFrom.Value),
+                DateOnly.FromDateTime(_dateTo.Value),
+                null,
+                string.IsNullOrWhiteSpace(_notes) ? null : _notes);
+
+            await Api.CreateWaitingListEntryAsync(request);
+            Snackbar.Add("Пациент добавлен в лист ожидания.", Severity.Success);
+            _notes = string.Empty;
+            _selectedPatient = null;
+            await LoadAsync();
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task UpdateStatusAsync(Guid id, string status)
+    {
+        try
+        {
+            await Api.UpdateWaitingListStatusAsync(id, status);
+            await LoadAsync();
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+    }
+
+    private void Close() => MudDialog.Close(DialogResult.Ok(true));
+}

@@ -1,0 +1,26 @@
+@* Карточка для графика: заголовок, скелетон/пустое состояние, слот с графиком *@
+
+<GlassCard Title="@Title" Class="@Class">
+    @if (Loading)
+    {
+        <div class="skeleton" style="height: @(Height)px; border-radius: var(--app-radius-md);"></div>
+    }
+    else if (HasData)
+    {
+        @ChildContent
+    }
+    else
+    {
+        <EmptyState Icon="@MudBlazor.Icons.Material.Filled.BarChart" Title="Нет данных" Description="@EmptyText" />
+    }
+</GlassCard>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public bool HasData { get; set; }
+    [Parameter] public int Height { get; set; } = 300;
+    [Parameter] public string EmptyText { get; set; } = "Недостаточно данных за выбранный период.";
+    [Parameter] public string Class { get; set; } = string.Empty;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

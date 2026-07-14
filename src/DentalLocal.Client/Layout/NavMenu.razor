@@ -1,8 +1,11 @@
-<MudNavMenu>
+<MudNavMenu Class="pa-2">
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Дашборд</MudNavLink>
     <MudNavLink Href="patients" Icon="@Icons.Material.Filled.People">Пациенты</MudNavLink>
+    <MudNavLink Href="calendar" Icon="@Icons.Material.Filled.CalendarMonth">Календарь</MudNavLink>
     <MudNavLink Href="debtors" Icon="@Icons.Material.Filled.MoneyOff">Должники</MudNavLink>
     <MudNavLink Href="inventory" Icon="@Icons.Material.Filled.Warehouse">Склад</MudNavLink>
     <MudNavLink Href="procedures" Icon="@Icons.Material.Filled.MedicalServices">Процедуры</MudNavLink>
-    <MudNavLink Href="settings" Icon="@Icons.Material.Filled.Settings">Настройки</MudNavLink>
+    <MudNavGroup Title="Ещё" Icon="@Icons.Material.Filled.MoreHoriz" Expanded="false">
+        <MudNavLink Href="settings" Icon="@Icons.Material.Filled.Settings">Настройки</MudNavLink>
+    </MudNavGroup>
 </MudNavMenu>

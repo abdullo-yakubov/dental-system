@@ -34,6 +34,7 @@ public class PatientConfiguration : IEntityTypeConfiguration<Patient>
         builder.Property(p => p.ChronicDiseases).HasColumnType("text");
         builder.Property(p => p.Comments).HasColumnType("text");
         builder.Property(p => p.DoctorNotes).HasColumnType("text");
+        builder.Property(p => p.Source).HasMaxLength(150);
 
         builder.Property(p => p.RegisteredAt).IsRequired();
         builder.Property(p => p.IsArchived).HasDefaultValue(false);
@@ -59,6 +60,9 @@ public class PatientConfiguration : IEntityTypeConfiguration<Patient>
 
         builder.HasIndex("SearchVector").HasMethod("GIN").HasDatabaseName("ix_patients_search_vector");
 
+        // GIN trigram index on FullName (concatenated columns)
         builder.HasIndex(p => p.LastName).HasMethod("gin").HasOperators(["gin_trgm_ops"]).HasDatabaseName("ix_patients_last_name_trgm");
+        builder.HasIndex(p => p.FirstName).HasMethod("gin").HasOperators(["gin_trgm_ops"]).HasDatabaseName("ix_patients_first_name_trgm");
+        builder.HasIndex(p => p.Phone).HasMethod("gin").HasOperators(["gin_trgm_ops"]).HasDatabaseName("ix_patients_phone_trgm");
     }
 }

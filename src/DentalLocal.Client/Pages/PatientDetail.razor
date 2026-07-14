@@ -9,13 +9,13 @@
 
 @if (_loading)
 {
-    <div class="d-flex justify-center align-center" style="height: 80vh;">
-        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
-    </div>
+    <div class="skeleton skeleton-title"></div>
+    <div class="skeleton skeleton-card mb-4" style="height:140px;"></div>
+    <div class="skeleton" style="height:420px;border-radius:var(--app-radius-md);"></div>
 }
 else if (_patient == null)
 {
-    <MudAlert Severity="Severity.Error" Class="ma-4">Пациент не найден.</MudAlert>
+    <EmptyState Icon="@Icons.Material.Filled.PersonOff" Title="Пациент не найден" Description="Возможно, карточка была удалена или архивирована." />
 }
 else
 {
@@ -48,8 +48,7 @@ else
     </MudStack>
 
     <!-- Main Header Card -->
-    <MudCard Class="border-radius-12 mb-6" Elevation="4">
-        <MudCardContent>
+    <div class="glass-card pa-4 mb-6">
             <MudGrid>
                 <MudItem xs="12" sm="8" md="9">
                     <MudStack Spacing="1">
@@ -89,8 +88,7 @@ else
                     </MudStack>
                 </MudItem>
             </MudGrid>
-        </MudCardContent>
-    </MudCard>
+    </div>
 
     <!-- Allergies Alert -->
     @if (!string.IsNullOrWhiteSpace(_patient.Allergies))
@@ -101,7 +99,8 @@ else
     }
 
     <!-- Tabs Layout -->
-    <MudTabs Elevation="2" Rounded="true">
+    <div class="glass-card pa-2">
+    <MudTabs Elevation="0" Rounded="true" PanelClass="pa-4">
         <!-- Overview Tab -->
         <MudTabPanel Text="Обзор" Icon="@Icons.Material.Filled.Info">
             <MudGrid>
@@ -143,13 +142,13 @@ else
                     <MudStack Spacing="4">
                         <div>
                             <MudText Typo="Typo.subtitle2" Class="text-secondary mb-1">Хронические заболевания</MudText>
-                            <MudPaper Class="pa-3 bg-light border-radius-8" Elevation="0">
+                            <MudPaper Class="pa-3 border-radius-8" Style="background-color:var(--mud-palette-background-grey);" Elevation="0">
                                 <MudText>@(string.IsNullOrWhiteSpace(_patient.ChronicDiseases) ? "Нет записей" : _patient.ChronicDiseases)</MudText>
                             </MudPaper>
                         </div>
                         <div>
                             <MudText Typo="Typo.subtitle2" Class="text-secondary mb-1">Заметки / Комментарии</MudText>
-                            <MudPaper Class="pa-3 bg-light border-radius-8" Elevation="0">
+                            <MudPaper Class="pa-3 border-radius-8" Style="background-color:var(--mud-palette-background-grey);" Elevation="0">
                                 <MudText>@(string.IsNullOrWhiteSpace(_patient.Comments) ? "Нет записей" : _patient.Comments)</MudText>
                             </MudPaper>
                         </div>
@@ -157,7 +156,7 @@ else
                         {
                             <div>
                                 <MudText Typo="Typo.subtitle2" Class="text-secondary mb-1">Особые отметки врача</MudText>
-                                <MudPaper Class="pa-3 bg-light border-radius-8 border-warning" Elevation="0">
+                                <MudPaper Class="pa-3 border-radius-8" Style="background-color:var(--mud-palette-warning-hover);border-left:3px solid var(--mud-palette-warning);" Elevation="0">
                                     <MudText>@_patient.DoctorNotes</MudText>
                                 </MudPaper>
                             </div>
@@ -184,13 +183,13 @@ else
 
                 @if (_visits.Count == 0)
                 {
-                    <MudText Class="text-secondary text-center py-6">Визиты еще не записаны.</MudText>
+                    <EmptyState Icon="@Icons.Material.Filled.EventBusy" Title="Визиты ещё не записаны" />
                 }
                 else
                 {
                     @foreach (var visit in _visits.OrderByDescending(v => v.VisitDate).ThenByDescending(v => v.VisitTime))
                     {
-                        <MudCard Outlined="true" Class="border-radius-8 mb-3">
+                        <MudCard Outlined="true" Class="glass-card hover-card mb-3">
                             <MudCardHeader>
                                 <CardHeaderContent>
                                     <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
@@ -243,11 +242,11 @@ else
 
                     @if (_payments.Count == 0)
                     {
-                        <MudText Class="text-secondary py-4 text-center">Оплат от пациента не зафиксировано.</MudText>
+                        <EmptyState Icon="@Icons.Material.Filled.Payments" Title="Оплат не зафиксировано" />
                     }
                     else
                     {
-                        <MudTable Items="_payments" Hover="true" Dense="true" Elevation="0">
+                        <MudTable Items="_payments" Hover="true" Dense="true" Elevation="0" Class="glass-table">
                             <HeaderContent>
                                 <MudTh>Дата</MudTh>
                                 <MudTh>Сумма</MudTh>
@@ -268,11 +267,11 @@ else
                     <MudText Typo="Typo.h6" Class="font-weight-bold mb-3">Задолженности</MudText>
                     @if (_debts.Count == 0)
                     {
-                        <MudText Class="text-secondary py-4 text-center">Задолженностей не обнаружено.</MudText>
+                        <EmptyState Icon="@Icons.Material.Filled.CheckCircleOutline" Title="Задолженностей не обнаружено" />
                     }
                     else
                     {
-                        <MudTable Items="_debts" Hover="true" Dense="true" Elevation="0">
+                        <MudTable Items="_debts" Hover="true" Dense="true" Elevation="0" Class="glass-table">
                             <HeaderContent>
                                 <MudTh>Дата</MudTh>
                                 <MudTh>Сумма долга</MudTh>
@@ -284,6 +283,56 @@ else
                                 <MudTd>
                                     <MudChip T="string" Color="@(context.Status == DebtStatus.Closed ? Color.Success : Color.Error)" Size="Size.Small">
                                         @(context.Status == DebtStatus.Closed ? "Оплачен" : "Активен")
+                                    </MudChip>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.h6" Class="font-weight-bold mb-3">История скидок</MudText>
+                    @if (_discountHistory.Count == 0)
+                    {
+                        <EmptyState Icon="@Icons.Material.Filled.Discount" Title="Скидки не применялись" />
+                    }
+                    else
+                    {
+                        <MudTable Items="_discountHistory" Hover="true" Dense="true" Elevation="0" Class="glass-table">
+                            <HeaderContent>
+                                <MudTh>Дата</MudTh>
+                                <MudTh>Скидка</MudTh>
+                                <MudTh>Причина</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@context.AppliedAt.LocalDateTime.ToString("dd.MM.yyyy")</MudTd>
+                                <MudTd>@(context.Percent > 0 ? $"{context.Percent:N0}%" : $"{context.Amount:N0} сум")</MudTd>
+                                <MudTd>@context.Reason</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.h6" Class="font-weight-bold mb-3">Гарантии на лечение</MudText>
+                    @if (_warranties.Count == 0)
+                    {
+                        <EmptyState Icon="@Icons.Material.Filled.VerifiedUser" Title="Гарантийных работ нет" />
+                    }
+                    else
+                    {
+                        <MudTable Items="_warranties" Hover="true" Dense="true" Elevation="0" Class="glass-table">
+                            <HeaderContent>
+                                <MudTh>Процедура</MudTh>
+                                <MudTh>Зуб</MudTh>
+                                <MudTh>Гарантия до</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@context.ProcedureName</MudTd>
+                                <MudTd>@(context.ToothNumber?.ToString() ?? "—")</MudTd>
+                                <MudTd>
+                                    <MudChip T="string" Size="Size.Small" Color="@(context.EndDate >= DateOnly.FromDateTime(DateTime.Today) ? Color.Success : Color.Default)">
+                                        @context.EndDate.ToString("dd.MM.yyyy")
                                     </MudChip>
                                 </MudTd>
                             </RowTemplate>
@@ -303,6 +352,7 @@ else
             <PatientTimeline PatientId="_patient.Id" />
         </MudTabPanel>
     </MudTabs>
+    </div>
 }
 
 @code {
@@ -312,6 +362,8 @@ else
     private List<VisitListItemDto> _visits = [];
     private List<PaymentDto> _payments = [];
     private List<DebtDto> _debts = [];
+    private List<DiscountHistoryDto> _discountHistory = [];
+    private List<WarrantyDto> _warranties = [];
     private decimal _totalDebt;
 
     private bool _loading = true;
@@ -332,13 +384,17 @@ else
             var visitTask = Api.GetPatientVisitsAsync(Id);
             var paymentsTask = Api.GetPatientPaymentsAsync(Id);
             var debtsTask = Api.GetPatientDebtsAsync(Id);
+            var discountsTask = Api.GetPatientDiscountHistoryAsync(Id);
+            var warrantiesTask = Api.GetPatientWarrantiesAsync(Id);
 
-            await Task.WhenAll(patientTask, visitTask, paymentsTask, debtsTask);
+            await Task.WhenAll(patientTask, visitTask, paymentsTask, debtsTask, discountsTask, warrantiesTask);
 
             _patient = await patientTask;
             _visits = (await visitTask).ToList();
             _payments = (await paymentsTask).ToList();
             _debts = (await debtsTask).ToList();
+            _discountHistory = (await discountsTask).ToList();
+            _warranties = (await warrantiesTask).ToList();
 
             _totalDebt = _debts.Where(d => d.Status != DebtStatus.Closed).Sum(d => d.RemainingAmount);
         }

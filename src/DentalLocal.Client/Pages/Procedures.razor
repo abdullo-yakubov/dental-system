@@ -6,13 +6,14 @@
 
 <PageTitle>Каталог процедур — DentalLocal</PageTitle>
 
-<MudText Typo="Typo.h5" Class="font-weight-bold mb-4" Color="Color.Primary">Справочники клиники</MudText>
+<PageHeader Title="Справочники клиники" Icon="@Icons.Material.Filled.MedicalServices" Subtitle="Процедуры и категории" />
 
-<MudTabs Elevation="2" Rounded="true" ApplyEffectsToInnerViews="true" Class="border-radius-12">
+<div class="glass-card pa-2">
+<MudTabs Elevation="0" Rounded="true" ApplyEffectsToInnerViews="true" PanelClass="pa-4">
     <!-- Procedures Tab -->
     <MudTabPanel Text="Услуги и Процедуры">
-        <MudCard Elevation="0" Class="pa-4">
-            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudStack Spacing="4">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                 <MudText Typo="Typo.h6">Каталог услуг</MudText>
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
                            OnClick="() => OpenProcedureCreateAsync()" Disabled="_loading">
@@ -20,12 +21,12 @@
                 </MudButton>
             </MudStack>
 
-            <MudStack Row="true" Class="mb-4">
+            <MudStack Row="true">
                 <MudCheckBox T="bool" @bind-Value="_includeInactive" Label="Показать неактивные" Color="Color.Primary"
                              CheckChanged="LoadDataAsync" />
             </MudStack>
 
-            <MudTable Items="_procedures" Hover="true" Loading="_loading" Elevation="0">
+            <MudTable Items="_procedures" Hover="true" Loading="_loading" Elevation="0" Class="glass-table">
                 <HeaderContent>
                     <MudTh>Название</MudTh>
                     <MudTh>Категория</MudTh>
@@ -54,16 +55,16 @@
                     </MudTd>
                 </RowTemplate>
                 <NoRecordsContent>
-                    <MudText>Процедуры не найдены.</MudText>
+                    <EmptyState Icon="@Icons.Material.Filled.MedicalServices" Title="Процедуры не найдены" />
                 </NoRecordsContent>
             </MudTable>
-        </MudCard>
+        </MudStack>
     </MudTabPanel>
 
     <!-- Categories Tab -->
     <MudTabPanel Text="Категории">
-        <MudCard Elevation="0" Class="pa-4">
-            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudStack Spacing="4">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                 <MudText Typo="Typo.h6">Категории процедур</MudText>
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
                            OnClick="() => OpenCategoryCreateAsync()" Disabled="_loading">
@@ -71,7 +72,7 @@
                 </MudButton>
             </MudStack>
 
-            <MudTable Items="_categories" Hover="true" Loading="_loading" Elevation="0">
+            <MudTable Items="_categories" Hover="true" Loading="_loading" Elevation="0" Class="glass-table">
                 <HeaderContent>
                     <MudTh>Название категории</MudTh>
                     <MudTh>Цвет для календаря</MudTh>
@@ -85,12 +86,13 @@
                     </MudTd>
                 </RowTemplate>
                 <NoRecordsContent>
-                    <MudText>Категории не найдены.</MudText>
+                    <EmptyState Icon="@Icons.Material.Filled.Category" Title="Категории не найдены" />
                 </NoRecordsContent>
             </MudTable>
-        </MudCard>
+        </MudStack>
     </MudTabPanel>
 </MudTabs>
+</div>
 
 @code {
     private List<ProcedureDto> _procedures = [];

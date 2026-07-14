@@ -12,6 +12,16 @@
     <link rel="icon" type="image/jpeg" href="logo.jpg" />
     <link href="DentalLocal.Client.styles.css" rel="stylesheet" />
     <script type="importmap"></script>
+    <script>
+        (function () {
+            try {
+                var mode = localStorage.getItem('dental-theme-mode') || 'light';
+                var accent = localStorage.getItem('dental-theme-accent') || 'blue';
+                document.documentElement.setAttribute('data-theme', mode);
+                document.documentElement.setAttribute('data-accent', accent);
+            } catch (e) { /* no-op */ }
+        })();
+    </script>
 </head>
 
 <body>
@@ -31,6 +41,8 @@
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
     <script src="js/download.js"></script>
+    <script src="js/theme.js"></script>
+    <script src="js/draftAutosave.js"></script>
 </body>
 
 </html>

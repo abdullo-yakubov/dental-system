@@ -6,12 +6,13 @@
 
 <PageTitle>Склад и Материалы — DentalLocal</PageTitle>
 
-<MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
-    <MudText Typo="Typo.h5" Class="font-weight-bold" Color="Color.Primary">Склад материалов</MudText>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="(() => OpenCreateDialogAsync())">
-        Добавить материал
-    </MudButton>
-</MudStack>
+<PageHeader Title="Склад материалов" Icon="@Icons.Material.Filled.Warehouse" Subtitle="Остатки, приход/расход, оповещения о низком запасе">
+    <Actions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="(() => OpenCreateDialogAsync())">
+            Добавить материал
+        </MudButton>
+    </Actions>
+</PageHeader>
 
 @if (_lowStockMaterials.Count > 0)
 {
@@ -23,13 +24,12 @@
     </MudAlert>
 }
 
-<MudStack Row="true" Spacing="4" Class="mb-4">
-    <MudTextField T="string" Label="Поиск материала" Adornment="Adornment.Start"
-                   AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true"
-                   DebounceInterval="300" ValueChanged="OnSearchChanged" Value="_search" Class="flex-grow-1" />
-</MudStack>
+<GlassCard Class="mb-4">
+    <SearchBox Value="_search" OnSearch="OnSearchChanged" Placeholder="Поиск материала" />
+</GlassCard>
 
-<MudTable Items="_materials" Hover="true" Loading="_isLoading" Elevation="2" Class="border-radius-12">
+<GlassCard Class="pa-0">
+<MudTable Items="_materials" Hover="true" Loading="_isLoading" Elevation="0" Class="glass-table">
     <HeaderContent>
         <MudTh>Название</MudTh>
         <MudTh>Ед. изм.</MudTh>
@@ -69,9 +69,10 @@
         </MudTd>
     </RowTemplate>
     <NoRecordsContent>
-        <MudText>Материалы на складе не найдены.</MudText>
+        <EmptyState Icon="@Icons.Material.Filled.Inventory2" Title="Материалы не найдены" Description="Измените поиск или добавьте новый материал." />
     </NoRecordsContent>
 </MudTable>
+</GlassCard>
 
 @code {
     private List<MaterialDto> _materials = [];

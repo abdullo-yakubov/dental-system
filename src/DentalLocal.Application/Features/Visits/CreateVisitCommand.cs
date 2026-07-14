@@ -51,6 +51,7 @@ public sealed class CreateVisitCommandHandler(IUnitOfWork unitOfWork, IMapper ma
             return Result.Failure<VisitDto>(Error.NotFound("Patient.NotFound", "Пациент не найден."));
 
         Visit visit;
+        var warranties = new List<Warranty>();
         try
         {
             visit = Visit.Create(
@@ -70,6 +71,12 @@ public sealed class CreateVisitCommandHandler(IUnitOfWork unitOfWork, IMapper ma
                     return Result.Failure<VisitDto>(Error.NotFound("Procedure.NotFound", $"Процедура {item.ProcedureId} не найдена."));
 
                 visit.AddItem(item.ProcedureId, item.ToothNumber, item.Price, item.Quantity, item.Comment);
+
+                if (procedure.WarrantyMonths > 0)
+                {
+                    warranties.Add(Warranty.Create(
+                        request.PatientId, visit.Id, item.ProcedureId, item.ToothNumber, request.VisitDate, procedure.WarrantyMonths, null));
+                }
             }
         }
         catch (ArgumentException ex)
@@ -82,6 +89,9 @@ public sealed class CreateVisitCommandHandler(IUnitOfWork unitOfWork, IMapper ma
             request.VisitTime.Hour, request.VisitTime.Minute, 0, TimeSpan.Zero));
 
         await unitOfWork.Visits.AddAsync(visit, cancellationToken);
+
+        foreach (var warranty in warranties)
+            await unitOfWork.Warranties.AddAsync(warranty, cancellationToken);
 
         if (visit.RemainingAmount > 0)
         {

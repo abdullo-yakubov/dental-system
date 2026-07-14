@@ -9,7 +9,7 @@ public class TreatmentItem : Entity, IImmutableRecord
     public Guid ProcedureId { get; private set; }
     public Procedure Procedure { get; private set; } = null!;
 
-    /// <summary>Номер зуба по FDI (11-18, 21-28, 31-38, 41-48) либо null, если процедура не привязана к зубу.</summary>
+    /// <summary>Номер зуба по FDI: постоянные 11-18/21-28/31-38/41-48, молочные 51-55/61-65/71-75/81-85. Либо null, если процедура не привязана к зубу.</summary>
     public short? ToothNumber { get; private set; }
 
     /// <summary>Снимок цены процедуры на момент лечения — не меняется при последующем изменении каталога.</summary>
@@ -21,6 +21,8 @@ public class TreatmentItem : Entity, IImmutableRecord
     private static readonly HashSet<short> ValidToothNumbers =
         Enumerable.Range(11, 8).Concat(Enumerable.Range(21, 8))
             .Concat(Enumerable.Range(31, 8)).Concat(Enumerable.Range(41, 8))
+            .Concat(Enumerable.Range(51, 5)).Concat(Enumerable.Range(61, 5))
+            .Concat(Enumerable.Range(71, 5)).Concat(Enumerable.Range(81, 5))
             .Select(n => (short)n)
             .ToHashSet();
 

@@ -9,6 +9,11 @@ public class Procedure : Entity
     public string Name { get; private set; } = null!;
     public string? Description { get; private set; }
     public decimal Price { get; private set; }
+    public decimal PriceMin { get; private set; }
+    public decimal PriceMax { get; private set; }
+    public string? Specialty { get; private set; }
+    public bool RequiresConsent { get; private set; }
+    public int WarrantyMonths { get; private set; }
     public int DurationMinutes { get; private set; }
     public bool IsActive { get; private set; }
     public bool RequiresTooth { get; private set; }
@@ -23,7 +28,12 @@ public class Procedure : Entity
         string? description,
         decimal price,
         int durationMinutes,
-        bool requiresTooth)
+        bool requiresTooth,
+        decimal priceMin = 0,
+        decimal priceMax = 0,
+        string? specialty = null,
+        bool requiresConsent = false,
+        int warrantyMonths = 0)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Название процедуры обязательно.", nameof(name));
@@ -40,13 +50,29 @@ public class Procedure : Entity
             Name = name.Trim(),
             Description = description,
             Price = price,
+            PriceMin = priceMin,
+            PriceMax = priceMax,
+            Specialty = specialty,
+            RequiresConsent = requiresConsent,
+            WarrantyMonths = warrantyMonths,
             DurationMinutes = durationMinutes,
             RequiresTooth = requiresTooth,
             IsActive = true,
         };
     }
 
-    public void Update(Guid categoryId, string name, string? description, decimal price, int durationMinutes, bool requiresTooth)
+    public void Update(
+        Guid categoryId,
+        string name,
+        string? description,
+        decimal price,
+        int durationMinutes,
+        bool requiresTooth,
+        decimal priceMin = 0,
+        decimal priceMax = 0,
+        string? specialty = null,
+        bool requiresConsent = false,
+        int warrantyMonths = 0)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Название процедуры обязательно.", nameof(name));
@@ -58,6 +84,11 @@ public class Procedure : Entity
         Name = name.Trim();
         Description = description;
         Price = price;
+        PriceMin = priceMin;
+        PriceMax = priceMax;
+        Specialty = specialty;
+        RequiresConsent = requiresConsent;
+        WarrantyMonths = warrantyMonths;
         DurationMinutes = durationMinutes;
         RequiresTooth = requiresTooth;
         Touch();

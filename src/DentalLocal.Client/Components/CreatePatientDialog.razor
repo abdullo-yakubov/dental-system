@@ -1,5 +1,7 @@
 @inject ApiClient Api
 @inject ISnackbar Snackbar
+@inject DraftAutosaveService Drafts
+@implements IAsyncDisposable
 
 <MudDialog>
     <TitleContent>@(Patient == null ? "Новый пациент" : "Редактировать пациента")</TitleContent>
@@ -45,8 +47,13 @@
     private string? _chronicDiseases;
     private string? _errorMessage;
     private bool _isBusy;
+    private DraftAutosaveTimer? _autosaveTimer;
+    private const string DraftKey = "new-patient";
 
-    protected override void OnParametersSet()
+    private record Draft(string LastName, string FirstName, string? MiddleName, Gender Gender,
+        DateTime? BirthDate, string Phone, string? Address, string? Allergies, string? ChronicDiseases);
+
+    protected override async Task OnParametersSetAsync()
     {
         if (Patient != null)
         {
@@ -59,10 +66,44 @@
             _address = Patient.Address;
             _allergies = Patient.Allergies;
             _chronicDiseases = Patient.ChronicDiseases;
+            return;
         }
+
+        // Черновик восстанавливается только для формы нового пациента (раздел 10 ТЗ: autosave форм).
+        var draft = await Drafts.LoadAsync<Draft>(DraftKey);
+        if (draft is not null)
+        {
+            _lastName = draft.LastName;
+            _firstName = draft.FirstName;
+            _middleName = draft.MiddleName;
+            _gender = draft.Gender;
+            _birthDate = draft.BirthDate;
+            _phone = draft.Phone;
+            _address = draft.Address;
+            _allergies = draft.Allergies;
+            _chronicDiseases = draft.ChronicDiseases;
+            Snackbar.Add("Восстановлен несохранённый черновик пациента.", Severity.Info);
+        }
+
+        _autosaveTimer = new DraftAutosaveTimer(SaveDraftAsync);
+    }
+
+    private Task SaveDraftAsync()
+    {
+        if (Patient != null)
+            return Task.CompletedTask;
+
+        var draft = new Draft(_lastName, _firstName, _middleName, _gender, _birthDate, _phone, _address, _allergies, _chronicDiseases);
+        return Drafts.SaveAsync(DraftKey, draft);
     }
 
     private void Cancel() => MudDialog.Cancel();
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_autosaveTimer is not null)
+            await _autosaveTimer.DisposeAsync();
+    }
 
     private async Task SubmitAsync()
     {
@@ -95,6 +136,7 @@
                     _phone, null, _address, _allergies, _chronicDiseases, null, null);
 
                 var created = await Api.CreatePatientAsync(request);
+                await Drafts.ClearAsync(DraftKey);
                 Snackbar.Add($"Пациент «{created.FullName}» добавлен.", Severity.Success);
                 MudDialog.Close(DialogResult.Ok(created));
             }

@@ -23,6 +23,9 @@ public static class DependencyInjection
         services.AddScoped<IDebtRepository, DebtRepository>();
         services.AddScoped<IToothStateRepository, ToothStateRepository>();
         services.AddScoped<IToothStateHistoryRepository, ToothStateHistoryRepository>();
+        services.AddScoped<IToothSurfaceHistoryRepository, ToothSurfaceHistoryRepository>();
+        services.AddScoped<IIcd10CodeRepository, Icd10CodeRepository>();
+        services.AddScoped<IIcd11CodeRepository, Icd11CodeRepository>();
         services.AddScoped<IPatientFileRepository, PatientFileRepository>();
         services.AddScoped<IAppointmentRepository, AppointmentRepository>();
         services.AddScoped<IBackupRecordRepository, BackupRecordRepository>();
@@ -32,6 +35,11 @@ public static class DependencyInjection
         services.AddScoped<IMaterialUsageRepository, MaterialUsageRepository>();
         services.AddScoped<IReminderRepository, ReminderRepository>();
         services.AddScoped<ITreatmentPlanRepository, TreatmentPlanRepository>();
+        services.AddScoped<ICurrencyRepository, CurrencyRepository>();
+        services.AddScoped<IDiscountHistoryRepository, DiscountHistoryRepository>();
+        services.AddScoped<IWaitingListRepository, WaitingListRepository>();
+        services.AddScoped<IPrescriptionRepository, PrescriptionRepository>();
+        services.AddScoped<IWarrantyRepository, WarrantyRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<DentalLocal.Application.Interfaces.IDashboardService, Services.DashboardService>();
 

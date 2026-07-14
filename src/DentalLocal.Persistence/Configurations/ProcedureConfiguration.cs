@@ -22,6 +22,23 @@ public class ProcedureConfiguration : IEntityTypeConfiguration<Procedure>
             .HasColumnType("numeric(12,2)")
             .IsRequired();
 
+        builder.Property(p => p.PriceMin)
+            .HasColumnType("numeric(12,2)")
+            .HasDefaultValue(0);
+
+        builder.Property(p => p.PriceMax)
+            .HasColumnType("numeric(12,2)")
+            .HasDefaultValue(0);
+
+        builder.Property(p => p.Specialty)
+            .HasMaxLength(100);
+
+        builder.Property(p => p.RequiresConsent)
+            .HasDefaultValue(false);
+
+        builder.Property(p => p.WarrantyMonths)
+            .HasDefaultValue(0);
+
         builder.Property(p => p.DurationMinutes)
             .HasDefaultValue(30)
             .IsRequired();

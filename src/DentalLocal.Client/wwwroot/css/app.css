@@ -119,13 +119,26 @@ code {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    background: linear-gradient(135deg, #eef3fb 0%, #dbe6f6 100%);
+    background: linear-gradient(135deg, var(--app-page-bg-1) 0%, var(--app-page-bg-2) 100%);
 }
 
 .login-card {
-    width: 340px;
-    border-radius: 16px !important;
-    backdrop-filter: blur(6px);
+    width: 360px;
+    border-radius: var(--app-radius-lg) !important;
+    background: var(--app-glass-bg) !important;
+    backdrop-filter: blur(var(--app-glass-blur));
+    -webkit-backdrop-filter: blur(var(--app-glass-blur));
+    border: 1px solid var(--app-glass-border);
+    box-shadow: var(--app-glass-shadow);
+}
+
+.login-keypad-btn {
+    border-radius: var(--app-radius-sm) !important;
+    transition: transform var(--app-transition);
+}
+
+.login-keypad-btn:active {
+    transform: scale(0.94);
 }
 
 .shake {
@@ -247,4 +260,167 @@ code {
 .legend-text {
     font-size: 0.85rem;
     color: var(--mud-palette-text-secondary);
+}
+
+/* ── Design tokens (тема/акцент читаются из data-theme / data-accent на <html>) ─────── */
+:root {
+    --app-radius-sm: 10px;
+    --app-radius-md: 14px;
+    --app-radius-lg: 20px;
+    --app-glass-blur: 16px;
+    --app-transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:root, [data-theme="light"] {
+    --app-glass-bg: rgba(255, 255, 255, 0.6);
+    --app-glass-border: rgba(255, 255, 255, 0.35);
+    --app-glass-shadow: 0 8px 32px rgba(20, 30, 60, 0.10);
+    --app-page-bg-1: #eef3fb;
+    --app-page-bg-2: #dbe6f6;
+    --app-skeleton-base: #e6ebf3;
+    --app-skeleton-shine: #f5f8fc;
+}
+
+[data-theme="dark"] {
+    --app-glass-bg: rgba(27, 32, 44, 0.55);
+    --app-glass-border: rgba(255, 255, 255, 0.08);
+    --app-glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    --app-page-bg-1: #10131b;
+    --app-page-bg-2: #171c27;
+    --app-skeleton-base: #1f2530;
+    --app-skeleton-shine: #2a3140;
+}
+
+html, body {
+    background: linear-gradient(160deg, var(--app-page-bg-1) 0%, var(--app-page-bg-2) 100%);
+    transition: background var(--app-transition);
+}
+
+* {
+    scrollbar-width: thin;
+}
+
+/* ── Glassmorphism utility classes ───────────────────────────────────────── */
+.glass-card, .glass-panel {
+    background: var(--app-glass-bg);
+    backdrop-filter: blur(var(--app-glass-blur));
+    -webkit-backdrop-filter: blur(var(--app-glass-blur));
+    border: 1px solid var(--app-glass-border);
+    border-radius: var(--app-radius-md);
+    box-shadow: var(--app-glass-shadow);
+    transition: transform var(--app-transition), box-shadow var(--app-transition), background var(--app-transition);
+}
+
+/* MudGrid внутри вкладки применяет отрицательный margin для компенсации gutter у MudItem;
+   без clip он "протекает" вверх и перекрывает клики по заголовкам соседних вкладок (MudTabs). */
+.mud-tabs-panels {
+    overflow: hidden;
+}
+
+.glass-card:hover {
+    transform: translateY(-2px);
+}
+
+.app-bar-glass {
+    background: var(--app-glass-bg) !important;
+    backdrop-filter: blur(var(--app-glass-blur));
+    -webkit-backdrop-filter: blur(var(--app-glass-blur));
+    border-bottom: 1px solid var(--app-glass-border);
+    color: var(--mud-palette-text-primary) !important;
+}
+
+.app-drawer-glass {
+    background: var(--app-glass-bg) !important;
+    backdrop-filter: blur(var(--app-glass-blur));
+    -webkit-backdrop-filter: blur(var(--app-glass-blur));
+    border-right: 1px solid var(--app-glass-border);
+}
+
+.hover-card {
+    transition: transform var(--app-transition), box-shadow var(--app-transition);
+}
+
+.hover-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--mud-elevation-8);
+}
+
+.border-radius-12 {
+    border-radius: 12px !important;
+}
+
+/* ── Page enter animation ─────────────────────────────────────────────────── */
+.page-fade-in {
+    animation: page-fade-in 260ms ease-out;
+}
+
+@keyframes page-fade-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Skeleton loading ─────────────────────────────────────────────────────── */
+.skeleton {
+    position: relative;
+    overflow: hidden;
+    background: var(--app-skeleton-base);
+    border-radius: var(--app-radius-sm);
+}
+
+.skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, var(--app-skeleton-shine), transparent);
+    animation: skeleton-shimmer 1.4s infinite;
+}
+
+@keyframes skeleton-shimmer {
+    100% { transform: translateX(100%); }
+}
+
+.skeleton-text {
+    height: 14px;
+    margin-bottom: 8px;
+    width: 100%;
+}
+
+.skeleton-title {
+    height: 22px;
+    width: 40%;
+    margin-bottom: 14px;
+}
+
+.skeleton-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+}
+
+.skeleton-card {
+    height: 96px;
+    border-radius: var(--app-radius-md);
+}
+
+/* ── Empty state ──────────────────────────────────────────────────────────── */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--mud-palette-text-secondary);
+}
+
+.empty-state .mud-icon-root {
+    opacity: 0.35;
+    margin-bottom: 12px;
+}
+
+.glass-table .mud-table-container,
+.glass-table .mud-table-toolbar,
+.glass-table table {
+    background: transparent !important;
 }

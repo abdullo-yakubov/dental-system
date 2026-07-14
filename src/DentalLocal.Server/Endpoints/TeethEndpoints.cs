@@ -41,5 +41,26 @@ public static class TeethEndpoints
                 var result = await sender.Send(command, ct);
                 return result.ToApiResult();
             }).WithTags("Teeth");
+
+        // POST /api/v1/patients/{id}/teeth/{number}/surfaces
+        app.MapPost($"{ApiRoutes.Patients.Base}/{{patientId:guid}}/teeth/{{toothNumber:int}}/surfaces",
+            async (Guid patientId, short toothNumber, AddToothSurfaceRecordRequest request, ISender sender, CancellationToken ct) =>
+            {
+                var command = new AddToothSurfaceRecordCommand(
+                    patientId, toothNumber, request.SurfaceCode, request.Status,
+                    request.Diagnosis, request.Icd10Code, request.Icd11Code,
+                    request.VisitId, request.DoctorComment);
+
+                var result = await sender.Send(command, ct);
+                return result.ToApiResult();
+            }).WithTags("Teeth");
+
+        // GET /api/v1/patients/{id}/teeth/{number}/surface-history
+        app.MapGet($"{ApiRoutes.Patients.Base}/{{patientId:guid}}/teeth/{{toothNumber:int}}/surface-history",
+            async (Guid patientId, short toothNumber, ISender sender, CancellationToken ct) =>
+            {
+                var result = await sender.Send(new GetSurfaceHistoryQuery(patientId, toothNumber), ct);
+                return result.ToApiResult();
+            }).WithTags("Teeth");
     }
 }

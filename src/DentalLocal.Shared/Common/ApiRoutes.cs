@@ -45,6 +45,12 @@ public static class ApiRoutes
         public const string Base = $"{Prefix}/teeth";
     }
 
+    public static class Icd
+    {
+        public const string Icd10 = $"{Prefix}/icd10";
+        public const string Icd11 = $"{Prefix}/icd11";
+    }
+
     public static class Debts
     {
         public const string Base = $"{Prefix}/debts";
@@ -103,5 +109,30 @@ public static class ApiRoutes
     public static class System
     {
         public const string Health = $"{Prefix}/system/health";
+    }
+
+    public static class Currencies
+    {
+        public const string Base = $"{Prefix}/currencies";
+    }
+
+    public static class Discounts
+    {
+        public const string Base = $"{Prefix}/discounts";
+    }
+
+    public static class WaitingList
+    {
+        public const string Base = $"{Prefix}/waiting-list";
+    }
+
+    public static class Prescriptions
+    {
+        public const string Base = $"{Prefix}/prescriptions";
+    }
+
+    public static class Warranties
+    {
+        public const string Base = $"{Prefix}/warranties";
     }
 }

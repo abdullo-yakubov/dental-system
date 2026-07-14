@@ -19,6 +19,8 @@ public class PatientFileConfiguration : IEntityTypeConfiguration<PatientFile>
         builder.Property(f => f.StoredPath).HasMaxLength(500).IsRequired();
         builder.Property(f => f.UploadedAt).IsRequired();
         builder.Property(f => f.Description).HasColumnType("text");
+        builder.Property(f => f.Sha256Hash).HasMaxLength(64);
+        builder.Property(f => f.BeforeAfterType).HasMaxLength(20);
 
         builder.HasOne(f => f.Patient)
             .WithMany()

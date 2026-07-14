@@ -7,25 +7,27 @@
 
 <PageTitle>Долги и Оплаты — DentalLocal</PageTitle>
 
-<MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
-    <MudText Typo="Typo.h5">Должники</MudText>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenCreatePatientDialogAsync">
-        Добавить пациента
-    </MudButton>
-</MudStack>
+<PageHeader Title="Должники" Icon="@Icons.Material.Filled.MoneyOff" Subtitle="Задолженности пациентов и их погашение">
+    <Actions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenCreatePatientDialogAsync">
+            Добавить пациента
+        </MudButton>
+    </Actions>
+</PageHeader>
 
-<MudStack Row="true" Spacing="4" Class="mb-4">
-    <MudTextField T="string" Label="Поиск по ФИО пациента или телефону" Adornment="Adornment.Start"
-                   AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true"
-                   DebounceInterval="300" ValueChanged="OnSearchChanged" Value="_search" Class="flex-grow-1" />
-    <MudSelect T="DebtStatus?" Value="_status" ValueChanged="OnStatusChanged" Label="Статус долга" Class="flex-grow-0" Style="width: 200px;">
-        <MudSelectItem Value="((DebtStatus?)null)">Все долги</MudSelectItem>
-        <MudSelectItem Value="((DebtStatus?)DebtStatus.Open)">Открытые</MudSelectItem>
-        <MudSelectItem Value="((DebtStatus?)DebtStatus.Closed)">Погашенные</MudSelectItem>
-    </MudSelect>
-</MudStack>
+<GlassCard Class="mb-4">
+    <MudStack Row="true" Spacing="4" AlignItems="AlignItems.Center">
+        <SearchBox Value="_search" OnSearch="OnSearchChanged" Placeholder="Поиск по ФИО пациента или телефону" Class="flex-grow-1" />
+        <MudSelect T="DebtStatus?" Value="_status" ValueChanged="OnStatusChanged" Label="Статус долга" Class="flex-grow-0" Style="width: 200px;">
+            <MudSelectItem Value="((DebtStatus?)null)">Все долги</MudSelectItem>
+            <MudSelectItem Value="((DebtStatus?)DebtStatus.Open)">Открытые</MudSelectItem>
+            <MudSelectItem Value="((DebtStatus?)DebtStatus.Closed)">Погашенные</MudSelectItem>
+        </MudSelect>
+    </MudStack>
+</GlassCard>
 
-<MudTable ServerData="LoadDebtsAsync" @ref="_table" Hover="true" Loading="_isLoading">
+<GlassCard Class="pa-0">
+<MudTable ServerData="LoadDebtsAsync" @ref="_table" Hover="true" Loading="_isLoading" Elevation="0" Class="glass-table">
     <HeaderContent>
         <MudTh>Пациент</MudTh>
         <MudTh>Телефон</MudTh>
@@ -72,12 +74,13 @@
         </MudTd>
     </RowTemplate>
     <NoRecordsContent>
-        <MudText>Долги не найдены.</MudText>
+        <EmptyState Icon="@Icons.Material.Filled.CheckCircleOutline" Title="Долги не найдены" Description="Все пациенты рассчитались, либо измените фильтр." />
     </NoRecordsContent>
     <PagerContent>
         <MudTablePager RowsPerPageString="На странице:" InfoFormat="{first_item}-{last_item} из {all_items}" />
     </PagerContent>
 </MudTable>
+</GlassCard>
 
 @code {
     private MudTable<DebtListItemDto>? _table;

@@ -65,6 +65,39 @@
                 </MudStack>
 
                 <MudExpansionPanels Elevation="0">
+                    <MudExpansionPanel Text="Назначения" @bind-Expanded="_prescriptionsExpanded">
+                        <MudStack Spacing="2">
+                            @foreach (var p in _prescriptions)
+                            {
+                                <div class="d-flex justify-space-between align-center py-1">
+                                    <div>
+                                        <MudText Typo="Typo.body2" Class="font-weight-bold">@p.MedicationName — @p.Dosage</MudText>
+                                        @if (!string.IsNullOrWhiteSpace(p.Instructions))
+                                        {
+                                            <MudText Typo="Typo.caption" Class="text-secondary">@p.Instructions</MudText>
+                                        }
+                                    </div>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="@(() => DeletePrescriptionAsync(p.Id))" />
+                                </div>
+                            }
+                            <MudGrid>
+                                <MudItem xs="4">
+                                    <MudTextField T="string" @bind-Value="_newMedication" Label="Лекарство" Variant="Variant.Outlined" />
+                                </MudItem>
+                                <MudItem xs="3">
+                                    <MudTextField T="string" @bind-Value="_newDosage" Label="Дозировка" Variant="Variant.Outlined" />
+                                </MudItem>
+                                <MudItem xs="3">
+                                    <MudTextField T="string" @bind-Value="_newInstructions" Label="Инструкции" Variant="Variant.Outlined" />
+                                </MudItem>
+                                <MudItem xs="2" Class="d-flex align-center">
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="AddPrescriptionAsync" Disabled="_isBusy">
+                                        Добавить
+                                    </MudButton>
+                                </MudItem>
+                            </MudGrid>
+                        </MudStack>
+                    </MudExpansionPanel>
                     <MudExpansionPanel Text="Напомнить" @bind-Expanded="_reminderExpanded">
                         <MudStack Spacing="2">
                             <MudTextField @bind-Value="_reminderTitle" Label="Текст напоминания" Variant="Variant.Outlined" />
@@ -118,6 +151,12 @@
     private string _reminderTitle = "Напомнить пациенту о визите";
     private DateTime? _reminderDate = DateTime.Today.AddDays(1);
 
+    private bool _prescriptionsExpanded;
+    private List<PrescriptionDto> _prescriptions = [];
+    private string _newMedication = string.Empty;
+    private string _newDosage = string.Empty;
+    private string _newInstructions = string.Empty;
+
     private string WhatsAppLink => $"https://wa.me/{new string(_patientPhone.Where(char.IsDigit).ToArray())}";
 
     private Color StatusColor => _visit?.Status switch
@@ -149,6 +188,8 @@
 
             var patient = await Api.GetPatientAsync(_visit.PatientId);
             _patientPhone = patient.Phone;
+
+            _prescriptions = (await Api.GetVisitPrescriptionsAsync(_visit.Id)).ToList();
         }
         catch (ApiException ex)
         {
@@ -247,6 +288,49 @@
         finally
         {
             _isBusy = false;
+        }
+    }
+
+    private async Task AddPrescriptionAsync()
+    {
+        if (_visit is null || string.IsNullOrWhiteSpace(_newMedication) || string.IsNullOrWhiteSpace(_newDosage))
+        {
+            Snackbar.Add("Укажите название и дозировку.", Severity.Warning);
+            return;
+        }
+
+        _isBusy = true;
+        try
+        {
+            var request = new CreatePrescriptionRequest(_newMedication, _newDosage,
+                string.IsNullOrWhiteSpace(_newInstructions) ? null : _newInstructions);
+            await Api.CreatePrescriptionAsync(_visit.Id, request);
+            _prescriptions = (await Api.GetVisitPrescriptionsAsync(_visit.Id)).ToList();
+            _newMedication = string.Empty;
+            _newDosage = string.Empty;
+            _newInstructions = string.Empty;
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task DeletePrescriptionAsync(Guid id)
+    {
+        if (_visit is null) return;
+        try
+        {
+            await Api.DeletePrescriptionAsync(id);
+            _prescriptions = (await Api.GetVisitPrescriptionsAsync(_visit.Id)).ToList();
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add(ex.Message, Severity.Error);
         }
     }
 

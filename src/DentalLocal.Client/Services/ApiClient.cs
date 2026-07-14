@@ -13,6 +13,12 @@ using DentalLocal.Shared.Contracts.Backups;
 using DentalLocal.Shared.Contracts.Settings;
 using DentalLocal.Shared.Contracts.Reminders;
 using DentalLocal.Shared.Contracts.TreatmentPlans;
+using DentalLocal.Shared.Contracts.Icd;
+using DentalLocal.Shared.Contracts.Currencies;
+using DentalLocal.Shared.Contracts.Discounts;
+using DentalLocal.Shared.Contracts.WaitingList;
+using DentalLocal.Shared.Contracts.Prescriptions;
+using DentalLocal.Shared.Contracts.Warranties;
 using DentalLocal.Shared.Enums;
 
 namespace DentalLocal.Client.Services;
@@ -186,6 +192,18 @@ public sealed class ApiClient(HttpClient http)
     public Task<ToothStateDto> UpdateToothAsync(Guid patientId, short toothNumber, UpdateToothRequest request, CancellationToken ct = default) =>
         SendAsync<ToothStateDto>(() => http.PutAsJsonAsync($"{ApiRoutes.Patients.Base}/{patientId}/teeth/{toothNumber}", request, ct));
 
+    public Task<ToothSurfaceHistoryDto> AddToothSurfaceRecordAsync(Guid patientId, short toothNumber, AddToothSurfaceRecordRequest request, CancellationToken ct = default) =>
+        SendAsync<ToothSurfaceHistoryDto>(() => http.PostAsJsonAsync($"{ApiRoutes.Patients.Base}/{patientId}/teeth/{toothNumber}/surfaces", request, ct));
+
+    public Task<IReadOnlyList<ToothTimelineEntryDto>> GetToothSurfaceHistoryAsync(Guid patientId, short toothNumber, CancellationToken ct = default) =>
+        SendAsync<IReadOnlyList<ToothTimelineEntryDto>>(() => http.GetAsync($"{ApiRoutes.Patients.Base}/{patientId}/teeth/{toothNumber}/surface-history", ct));
+
+    public Task<IReadOnlyList<IcdCodeDto>> SearchIcd10Async(string? search, CancellationToken ct = default) =>
+        SendAsync<IReadOnlyList<IcdCodeDto>>(() => http.GetAsync($"{ApiRoutes.Icd.Icd10}?search={Uri.EscapeDataString(search ?? string.Empty)}", ct));
+
+    public Task<IReadOnlyList<IcdCodeDto>> SearchIcd11Async(string? search, CancellationToken ct = default) =>
+        SendAsync<IReadOnlyList<IcdCodeDto>>(() => http.GetAsync($"{ApiRoutes.Icd.Icd11}?search={Uri.EscapeDataString(search ?? string.Empty)}", ct));
+
     // ── Payments & Debts ─────────────────────────────────────────────────────
 
     public Task<PaymentDto> RegisterPaymentAsync(RegisterPaymentRequest request, CancellationToken ct = default) =>
@@ -270,6 +288,56 @@ public sealed class ApiClient(HttpClient http)
 
     public Task<PagedResult<AuditLogDto>> GetAuditLogsAsync(int page, int pageSize, CancellationToken ct = default) =>
         SendAsync<PagedResult<AuditLogDto>>(() => http.GetAsync($"{ApiRoutes.AuditLogs.Base}?page={page}&pageSize={pageSize}", ct));
+
+    // ── Currencies ───────────────────────────────────────────────────────────
+
+    public Task<IReadOnlyList<CurrencyDto>> GetCurrenciesAsync(CancellationToken ct = default) =>
+        SendAsync<IReadOnlyList<CurrencyDto>>(() => http.GetAsync(ApiRoutes.Currencies.Base, ct));
+
+    public Task<CurrencyDto> CreateCurrencyAsync(CreateCurrencyRequest request, CancellationToken ct = default) =>
+        SendAsync<CurrencyDto>(() => http.PostAsJsonAsync(ApiRoutes.Currencies.Base, request, ct));
+
+    public Task<CurrencyDto> UpdateCurrencyAsync(Guid id, UpdateCurrencyRequest request, CancellationToken ct = default) =>
+        SendAsync<CurrencyDto>(() => http.PutAsJsonAsync($"{ApiRoutes.Currencies.Base}/{id}", request, ct));
+
+    // ── Discounts ────────────────────────────────────────────────────────────
+
+    public Task<IReadOnlyList<DiscountHistoryDto>> GetPatientDiscountHistoryAsync(Guid patientId, CancellationToken ct = default) =>
+        SendAsync<IReadOnlyList<DiscountHistoryDto>>(() => http.GetAsync($"{ApiRoutes.Discounts.Base}/patients/{patientId}", ct));
+
+    public Task<DiscountHistoryDto> ApplyDiscountAsync(Guid patientId, ApplyDiscountRequest request, CancellationToken ct = default) =>
+        SendAsync<DiscountHistoryDto>(() => http.PostAsJsonAsync($"{ApiRoutes.Discounts.Base}/patients/{patientId}", request, ct));
+
+    // ── Waiting list ─────────────────────────────────────────────────────────
+
+    public Task<IReadOnlyList<WaitingListEntryDto>> GetWaitingListAsync(string? status = null, CancellationToken ct = default) =>
+        SendAsync<IReadOnlyList<WaitingListEntryDto>>(() =>
+            http.GetAsync($"{ApiRoutes.WaitingList.Base}{(status is null ? "" : $"?status={Uri.EscapeDataString(status)}")}", ct));
+
+    public Task<WaitingListEntryDto> CreateWaitingListEntryAsync(CreateWaitingListEntryRequest request, CancellationToken ct = default) =>
+        SendAsync<WaitingListEntryDto>(() => http.PostAsJsonAsync(ApiRoutes.WaitingList.Base, request, ct));
+
+    public Task<WaitingListEntryDto> UpdateWaitingListStatusAsync(Guid id, string status, CancellationToken ct = default) =>
+        SendAsync<WaitingListEntryDto>(() => http.PutAsJsonAsync($"{ApiRoutes.WaitingList.Base}/{id}/status", new UpdateWaitingListStatusRequest(status), ct));
+
+    // ── Prescriptions ────────────────────────────────────────────────────────
+
+    public Task<IReadOnlyList<PrescriptionDto>> GetVisitPrescriptionsAsync(Guid visitId, CancellationToken ct = default) =>
+        SendAsync<IReadOnlyList<PrescriptionDto>>(() => http.GetAsync($"{ApiRoutes.Prescriptions.Base}/visits/{visitId}", ct));
+
+    public Task<PrescriptionDto> CreatePrescriptionAsync(Guid visitId, CreatePrescriptionRequest request, CancellationToken ct = default) =>
+        SendAsync<PrescriptionDto>(() => http.PostAsJsonAsync($"{ApiRoutes.Prescriptions.Base}/visits/{visitId}", request, ct));
+
+    public Task DeletePrescriptionAsync(Guid id, CancellationToken ct = default) =>
+        SendVoidAsync(() => http.DeleteAsync($"{ApiRoutes.Prescriptions.Base}/{id}", ct));
+
+    // ── Warranties ───────────────────────────────────────────────────────────
+
+    public Task<IReadOnlyList<WarrantyDto>> GetPatientWarrantiesAsync(Guid patientId, CancellationToken ct = default) =>
+        SendAsync<IReadOnlyList<WarrantyDto>>(() => http.GetAsync($"{ApiRoutes.Warranties.Base}/patients/{patientId}", ct));
+
+    public Task<IReadOnlyList<WarrantyDto>> GetToothWarrantiesAsync(Guid patientId, short toothNumber, CancellationToken ct = default) =>
+        SendAsync<IReadOnlyList<WarrantyDto>>(() => http.GetAsync($"{ApiRoutes.Warranties.Base}/patients/{patientId}/teeth/{toothNumber}", ct));
 
     private static async Task<T> SendAsync<T>(Func<Task<HttpResponseMessage>> send)
     {

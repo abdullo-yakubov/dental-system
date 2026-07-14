@@ -1,0 +1,21 @@
+@* Единое состояние "нет данных" *@
+
+<div class="empty-state">
+    <MudIcon Icon="@Icon" Size="Size.Large" />
+    <MudText Typo="Typo.subtitle1" Class="font-weight-bold">@Title</MudText>
+    @if (!string.IsNullOrWhiteSpace(Description))
+    {
+        <MudText Typo="Typo.body2" Class="mb-3">@Description</MudText>
+    }
+    @if (ActionContent is not null)
+    {
+        <div class="mt-2">@ActionContent</div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Icon { get; set; } = MudBlazor.Icons.Material.Filled.Inbox;
+    [Parameter] public string Title { get; set; } = "Нет данных";
+    [Parameter] public string? Description { get; set; }
+    [Parameter] public RenderFragment? ActionContent { get; set; }
+}

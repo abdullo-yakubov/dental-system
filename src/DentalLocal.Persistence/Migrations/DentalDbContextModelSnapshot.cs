@@ -223,6 +223,59 @@ namespace DentalLocal.Persistence.Migrations
                     b.ToTable("backup_records", "dental");
                 });
 
+            modelBuilder.Entity("DentalLocal.Domain.Entities.Currency", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<decimal>("ExchangeRateToBase")
+                        .HasColumnType("numeric(12,4)")
+                        .HasColumnName("exchange_rate_to_base");
+
+                    b.Property<bool>("IsBase")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_base");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("symbol");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_currencies");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_currencies_code");
+
+                    b.ToTable("currencies", "dental");
+                });
+
             modelBuilder.Entity("DentalLocal.Domain.Entities.Debt", b =>
                 {
                     b.Property<Guid>("Id")
@@ -280,6 +333,186 @@ namespace DentalLocal.Persistence.Migrations
                         .HasDatabaseName("ix_debts_visit_id");
 
                     b.ToTable("debts", "dental");
+                });
+
+            modelBuilder.Entity("DentalLocal.Domain.Entities.DiscountHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("amount");
+
+                    b.Property<DateTimeOffset>("AppliedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("applied_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DiscountType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("discount_type");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("patient_id");
+
+                    b.Property<decimal>("Percent")
+                        .HasColumnType("numeric(5,2)")
+                        .HasColumnName("percent");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)")
+                        .HasColumnName("reason");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("VisitId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("visit_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_discount_history");
+
+                    b.HasIndex("PatientId")
+                        .HasDatabaseName("ix_discount_history_patient_id");
+
+                    b.HasIndex("VisitId")
+                        .HasDatabaseName("ix_discount_history_visit_id");
+
+                    b.ToTable("discount_history", "dental");
+                });
+
+            modelBuilder.Entity("DentalLocal.Domain.Entities.DoctorSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<int>("DayOfWeek")
+                        .HasColumnType("integer")
+                        .HasColumnName("day_of_week");
+
+                    b.Property<string>("DoctorName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("doctor_name");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time")
+                        .HasColumnName("end_time");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time")
+                        .HasColumnName("start_time");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_doctor_schedules");
+
+                    b.HasIndex("DoctorName", "DayOfWeek")
+                        .HasDatabaseName("ix_doctor_schedules_doctor_name_day_of_week");
+
+                    b.ToTable("doctor_schedules", "dental");
+                });
+
+            modelBuilder.Entity("DentalLocal.Domain.Entities.Icd10Code", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_icd10_codes");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_icd10_codes_code");
+
+                    b.ToTable("icd10_codes", "dental");
+                });
+
+            modelBuilder.Entity("DentalLocal.Domain.Entities.Icd11Code", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("code");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("description");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_icd11_codes");
+
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("ix_icd11_codes_code");
+
+                    b.ToTable("icd11_codes", "dental");
                 });
 
             modelBuilder.Entity("DentalLocal.Domain.Entities.Material", b =>
@@ -478,6 +711,11 @@ namespace DentalLocal.Persistence.Migrations
                         .HasColumnName("search_vector")
                         .HasComputedColumnSql("to_tsvector('russian', coalesce(last_name, '') || ' ' || coalesce(first_name, '') || ' ' || coalesce(middle_name, '') || ' ' || coalesce(phone, '') || ' ' || coalesce(address, ''))", true);
 
+                    b.Property<string>("Source")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("source");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
@@ -488,6 +726,12 @@ namespace DentalLocal.Persistence.Migrations
                     b.HasIndex("CardNumber")
                         .IsUnique()
                         .HasDatabaseName("ix_patients_card_number");
+
+                    b.HasIndex("FirstName")
+                        .HasDatabaseName("ix_patients_first_name_trgm");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("FirstName"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("FirstName"), new[] { "gin_trgm_ops" });
 
                     b.HasIndex("IsArchived")
                         .HasDatabaseName("ix_patients_not_archived")
@@ -500,7 +744,10 @@ namespace DentalLocal.Persistence.Migrations
                     NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("LastName"), new[] { "gin_trgm_ops" });
 
                     b.HasIndex("Phone")
-                        .HasDatabaseName("ix_patients_phone");
+                        .HasDatabaseName("ix_patients_phone_trgm");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Phone"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Phone"), new[] { "gin_trgm_ops" });
 
                     b.HasIndex("PhotoFileId")
                         .HasDatabaseName("ix_patients_photo_file_id");
@@ -522,6 +769,11 @@ namespace DentalLocal.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
+
+                    b.Property<string>("BeforeAfterType")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("before_after_type");
 
                     b.Property<string>("ContentType")
                         .IsRequired()
@@ -550,6 +802,11 @@ namespace DentalLocal.Persistence.Migrations
                     b.Property<Guid>("PatientId")
                         .HasColumnType("uuid")
                         .HasColumnName("patient_id");
+
+                    b.Property<string>("Sha256Hash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("sha256hash");
 
                     b.Property<long>("SizeBytes")
                         .HasColumnType("bigint")
@@ -643,6 +900,50 @@ namespace DentalLocal.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("DentalLocal.Domain.Entities.Prescription", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Dosage")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("dosage");
+
+                    b.Property<string>("Instructions")
+                        .HasColumnType("text")
+                        .HasColumnName("instructions");
+
+                    b.Property<string>("MedicationName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("medication_name");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("VisitId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("visit_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_prescriptions");
+
+                    b.HasIndex("VisitId")
+                        .HasDatabaseName("ix_prescriptions_visit_id");
+
+                    b.ToTable("prescriptions", "dental");
+                });
+
             modelBuilder.Entity("DentalLocal.Domain.Entities.Procedure", b =>
                 {
                     b.Property<Guid>("Id")
@@ -684,15 +985,44 @@ namespace DentalLocal.Persistence.Migrations
                         .HasColumnType("numeric(12,2)")
                         .HasColumnName("price");
 
+                    b.Property<decimal>("PriceMax")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(12,2)")
+                        .HasDefaultValue(0m)
+                        .HasColumnName("price_max");
+
+                    b.Property<decimal>("PriceMin")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(12,2)")
+                        .HasDefaultValue(0m)
+                        .HasColumnName("price_min");
+
+                    b.Property<bool>("RequiresConsent")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("requires_consent");
+
                     b.Property<bool>("RequiresTooth")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
                         .HasDefaultValue(false)
                         .HasColumnName("requires_tooth");
 
+                    b.Property<string>("Specialty")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("specialty");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
+
+                    b.Property<int>("WarrantyMonths")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("warranty_months");
 
                     b.HasKey("Id")
                         .HasName("pk_procedures");
@@ -900,6 +1230,77 @@ namespace DentalLocal.Persistence.Migrations
                         .HasDatabaseName("ix_tooth_state_history_patient_id_tooth_number");
 
                     b.ToTable("tooth_state_history", "dental");
+                });
+
+            modelBuilder.Entity("DentalLocal.Domain.Entities.ToothSurfaceHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("ChangedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("changed_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Diagnosis")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("diagnosis");
+
+                    b.Property<string>("DoctorComment")
+                        .HasColumnType("text")
+                        .HasColumnName("doctor_comment");
+
+                    b.Property<string>("Icd10Code")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("icd10code");
+
+                    b.Property<string>("Icd11Code")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("icd11code");
+
+                    b.Property<short>("Status")
+                        .HasColumnType("smallint")
+                        .HasColumnName("status");
+
+                    b.Property<string>("SurfaceCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("surface_code");
+
+                    b.Property<Guid>("ToothId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tooth_id");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid?>("VisitId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("visit_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_tooth_surface_history");
+
+                    b.HasIndex("ChangedAt")
+                        .HasDatabaseName("ix_tooth_surface_history_changed_at");
+
+                    b.HasIndex("VisitId")
+                        .HasDatabaseName("ix_tooth_surface_history_visit_id");
+
+                    b.HasIndex("ToothId", "SurfaceCode")
+                        .HasDatabaseName("ix_tooth_surface_history_tooth_id_surface_code");
+
+                    b.ToTable("tooth_surface_history", "dental");
                 });
 
             modelBuilder.Entity("DentalLocal.Domain.Entities.TreatmentItem", b =>
@@ -1133,6 +1534,155 @@ namespace DentalLocal.Persistence.Migrations
                     b.ToTable("visits", "dental");
                 });
 
+            modelBuilder.Entity("DentalLocal.Domain.Entities.WaitingList", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateOnly>("DesiredDateFrom")
+                        .HasColumnType("date")
+                        .HasColumnName("desired_date_from");
+
+                    b.Property<DateOnly>("DesiredDateTo")
+                        .HasColumnType("date")
+                        .HasColumnName("desired_date_to");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text")
+                        .HasColumnName("notes");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("patient_id");
+
+                    b.Property<Guid?>("ProcedureId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("procedure_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("Waiting")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_waiting_list");
+
+                    b.HasIndex("PatientId")
+                        .HasDatabaseName("ix_waiting_list_patient_id");
+
+                    b.HasIndex("ProcedureId")
+                        .HasDatabaseName("ix_waiting_list_procedure_id");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("ix_waiting_list_status");
+
+                    b.ToTable("waiting_list", "dental");
+                });
+
+            modelBuilder.Entity("DentalLocal.Domain.Entities.Warranty", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date")
+                        .HasColumnName("end_date");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("text")
+                        .HasColumnName("notes");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("patient_id");
+
+                    b.Property<Guid>("ProcedureId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("procedure_id");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date")
+                        .HasColumnName("start_date");
+
+                    b.Property<short?>("ToothNumber")
+                        .HasColumnType("smallint")
+                        .HasColumnName("tooth_number");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("VisitId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("visit_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_warranties");
+
+                    b.HasIndex("PatientId")
+                        .HasDatabaseName("ix_warranties_patient_id");
+
+                    b.HasIndex("ProcedureId")
+                        .HasDatabaseName("ix_warranties_procedure_id");
+
+                    b.HasIndex("VisitId")
+                        .HasDatabaseName("ix_warranties_visit_id");
+
+                    b.ToTable("warranties", "dental");
+                });
+
+            modelBuilder.Entity("DentalLocal.Persistence.Configurations.PatientDebtView", b =>
+                {
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("full_name");
+
+                    b.Property<DateTimeOffset?>("LastDebtDate")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_debt_date");
+
+                    b.Property<Guid?>("LastVisitId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("last_visit_id");
+
+                    b.Property<Guid>("PatientId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("patient_id");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("phone");
+
+                    b.Property<decimal>("TotalDebt")
+                        .HasColumnType("numeric")
+                        .HasColumnName("total_debt");
+
+                    b.ToTable((string)null);
+
+                    b.ToView("patient_debts", "dental");
+                });
+
             modelBuilder.Entity("DentalLocal.Domain.Entities.Appointment", b =>
                 {
                     b.HasOne("DentalLocal.Domain.Entities.Patient", "Patient")
@@ -1249,6 +1799,18 @@ namespace DentalLocal.Persistence.Migrations
                     b.Navigation("Visit");
                 });
 
+            modelBuilder.Entity("DentalLocal.Domain.Entities.Prescription", b =>
+                {
+                    b.HasOne("DentalLocal.Domain.Entities.Visit", "Visit")
+                        .WithMany()
+                        .HasForeignKey("VisitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_prescriptions_visits_visit_id");
+
+                    b.Navigation("Visit");
+                });
+
             modelBuilder.Entity("DentalLocal.Domain.Entities.Procedure", b =>
                 {
                     b.HasOne("DentalLocal.Domain.Entities.ProcedureCategory", "Category")
@@ -1307,6 +1869,24 @@ namespace DentalLocal.Persistence.Migrations
                         .HasConstraintName("fk_tooth_state_history_visits_visit_id");
 
                     b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("DentalLocal.Domain.Entities.ToothSurfaceHistory", b =>
+                {
+                    b.HasOne("DentalLocal.Domain.Entities.ToothState", "Tooth")
+                        .WithMany()
+                        .HasForeignKey("ToothId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_tooth_surface_history_tooth_states_tooth_id");
+
+                    b.HasOne("DentalLocal.Domain.Entities.Visit", null)
+                        .WithMany()
+                        .HasForeignKey("VisitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_tooth_surface_history_visits_visit_id");
+
+                    b.Navigation("Tooth");
                 });
 
             modelBuilder.Entity("DentalLocal.Domain.Entities.TreatmentItem", b =>
@@ -1373,6 +1953,50 @@ namespace DentalLocal.Persistence.Migrations
                         .HasConstraintName("fk_visits_patients_patient_id");
 
                     b.Navigation("Patient");
+                });
+
+            modelBuilder.Entity("DentalLocal.Domain.Entities.WaitingList", b =>
+                {
+                    b.HasOne("DentalLocal.Domain.Entities.Patient", "Patient")
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_waiting_list_patients_patient_id");
+
+                    b.HasOne("DentalLocal.Domain.Entities.Procedure", "Procedure")
+                        .WithMany()
+                        .HasForeignKey("ProcedureId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_waiting_list_procedures_procedure_id");
+
+                    b.Navigation("Patient");
+
+                    b.Navigation("Procedure");
+                });
+
+            modelBuilder.Entity("DentalLocal.Domain.Entities.Warranty", b =>
+                {
+                    b.HasOne("DentalLocal.Domain.Entities.Patient", null)
+                        .WithMany()
+                        .HasForeignKey("PatientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_warranties_patients_patient_id");
+
+                    b.HasOne("DentalLocal.Domain.Entities.Procedure", null)
+                        .WithMany()
+                        .HasForeignKey("ProcedureId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_warranties_procedures_procedure_id");
+
+                    b.HasOne("DentalLocal.Domain.Entities.Visit", null)
+                        .WithMany()
+                        .HasForeignKey("VisitId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_warranties_visits_visit_id");
                 });
 
             modelBuilder.Entity("DentalLocal.Domain.Entities.ProcedureCategory", b =>

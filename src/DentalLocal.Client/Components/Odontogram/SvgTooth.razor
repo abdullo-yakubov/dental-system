@@ -1,13 +1,8 @@
 @*  SVG representation of a single tooth with 5 clickable surfaces  *@
 
-@{
-    var stateColor = GetStateColor(State);
-    var isExtracted = State == ToothStateType.Extracted || State == ToothStateType.Missing;
-}
-
 <svg class="tooth-svg" viewBox="0 0 50 60" xmlns="http://www.w3.org/2000/svg"
      @onclick:stopPropagation="true">
-    @if (isExtracted)
+    @if (IsExtracted)
     {
         <!-- Extracted/Missing — show X -->
         <rect x="5" y="5" width="40" height="50" rx="4" fill="#e5e7eb" stroke="#9ca3af" stroke-width="1.5" />
@@ -18,37 +13,37 @@
     {
         <!-- Buccal/Vestibular (top) -->
         <polygon points="5,5 45,5 38,18 12,18"
-                 fill="@GetSurfaceColor("B", stateColor)"
+                 fill="@GetSurfaceColor("B")"
                  stroke="white" stroke-width="1"
-                 @onclick="() => OnSurfaceClick?.Invoke(ToothNumber)"
+                 @onclick='() => OnSurfaceClick?.Invoke(ToothNumber, "B")'
                  class="tooth-surface" />
 
         <!-- Lingual/Palatal (bottom) -->
         <polygon points="12,42 38,42 45,55 5,55"
-                 fill="@GetSurfaceColor("L", stateColor)"
+                 fill="@GetSurfaceColor("L")"
                  stroke="white" stroke-width="1"
-                 @onclick="() => OnSurfaceClick?.Invoke(ToothNumber)"
+                 @onclick='() => OnSurfaceClick?.Invoke(ToothNumber, "L")'
                  class="tooth-surface" />
 
         <!-- Mesial (left) -->
         <polygon points="5,5 12,18 12,42 5,55"
-                 fill="@GetSurfaceColor("M", stateColor)"
+                 fill="@GetSurfaceColor("M")"
                  stroke="white" stroke-width="1"
-                 @onclick="() => OnSurfaceClick?.Invoke(ToothNumber)"
+                 @onclick='() => OnSurfaceClick?.Invoke(ToothNumber, "M")'
                  class="tooth-surface" />
 
         <!-- Distal (right) -->
         <polygon points="45,5 38,18 38,42 45,55"
-                 fill="@GetSurfaceColor("D", stateColor)"
+                 fill="@GetSurfaceColor("D")"
                  stroke="white" stroke-width="1"
-                 @onclick="() => OnSurfaceClick?.Invoke(ToothNumber)"
+                 @onclick='() => OnSurfaceClick?.Invoke(ToothNumber, "D")'
                  class="tooth-surface" />
 
         <!-- Occlusal/Incisal (center) -->
         <rect x="12" y="18" width="26" height="24" rx="2"
-              fill="@GetSurfaceColor("O", stateColor)"
+              fill="@GetSurfaceColor("O")"
               stroke="white" stroke-width="1"
-              @onclick="() => OnSurfaceClick?.Invoke(ToothNumber)"
+              @onclick='() => OnSurfaceClick?.Invoke(ToothNumber, "O")'
               class="tooth-surface" />
 
         @if (State == ToothStateType.Cracked)
@@ -62,7 +57,16 @@
 @code {
     [Parameter] public int ToothNumber { get; set; }
     [Parameter] public ToothStateType State { get; set; }
-    [Parameter] public Action<int>? OnSurfaceClick { get; set; }
+    [Parameter] public Dictionary<string, ToothStateType>? SurfaceStates { get; set; }
+    [Parameter] public Action<int, string>? OnSurfaceClick { get; set; }
+
+    private bool IsExtracted => State == ToothStateType.Extracted || State == ToothStateType.Missing;
+
+    private string GetSurfaceColor(string surface)
+    {
+        var state = SurfaceStates != null && SurfaceStates.TryGetValue(surface, out var s) ? s : State;
+        return GetStateColor(state);
+    }
 
     private static string GetStateColor(ToothStateType state) => state switch
     {
@@ -81,11 +85,4 @@
         ToothStateType.Missing or ToothStateType.Extracted => "#e5e7eb",
         _ => "#f9fafb"
     };
-
-    private static string GetSurfaceColor(string surface, string baseColor)
-    {
-        // All surfaces get the same state color for now
-        // Per-surface coloring can be added when surface history is implemented
-        return baseColor;
-    }
 }

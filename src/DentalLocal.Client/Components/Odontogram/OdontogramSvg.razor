@@ -23,7 +23,7 @@
                 @foreach (var n in (_isDeciduous ? UpperDeciduous : UpperAdult))
                 {
                     <div class="tooth-cell @GetToothClass(n)" @onclick="() => OnToothClick(n)" title="@GetToothLabel(n)">
-                        <SvgTooth ToothNumber="@n" State="GetToothState(n)" OnSurfaceClick="OnSurfaceClick" />
+                        <SvgTooth ToothNumber="@n" State="GetToothState(n)" SurfaceStates="GetSurfaceStates(n)" OnSurfaceClick="OnSurfaceClick" />
                         <span class="tooth-number">@n</span>
                     </div>
                 }
@@ -34,7 +34,7 @@
                 @foreach (var n in (_isDeciduous ? LowerDeciduous : LowerAdult))
                 {
                     <div class="tooth-cell @GetToothClass(n)" @onclick="() => OnToothClick(n)" title="@GetToothLabel(n)">
-                        <SvgTooth ToothNumber="@n" State="GetToothState(n)" OnSurfaceClick="OnSurfaceClick" />
+                        <SvgTooth ToothNumber="@n" State="GetToothState(n)" SurfaceStates="GetSurfaceStates(n)" OnSurfaceClick="OnSurfaceClick" />
                         <span class="tooth-number">@n</span>
                     </div>
                 }
@@ -45,15 +45,25 @@
         <!-- Legend -->
         <OdontogramLegend />
 
-        <!-- Tooth detail panel -->
-        @if (_selectedToothNumber.HasValue)
+        <!-- Surface edit panel (клик по поверхности) -->
+        @if (_selectedSurface.HasValue)
         {
             <ToothDetailPanel
                 PatientId="PatientId"
-                ToothNumber="_selectedToothNumber.Value"
-                CurrentState="GetToothState(_selectedToothNumber.Value)"
+                ToothNumber="_selectedSurface.Value.ToothNumber"
+                SurfaceCode="_selectedSurface.Value.SurfaceCode"
+                CurrentState="GetToothState(_selectedSurface.Value.ToothNumber)"
                 VisitId="VisitId"
                 OnStateSaved="OnStateSaved"
+                OnClose="() => _selectedSurface = null" />
+        }
+
+        <!-- Tooth timeline panel (клик по зубу целиком) -->
+        @if (_selectedToothNumber.HasValue)
+        {
+            <ToothTimelinePanel
+                PatientId="PatientId"
+                ToothNumber="_selectedToothNumber.Value"
                 OnClose="() => _selectedToothNumber = null" />
         }
     }
@@ -66,6 +76,7 @@
     private OdontogramDto? _odontogram;
     private bool _loading = true;
     private int? _selectedToothNumber;
+    private (int ToothNumber, string SurfaceCode)? _selectedSurface;
     private bool _isDeciduous;
     private IReadOnlyCollection<bool> _modeSelection = [];
 
@@ -101,6 +112,12 @@
         return tooth?.State ?? ToothStateType.Healthy;
     }
 
+    private Dictionary<string, ToothStateType> GetSurfaceStates(int toothNumber) =>
+        _odontogram?.SurfaceStates
+            .Where(s => s.ToothNumber == toothNumber)
+            .ToDictionary(s => s.SurfaceCode, s => s.Status)
+        ?? [];
+
     private string GetToothClass(int toothNumber)
     {
         var state = GetToothState(toothNumber);
@@ -131,18 +148,20 @@
 
     private void OnToothClick(int toothNumber)
     {
+        _selectedSurface = null;
         _selectedToothNumber = _selectedToothNumber == toothNumber ? null : toothNumber;
     }
 
-    private void OnSurfaceClick(int toothNumber)
+    private void OnSurfaceClick(int toothNumber, string surfaceCode)
     {
-        _selectedToothNumber = toothNumber;
+        _selectedToothNumber = null;
+        _selectedSurface = (toothNumber, surfaceCode);
     }
 
     private async Task OnStateSaved()
     {
-        // Reload odontogram after state change
         _odontogram = await Api.GetOdontogramAsync(PatientId);
+        _selectedSurface = null;
         StateHasChanged();
     }
 }

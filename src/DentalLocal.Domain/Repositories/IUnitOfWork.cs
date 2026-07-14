@@ -10,6 +10,9 @@ public interface IUnitOfWork
     IDebtRepository Debts { get; }
     IToothStateRepository ToothStates { get; }
     IToothStateHistoryRepository ToothStateHistory { get; }
+    IToothSurfaceHistoryRepository ToothSurfaceHistory { get; }
+    IIcd10CodeRepository Icd10Codes { get; }
+    IIcd11CodeRepository Icd11Codes { get; }
     IPatientFileRepository PatientFiles { get; }
     IAppointmentRepository Appointments { get; }
     IBackupRecordRepository BackupRecords { get; }
@@ -19,6 +22,11 @@ public interface IUnitOfWork
     IMaterialUsageRepository MaterialUsages { get; }
     IReminderRepository Reminders { get; }
     ITreatmentPlanRepository TreatmentPlans { get; }
+    ICurrencyRepository Currencies { get; }
+    IDiscountHistoryRepository DiscountHistory { get; }
+    IWaitingListRepository WaitingList { get; }
+    IPrescriptionRepository Prescriptions { get; }
+    IWarrantyRepository Warranties { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 

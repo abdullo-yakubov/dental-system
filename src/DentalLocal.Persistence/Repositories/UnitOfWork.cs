@@ -16,6 +16,9 @@ public class UnitOfWork : IUnitOfWork
         IDebtRepository debts,
         IToothStateRepository toothStates,
         IToothStateHistoryRepository toothStateHistory,
+        IToothSurfaceHistoryRepository toothSurfaceHistory,
+        IIcd10CodeRepository icd10Codes,
+        IIcd11CodeRepository icd11Codes,
         IPatientFileRepository patientFiles,
         IAppointmentRepository appointments,
         IBackupRecordRepository backupRecords,
@@ -24,7 +27,12 @@ public class UnitOfWork : IUnitOfWork
         IMaterialRepository materials,
         IMaterialUsageRepository materialUsages,
         IReminderRepository reminders,
-        ITreatmentPlanRepository treatmentPlans)
+        ITreatmentPlanRepository treatmentPlans,
+        ICurrencyRepository currencies,
+        IDiscountHistoryRepository discountHistory,
+        IWaitingListRepository waitingList,
+        IPrescriptionRepository prescriptions,
+        IWarrantyRepository warranties)
     {
         _context = context;
         Patients = patients;
@@ -35,6 +43,9 @@ public class UnitOfWork : IUnitOfWork
         Debts = debts;
         ToothStates = toothStates;
         ToothStateHistory = toothStateHistory;
+        ToothSurfaceHistory = toothSurfaceHistory;
+        Icd10Codes = icd10Codes;
+        Icd11Codes = icd11Codes;
         PatientFiles = patientFiles;
         Appointments = appointments;
         BackupRecords = backupRecords;
@@ -44,6 +55,11 @@ public class UnitOfWork : IUnitOfWork
         MaterialUsages = materialUsages;
         Reminders = reminders;
         TreatmentPlans = treatmentPlans;
+        Currencies = currencies;
+        DiscountHistory = discountHistory;
+        WaitingList = waitingList;
+        Prescriptions = prescriptions;
+        Warranties = warranties;
     }
 
     public IPatientRepository Patients { get; }
@@ -54,6 +70,9 @@ public class UnitOfWork : IUnitOfWork
     public IDebtRepository Debts { get; }
     public IToothStateRepository ToothStates { get; }
     public IToothStateHistoryRepository ToothStateHistory { get; }
+    public IToothSurfaceHistoryRepository ToothSurfaceHistory { get; }
+    public IIcd10CodeRepository Icd10Codes { get; }
+    public IIcd11CodeRepository Icd11Codes { get; }
     public IPatientFileRepository PatientFiles { get; }
     public IAppointmentRepository Appointments { get; }
     public IBackupRecordRepository BackupRecords { get; }
@@ -63,6 +82,11 @@ public class UnitOfWork : IUnitOfWork
     public IMaterialUsageRepository MaterialUsages { get; }
     public IReminderRepository Reminders { get; }
     public ITreatmentPlanRepository TreatmentPlans { get; }
+    public ICurrencyRepository Currencies { get; }
+    public IDiscountHistoryRepository DiscountHistory { get; }
+    public IWaitingListRepository WaitingList { get; }
+    public IPrescriptionRepository Prescriptions { get; }
+    public IWarrantyRepository Warranties { get; }
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
         _context.SaveChangesAsync(cancellationToken);

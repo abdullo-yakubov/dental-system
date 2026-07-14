@@ -1,0 +1,30 @@
+@* Единый заголовок страницы: иконка, title, subtitle, слот для действий *@
+
+<MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-6 flex-wrap" Spacing="2">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
+        @if (!string.IsNullOrWhiteSpace(Icon))
+        {
+            <MudIcon Icon="@Icon" Color="Color.Primary" Size="Size.Large" />
+        }
+        <div>
+            <MudText Typo="Typo.h4" Class="font-weight-bold">@Title</MudText>
+            @if (!string.IsNullOrWhiteSpace(Subtitle))
+            {
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">@Subtitle</MudText>
+            }
+        </div>
+    </MudStack>
+    @if (Actions is not null)
+    {
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+            @Actions
+        </MudStack>
+    }
+</MudStack>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string? Subtitle { get; set; }
+    [Parameter] public string? Icon { get; set; }
+    [Parameter] public RenderFragment? Actions { get; set; }
+}

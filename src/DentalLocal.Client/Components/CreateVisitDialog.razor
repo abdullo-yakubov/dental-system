@@ -1,5 +1,7 @@
 @inject ApiClient Api
 @inject ISnackbar Snackbar
+@inject DraftAutosaveService Drafts
+@implements IAsyncDisposable
 
 <MudDialog>
     <TitleContent>Новый визит</TitleContent>
@@ -72,6 +74,8 @@
 
     private List<ProcedureDto> _procedures = [];
     private List<VisitItemModel> _items = [new()];
+    private DraftAutosaveTimer? _autosaveTimer;
+    private string DraftKey => $"new-visit-{PatientId}";
 
     private sealed class VisitItemModel
     {
@@ -81,6 +85,9 @@
         public int Quantity { get; set; } = 1;
         public string? Comment { get; set; }
     }
+
+    private record Draft(DateTime? VisitDate, TimeSpan? VisitTime, string DoctorName, string? Notes,
+        List<VisitItemModel> Items);
 
     protected override async Task OnInitializedAsync()
     {
@@ -92,6 +99,32 @@
         {
             _errorMessage = $"Не удалось загрузить процедуры: {ex.Message}";
         }
+
+        var draft = await Drafts.LoadAsync<Draft>(DraftKey);
+        if (draft is not null)
+        {
+            _visitDate = draft.VisitDate;
+            _visitTime = draft.VisitTime;
+            _doctorName = draft.DoctorName;
+            _notes = draft.Notes;
+            if (draft.Items.Count > 0)
+                _items = draft.Items;
+            Snackbar.Add("Восстановлен несохранённый черновик визита.", Severity.Info);
+        }
+
+        _autosaveTimer = new DraftAutosaveTimer(SaveDraftAsync);
+    }
+
+    private Task SaveDraftAsync()
+    {
+        var draft = new Draft(_visitDate, _visitTime, _doctorName, _notes, _items);
+        return Drafts.SaveAsync(DraftKey, draft);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_autosaveTimer is not null)
+            await _autosaveTimer.DisposeAsync();
     }
 
     private void AddItem() => _items.Add(new VisitItemModel());
@@ -128,6 +161,7 @@
                 items);
 
             var visit = await Api.CreateVisitAsync(request);
+            await Drafts.ClearAsync(DraftKey);
             Snackbar.Add($"Визит от {visit.VisitDate:dd.MM.yyyy} записан.", Severity.Success);
             MudDialog.Close(DialogResult.Ok(visit));
         }

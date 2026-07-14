@@ -1,23 +1,35 @@
 @inject ApiClient Api
 @inject ISnackbar Snackbar
+@using DentalLocal.Shared.Contracts.Icd
 
 <MudCard Class="mt-3 pa-3" Elevation="3">
     <MudCardHeader>
         <CardHeaderContent>
-            <MudText Typo="Typo.subtitle1">Зуб @ToothNumber — @GetStateName(CurrentState)</MudText>
+            <MudText Typo="Typo.subtitle1">Зуб @ToothNumber, поверхность «@GetSurfaceName(SurfaceCode)»</MudText>
         </CardHeaderContent>
         <CardHeaderActions>
             <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="() => OnClose?.Invoke()" />
         </CardHeaderActions>
     </MudCardHeader>
     <MudCardContent>
-        <MudSelect T="ToothStateType" @bind-Value="_newState" Label="Новое состояние" Class="mb-3">
+        <MudSelect T="ToothStateType" @bind-Value="_status" Label="Статус/диагноз" Class="mb-3">
             @foreach (ToothStateType s in Enum.GetValues<ToothStateType>())
             {
                 <MudSelectItem Value="s">@GetStateName(s)</MudSelectItem>
             }
         </MudSelect>
-        <MudTextField @bind-Value="_comment" Label="Комментарий" Lines="2" />
+
+        <MudTextField @bind-Value="_diagnosis" Label="Диагноз (текст)" Class="mb-3" MaxLength="255" />
+
+        <MudAutocomplete T="IcdCodeDto" Label="МКБ-10" @bind-Value="_icd10" SearchFunc="SearchIcd10Async"
+                          ToStringFunc="@(x => x == null ? "" : $"{x.Code} — {x.Description}")"
+                          ResetValueOnEmptyText="true" CoerceText="true" CoerceValue="false" Class="mb-3" />
+
+        <MudAutocomplete T="IcdCodeDto" Label="МКБ-11" @bind-Value="_icd11" SearchFunc="SearchIcd11Async"
+                          ToStringFunc="@(x => x == null ? "" : $"{x.Code} — {x.Description}")"
+                          ResetValueOnEmptyText="true" CoerceText="true" CoerceValue="false" Class="mb-3" />
+
+        <MudTextField @bind-Value="_comment" Label="Комментарий врача" Lines="2" />
     </MudCardContent>
     <MudCardActions>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync" Disabled="_saving">
@@ -29,18 +41,36 @@
 @code {
     [Parameter] public Guid PatientId { get; set; }
     [Parameter] public int ToothNumber { get; set; }
+    [Parameter] public string SurfaceCode { get; set; } = "O";
     [Parameter] public ToothStateType CurrentState { get; set; }
     [Parameter] public Guid? VisitId { get; set; }
     [Parameter] public Func<Task>? OnStateSaved { get; set; }
     [Parameter] public Action? OnClose { get; set; }
 
-    private ToothStateType _newState;
+    private ToothStateType _status;
+    private string? _diagnosis;
+    private IcdCodeDto? _icd10;
+    private IcdCodeDto? _icd11;
     private string? _comment;
     private bool _saving;
 
     protected override void OnParametersSet()
     {
-        _newState = CurrentState;
+        _status = CurrentState;
+    }
+
+    private async Task<IEnumerable<IcdCodeDto>> SearchIcd10Async(string search, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(search) || search.Length < 2) return [];
+        try { return await Api.SearchIcd10Async(search, ct); }
+        catch { return []; }
+    }
+
+    private async Task<IEnumerable<IcdCodeDto>> SearchIcd11Async(string search, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(search) || search.Length < 2) return [];
+        try { return await Api.SearchIcd11Async(search, ct); }
+        catch { return []; }
     }
 
     private async Task SaveAsync()
@@ -48,9 +78,10 @@
         _saving = true;
         try
         {
-            var request = new UpdateToothRequest((short)ToothNumber, _newState, VisitId, _comment);
-            await Api.UpdateToothAsync(PatientId, (short)ToothNumber, request);
-            Snackbar.Add($"Зуб {ToothNumber} обновлён.", Severity.Success);
+            var request = new AddToothSurfaceRecordRequest(
+                SurfaceCode, _status, _diagnosis, _icd10?.Code, _icd11?.Code, VisitId, _comment);
+            await Api.AddToothSurfaceRecordAsync(PatientId, (short)ToothNumber, request);
+            Snackbar.Add($"Зуб {ToothNumber} ({GetSurfaceName(SurfaceCode)}) обновлён.", Severity.Success);
             if (OnStateSaved != null) await OnStateSaved();
         }
         catch (ApiException ex)
@@ -62,6 +93,16 @@
             _saving = false;
         }
     }
+
+    private static string GetSurfaceName(string code) => code switch
+    {
+        "M" => "медиальная",
+        "D" => "дистальная",
+        "O" => "окклюзионная/режущая",
+        "B" => "вестибулярная (щёчная)",
+        "L" => "нёбная/язычная",
+        _ => code
+    };
 
     private static string GetStateName(ToothStateType state) => state switch
     {

@@ -1,0 +1,18 @@
+.loading-overlay-host {
+    position: relative;
+}
+
+.loading-overlay-mask {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--app-glass-bg);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-radius: inherit;
+    z-index: 5;
+    animation: page-fade-in 150ms ease-out;
+}

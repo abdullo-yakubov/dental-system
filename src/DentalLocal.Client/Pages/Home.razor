@@ -8,181 +8,157 @@
 
 @if (_loading)
 {
-    <div class="d-flex justify-center align-center" style="height: 80vh;">
-        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+    <div class="page-fade-in">
+        <div class="skeleton skeleton-title"></div>
+        <MudGrid Class="mb-6">
+            @for (var i = 0; i < 4; i++)
+            {
+                <MudItem xs="12" sm="6" md="3">
+                    <div class="skeleton skeleton-card"></div>
+                </MudItem>
+            }
+        </MudGrid>
+        <div class="skeleton" style="height:350px;border-radius:var(--app-radius-md);"></div>
     </div>
 }
 else
 {
-    <MudText Typo="Typo.h4" Class="mb-6 font-weight-bold" Color="Color.Primary">Панель управления</MudText>
+    <div class="page-fade-in">
+    <PageHeader Title="Панель управления" Icon="@Icons.Material.Filled.Dashboard" Subtitle="@_greeting" />
 
     <!-- Top Summary Cards -->
     <MudGrid Class="mb-6">
         <MudItem xs="12" sm="6" md="3">
-            <MudCard Elevation="4" Class="border-radius-12 hover-card">
-                <MudCardContent>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                        <div>
-                            <MudText Typo="Typo.subtitle2" Class="text-secondary">Всего пациентов</MudText>
-                            <MudText Typo="Typo.h4" Class="font-weight-bold">@_summary?.TotalPatients.ToString("N0")</MudText>
-                            <MudText Typo="Typo.caption" Color="Color.Success">@_summary?.ActivePatients активных</MudText>
-                        </div>
-                        <MudIcon Icon="@Icons.Material.Filled.People" Color="Color.Primary" Style="font-size: 3rem; opacity: 0.2;" />
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
+            <div class="glass-card hover-card pa-4">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Class="text-secondary">Всего пациентов</MudText>
+                        <MudText Typo="Typo.h4" Class="font-weight-bold">@_summary?.TotalPatients.ToString("N0")</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Success">@_summary?.ActivePatients активных</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.People" Color="Color.Primary" Style="font-size: 3rem; opacity: 0.2;" />
+                </MudStack>
+            </div>
         </MudItem>
 
         <MudItem xs="12" sm="6" md="3">
-            <MudCard Elevation="4" Class="border-radius-12 hover-card">
-                <MudCardContent>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                        <div>
-                            <MudText Typo="Typo.subtitle2" Class="text-secondary">Визиты сегодня</MudText>
-                            <MudText Typo="Typo.h4" Class="font-weight-bold">@_summary?.VisitsToday</MudText>
-                            <MudText Typo="Typo.caption">Запланировано приемов</MudText>
-                        </div>
-                        <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Color="Color.Info" Style="font-size: 3rem; opacity: 0.2;" />
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
+            <div class="glass-card hover-card pa-4">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Class="text-secondary">Визиты сегодня</MudText>
+                        <MudText Typo="Typo.h4" Class="font-weight-bold">@_summary?.VisitsToday</MudText>
+                        <MudText Typo="Typo.caption">Запланировано приемов</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Color="Color.Info" Style="font-size: 3rem; opacity: 0.2;" />
+                </MudStack>
+            </div>
         </MudItem>
 
         <MudItem xs="12" sm="6" md="3">
-            <MudCard Elevation="4" Class="border-radius-12 hover-card">
-                <MudCardContent>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                        <div>
-                            <MudText Typo="Typo.subtitle2" Class="text-secondary">Выручка сегодня</MudText>
-                            <MudText Typo="Typo.h4" Class="font-weight-bold text-success">@_summary?.RevenueToday.ToString("N0")</MudText>
-                            <MudText Typo="Typo.caption" Class="text-success">сум</MudText>
-                        </div>
-                        <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Color="Color.Success" Style="font-size: 3rem; opacity: 0.2;" />
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
+            <div class="glass-card hover-card pa-4">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Class="text-secondary">Выручка сегодня</MudText>
+                        <MudText Typo="Typo.h4" Class="font-weight-bold text-success">@_summary?.RevenueToday.ToString("N0")</MudText>
+                        <MudText Typo="Typo.caption" Class="text-success">сум</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Color="Color.Success" Style="font-size: 3rem; opacity: 0.2;" />
+                </MudStack>
+            </div>
         </MudItem>
 
         <MudItem xs="12" sm="6" md="3">
-            <MudCard Elevation="4" Class="border-radius-12 hover-card">
-                <MudCardContent>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
-                        <div>
-                            <MudText Typo="Typo.subtitle2" Class="text-secondary">Общий долг</MudText>
-                            <MudText Typo="Typo.h4" Class="font-weight-bold text-danger">@_summary?.TotalDebt.ToString("N0")</MudText>
-                            <MudText Typo="Typo.caption" Color="Color.Error">@_summary?.DebtorsCount должников</MudText>
-                        </div>
-                        <MudIcon Icon="@Icons.Material.Filled.MoneyOff" Color="Color.Error" Style="font-size: 3rem; opacity: 0.2;" />
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
+            <div class="glass-card hover-card pa-4">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Class="text-secondary">Общий долг</MudText>
+                        <MudText Typo="Typo.h4" Class="font-weight-bold text-danger">@_summary?.TotalDebt.ToString("N0")</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Error">@_summary?.DebtorsCount должников</MudText>
+                    </div>
+                    <MudIcon Icon="@Icons.Material.Filled.MoneyOff" Color="Color.Error" Style="font-size: 3rem; opacity: 0.2;" />
+                </MudStack>
+            </div>
         </MudItem>
     </MudGrid>
 
     <MudGrid>
         <!-- Revenue Chart & Upcoming -->
         <MudItem xs="12" md="8">
-            <MudCard Elevation="4" Class="mb-6 border-radius-12">
-                <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Динамика выручки (последние 12 мес.)</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    @if (_chartPoints.Count > 0)
-                    {
-                        <MudChart T="double" ChartType="ChartType.Bar" ChartSeries="@_series" XAxisLabels="@_xAxisLabels" 
-                                  Width="100%" Height="350px" ChartOptions="@_chartOptions" />
-                    }
-                    else
-                    {
-                        <div class="d-flex justify-center align-center" style="height: 350px;">
-                            <MudText Class="text-secondary">Нет данных о доходах.</MudText>
-                        </div>
-                    }
-                </MudCardContent>
-            </MudCard>
+            <GlassCard Title="Динамика выручки (последние 12 мес.)" Class="mb-6">
+                @if (_chartPoints.Count > 0)
+                {
+                    <MudChart T="double" ChartType="ChartType.Bar" ChartSeries="@_series" XAxisLabels="@_xAxisLabels"
+                              Width="100%" Height="350px" ChartOptions="@_chartOptions" />
+                }
+                else
+                {
+                    <EmptyState Icon="@Icons.Material.Filled.ShowChart" Title="Нет данных о доходах" />
+                }
+            </GlassCard>
 
-            <MudCard Elevation="4" Class="border-radius-12">
-                <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Предстоящие визиты (7 дней)</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    @if (_upcomingVisits.Count > 0)
-                    {
-                        <MudTable Items="_upcomingVisits" Hover="true" Dense="true" Elevation="0">
-                            <HeaderContent>
-                                <MudTh>Время</MudTh>
-                                <MudTh>Пациент</MudTh>
-                                <MudTh>Врач</MudTh>
-                                <MudTh>Сумма</MudTh>
-                            </HeaderContent>
-                            <RowTemplate>
-                                <MudTd>
-                                    <MudStack Spacing="0">
-                                        <MudText Typo="Typo.body2" Class="font-weight-bold">@context.VisitDate.ToString("dd.MM.yyyy")</MudText>
-                                        <MudText Typo="Typo.caption" Class="text-secondary">@context.VisitTime.ToString("HH:mm")</MudText>
-                                    </MudStack>
-                                </MudTd>
-                                <MudTd>
-                                    <MudLink OnClick="@(() => Navigation.NavigateTo($"/patients/{context.PatientId}"))">
-                                        @context.PatientFullName
-                                    </MudLink>
-                                </MudTd>
-                                <MudTd>@context.DoctorName</MudTd>
-                                <MudTd>@context.TotalCost.ToString("N0") сум</MudTd>
-                            </RowTemplate>
-                        </MudTable>
-                    }
-                    else
-                    {
-                        <div class="d-flex justify-center align-center py-6">
-                            <MudText Class="text-secondary">Нет предстоящих визитов.</MudText>
-                        </div>
-                    }
-                </MudCardContent>
-            </MudCard>
+            <GlassCard Title="Предстоящие визиты (7 дней)">
+                @if (_upcomingVisits.Count > 0)
+                {
+                    <MudTable Items="_upcomingVisits" Hover="true" Dense="true" Elevation="0" Class="glass-table">
+                        <HeaderContent>
+                            <MudTh>Время</MudTh>
+                            <MudTh>Пациент</MudTh>
+                            <MudTh>Врач</MudTh>
+                            <MudTh>Сумма</MudTh>
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>
+                                <MudStack Spacing="0">
+                                    <MudText Typo="Typo.body2" Class="font-weight-bold">@context.VisitDate.ToString("dd.MM.yyyy")</MudText>
+                                    <MudText Typo="Typo.caption" Class="text-secondary">@context.VisitTime.ToString("HH:mm")</MudText>
+                                </MudStack>
+                            </MudTd>
+                            <MudTd>
+                                <MudLink OnClick="@(() => Navigation.NavigateTo($"/patients/{context.PatientId}"))">
+                                    @context.PatientFullName
+                                </MudLink>
+                            </MudTd>
+                            <MudTd>@context.DoctorName</MudTd>
+                            <MudTd>@context.TotalCost.ToString("N0") сум</MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+                else
+                {
+                    <EmptyState Icon="@Icons.Material.Filled.EventAvailable" Title="Нет предстоящих визитов" />
+                }
+            </GlassCard>
         </MudItem>
 
         <!-- Right Side: Top Procedures -->
         <MudItem xs="12" md="4">
-            <MudCard Elevation="4" Class="border-radius-12 mb-6" Style="height: 100%;">
-                <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText Typo="Typo.h6">Популярные процедуры</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    @if (_topProcedures.Count > 0)
-                    {
-                        <div class="d-flex flex-column align-center">
-                            <MudChart T="double" ChartType="ChartType.Donut" InputData="@_donutData" InputLabels="@_donutLabels"
-                                      Width="230px" Height="230px" />
-                            
-                            <MudList T="string" Class="width-full mt-4">
-                                @for (int i = 0; i < _topProcedures.Count; i++)
-                                {
-                                    var proc = _topProcedures[i];
-                                    <MudListItem Text="@($"{proc.Name} ({proc.Count} шт.)")" 
-                                                 SecondaryText="@($"{proc.TotalAmount.ToString("N0")} сум")" 
-                                                 Icon="@Icons.Material.Filled.CheckCircle" 
-                                                 IconColor="Color.Primary" />
-                                }
-                            </MudList>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="d-flex justify-center align-center" style="height: 350px;">
-                            <MudText Class="text-secondary">Нет данных о процедурах.</MudText>
-                        </div>
-                    }
-                </MudCardContent>
-            </MudCard>
+            <GlassCard Title="Популярные процедуры" Style="height: 100%;">
+                @if (_topProcedures.Count > 0)
+                {
+                    <div class="d-flex flex-column align-center">
+                        <MudChart T="double" ChartType="ChartType.Donut" InputData="@_donutData" InputLabels="@_donutLabels"
+                                  Width="230px" Height="230px" />
+
+                        <MudList T="string" Class="width-full mt-4">
+                            @for (int i = 0; i < _topProcedures.Count; i++)
+                            {
+                                var proc = _topProcedures[i];
+                                <MudListItem Text="@($"{proc.Name} ({proc.Count} шт.)")"
+                                             SecondaryText="@($"{proc.TotalAmount.ToString("N0")} сум")"
+                                             Icon="@Icons.Material.Filled.CheckCircle"
+                                             IconColor="Color.Primary" />
+                            }
+                        </MudList>
+                    </div>
+                }
+                else
+                {
+                    <EmptyState Icon="@Icons.Material.Filled.PieChart" Title="Нет данных о процедурах" />
+                }
+            </GlassCard>
         </MudItem>
     </MudGrid>
+    </div>
 }
 
 @code {
@@ -199,6 +175,20 @@ else
 
     private double[] _donutData = [];
     private string[] _donutLabels = [];
+    private string _greeting = "Добро пожаловать";
+
+    private static string BuildGreeting(string? doctorName)
+    {
+        var timeOfDay = DateTime.Now.Hour switch
+        {
+            >= 5 and < 12 => "Доброе утро",
+            >= 12 and < 18 => "Добрый день",
+            >= 18 and < 23 => "Добрый вечер",
+            _ => "Доброй ночи"
+        };
+
+        return string.IsNullOrWhiteSpace(doctorName) ? timeOfDay : $"{timeOfDay}, доктор {doctorName}";
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -208,13 +198,15 @@ else
             var chartTask = Api.GetIncomeChartAsync();
             var procTask = Api.GetTopProceduresAsync();
             var visitTask = Api.GetUpcomingVisitsAsync(7);
+            var settingsTask = Api.GetSettingsAsync();
 
-            await Task.WhenAll(summaryTask, chartTask, procTask, visitTask);
+            await Task.WhenAll(summaryTask, chartTask, procTask, visitTask, settingsTask);
 
             _summary = await summaryTask;
             _chartPoints = (await chartTask).ToList();
             _topProcedures = (await procTask).ToList();
             _upcomingVisits = (await visitTask).ToList();
+            _greeting = BuildGreeting((await settingsTask).DoctorName);
 
             // Prepare Bar Chart
             if (_chartPoints.Count > 0)

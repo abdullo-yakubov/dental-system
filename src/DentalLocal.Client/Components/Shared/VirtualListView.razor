@@ -1,0 +1,17 @@
+@* Обёртка над Virtualize для длинных списков (журнал действий, история зуба и т.п.) *@
+@typeparam TItem
+
+<div class="@Class" style="@(MaxHeight is null ? Style : $"max-height:{MaxHeight}px;overflow-y:auto;{Style}")">
+    <Virtualize Items="Items" Context="item" ItemSize="ItemSize">
+        @ItemTemplate(item)
+    </Virtualize>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public ICollection<TItem> Items { get; set; } = new List<TItem>();
+    [Parameter, EditorRequired] public RenderFragment<TItem> ItemTemplate { get; set; } = null!;
+    [Parameter] public float ItemSize { get; set; } = 56f;
+    [Parameter] public int? MaxHeight { get; set; } = 480;
+    [Parameter] public string Class { get; set; } = string.Empty;
+    [Parameter] public string Style { get; set; } = string.Empty;
+}

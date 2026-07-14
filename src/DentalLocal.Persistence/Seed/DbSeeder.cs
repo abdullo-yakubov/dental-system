@@ -16,6 +16,7 @@ public class DbSeeder(DentalDbContext context, ILogger<DbSeeder> logger)
 
         await SeedProceduresAsync(cancellationToken);
         await SeedAppSettingsAsync(cancellationToken);
+        await SeedIcdCodesAsync(cancellationToken);
 
         await context.SaveChangesAsync(cancellationToken);
 
@@ -42,7 +43,7 @@ public class DbSeeder(DentalDbContext context, ILogger<DbSeeder> logger)
 
         var categories = await context.ProcedureCategories.ToDictionaryAsync(c => c.Name, cancellationToken);
 
-        foreach (var (categoryName, name, price, durationMinutes, requiresTooth) in ProcedureSeedData.Procedures)
+        foreach (var (categoryName, name, priceMin, priceMax, durationMinutes, requiresTooth) in ProcedureSeedData.Procedures)
         {
             if (!categories.TryGetValue(categoryName, out var category))
             {
@@ -50,8 +51,12 @@ public class DbSeeder(DentalDbContext context, ILogger<DbSeeder> logger)
                 continue;
             }
 
+            var price = (priceMin + priceMax) / 2m;
+            var specialty = ProcedureSeedData.CategoryToSpecialty.GetValueOrDefault(categoryName, categoryName);
+
             await context.Procedures.AddAsync(
-                Procedure.Create(category.Id, name, description: null, price, durationMinutes, requiresTooth),
+                Procedure.Create(category.Id, name, description: null, price, durationMinutes, requiresTooth,
+                    priceMin, priceMax, specialty),
                 cancellationToken);
         }
     }
@@ -78,6 +83,21 @@ public class DbSeeder(DentalDbContext context, ILogger<DbSeeder> logger)
                 continue;
 
             await context.AppSettings.AddAsync(AppSetting.Create(key, value), cancellationToken);
+        }
+    }
+
+    private async Task SeedIcdCodesAsync(CancellationToken cancellationToken)
+    {
+        if (!await context.Icd10Codes.AnyAsync(cancellationToken))
+        {
+            foreach (var (code, description) in Icd10SeedData.Codes)
+                await context.Icd10Codes.AddAsync(Icd10Code.Create(code, description), cancellationToken);
+        }
+
+        if (!await context.Icd11Codes.AnyAsync(cancellationToken))
+        {
+            foreach (var (code, description) in Icd11SeedData.Codes)
+                await context.Icd11Codes.AddAsync(Icd11Code.Create(code, description), cancellationToken);
         }
     }
 }

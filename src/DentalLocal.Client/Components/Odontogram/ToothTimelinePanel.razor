@@ -1,0 +1,109 @@
+@inject ApiClient Api
+@inject ISnackbar Snackbar
+
+<MudCard Class="mt-3 pa-3" Elevation="3">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.subtitle1">История зуба @ToothNumber</MudText>
+        </CardHeaderContent>
+        <CardHeaderActions>
+            <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="() => OnClose?.Invoke()" />
+        </CardHeaderActions>
+    </MudCardHeader>
+    <MudCardContent>
+        @if (_loading)
+        {
+            <MudProgressCircular Indeterminate="true" Size="Size.Small" />
+        }
+        else if (_entries.Count == 0)
+        {
+            <MudText Typo="Typo.body2" Color="Color.Secondary">История изменений по этому зубу пока пуста.</MudText>
+        }
+        else
+        {
+            <MudTimeline TimelinePosition="TimelinePosition.Start">
+                @foreach (var entry in _entries)
+                {
+                    <MudTimelineItem Color="Color.Primary" Size="Size.Small">
+                        <MudText Typo="Typo.body2">
+                            <b>@entry.ChangedAt.LocalDateTime.ToString("dd.MM.yyyy HH:mm")</b>
+                            @(entry.SurfaceCode is null ? " — весь зуб" : $" — поверхность {GetSurfaceName(entry.SurfaceCode)}")
+                            → @GetStateName(entry.Status)
+                        </MudText>
+                        @if (!string.IsNullOrWhiteSpace(entry.Diagnosis))
+                        {
+                            <MudText Typo="Typo.caption">Диагноз: @entry.Diagnosis</MudText>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(entry.Icd10Code) || !string.IsNullOrWhiteSpace(entry.Icd11Code))
+                        {
+                            <MudText Typo="Typo.caption">
+                                @(!string.IsNullOrWhiteSpace(entry.Icd10Code) ? $"МКБ-10: {entry.Icd10Code} " : "")
+                                @(!string.IsNullOrWhiteSpace(entry.Icd11Code) ? $"МКБ-11: {entry.Icd11Code}" : "")
+                            </MudText>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(entry.Comment))
+                        {
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">@entry.Comment</MudText>
+                        }
+                    </MudTimelineItem>
+                }
+            </MudTimeline>
+        }
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public Guid PatientId { get; set; }
+    [Parameter] public int ToothNumber { get; set; }
+    [Parameter] public Action? OnClose { get; set; }
+
+    private List<ToothTimelineEntryDto> _entries = [];
+    private bool _loading = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loading = true;
+        try
+        {
+            var result = await Api.GetToothSurfaceHistoryAsync(PatientId, (short)ToothNumber);
+            _entries = result.ToList();
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Ошибка загрузки истории зуба: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static string GetSurfaceName(string code) => code switch
+    {
+        "M" => "медиальная",
+        "D" => "дистальная",
+        "O" => "окклюзионная/режущая",
+        "B" => "вестибулярная (щёчная)",
+        "L" => "нёбная/язычная",
+        _ => code
+    };
+
+    private static string GetStateName(ToothStateType state) => state switch
+    {
+        ToothStateType.Healthy => "Здоров",
+        ToothStateType.Caries => "Кариес",
+        ToothStateType.Filling => "Пломба",
+        ToothStateType.Extracted => "Удалён",
+        ToothStateType.Crown => "Коронка",
+        ToothStateType.Implant => "Имплант",
+        ToothStateType.Veneer => "Винир",
+        ToothStateType.RootCanalTreated => "Лечение каналов",
+        ToothStateType.Cracked => "Трещина",
+        ToothStateType.Destroyed => "Разрушен",
+        ToothStateType.Pulpitis => "Пульпит",
+        ToothStateType.Periodontitis => "Периодонтит",
+        ToothStateType.Bridge => "Мост",
+        ToothStateType.Missing => "Отсутствует",
+        _ => state.ToString()
+    };
+}

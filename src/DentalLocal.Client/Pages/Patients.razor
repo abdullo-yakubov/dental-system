@@ -7,46 +7,51 @@
 
 <PageTitle>Пациенты — DentalLocal</PageTitle>
 
-<MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
-    <MudText Typo="Typo.h5">Пациенты</MudText>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenCreateDialogAsync">
-        Новый пациент
-    </MudButton>
-</MudStack>
+<div class="page-fade-in">
+    <PageHeader Title="Пациенты" Icon="@Icons.Material.Filled.People" Subtitle="База пациентов клиники">
+        <Actions>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenCreateDialogAsync">
+                Новый пациент
+            </MudButton>
+        </Actions>
+    </PageHeader>
 
-<MudStack Row="true" Spacing="4" Class="mb-4">
-    <MudTextField T="string" Label="Поиск по ФИО, телефону, № карты" Adornment="Adornment.Start"
-                   AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true"
-                   DebounceInterval="300" ValueChanged="OnSearchChanged" Value="_search" Class="flex-grow-1" />
-    <MudCheckBox T="bool" Value="_includeArchived" ValueChanged="OnIncludeArchivedChanged" Label="Показать архивных" />
-</MudStack>
+    <GlassCard Class="mb-4">
+        <MudStack Row="true" Spacing="4" AlignItems="AlignItems.Center">
+            <SearchBox Value="_search" OnSearch="OnSearchChanged" Placeholder="Поиск по ФИО, телефону, № карты" Class="flex-grow-1" />
+            <MudCheckBox T="bool" Value="_includeArchived" ValueChanged="OnIncludeArchivedChanged" Label="Показать архивных" />
+        </MudStack>
+    </GlassCard>
 
-<MudTable ServerData="LoadPatientsAsync" @ref="_table" Hover="true" Loading="_isLoading">
-    <HeaderContent>
-        <MudTh>№ карты</MudTh>
-        <MudTh>ФИО</MudTh>
-        <MudTh>Возраст</MudTh>
-        <MudTh>Телефон</MudTh>
-        <MudTh>Последний визит</MudTh>
-        <MudTh></MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="№ карты">@context.CardNumberDisplay</MudTd>
-        <MudTd DataLabel="ФИО">@context.FullName @(context.IsArchived ? "(архив)" : "")</MudTd>
-        <MudTd DataLabel="Возраст">@context.Age</MudTd>
-        <MudTd DataLabel="Телефон">@context.Phone</MudTd>
-        <MudTd DataLabel="Последний визит">@(context.LastVisitAt?.ToString("dd.MM.yyyy") ?? "—")</MudTd>
-        <MudTd>
-            <MudButton Size="Size.Small" OnClick="@(() => OpenPatient(context.Id))">Открыть</MudButton>
-        </MudTd>
-    </RowTemplate>
-    <NoRecordsContent>
-        <MudText>Пациенты не найдены.</MudText>
-    </NoRecordsContent>
-    <PagerContent>
-        <MudTablePager RowsPerPageString="На странице:" InfoFormat="{first_item}-{last_item} из {all_items}" />
-    </PagerContent>
-</MudTable>
+    <GlassCard Class="pa-0">
+        <MudTable ServerData="LoadPatientsAsync" @ref="_table" Hover="true" Loading="_isLoading" Elevation="0" Class="glass-table">
+            <HeaderContent>
+                <MudTh>№ карты</MudTh>
+                <MudTh>ФИО</MudTh>
+                <MudTh>Возраст</MudTh>
+                <MudTh>Телефон</MudTh>
+                <MudTh>Последний визит</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="№ карты">@context.CardNumberDisplay</MudTd>
+                <MudTd DataLabel="ФИО">@context.FullName @(context.IsArchived ? "(архив)" : "")</MudTd>
+                <MudTd DataLabel="Возраст">@context.Age</MudTd>
+                <MudTd DataLabel="Телефон">@context.Phone</MudTd>
+                <MudTd DataLabel="Последний визит">@(context.LastVisitAt?.ToString("dd.MM.yyyy") ?? "—")</MudTd>
+                <MudTd>
+                    <MudButton Size="Size.Small" OnClick="@(() => OpenPatient(context.Id))">Открыть</MudButton>
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <EmptyState Icon="@Icons.Material.Filled.PersonSearch" Title="Пациенты не найдены" Description="Измените параметры поиска или добавьте нового пациента." />
+            </NoRecordsContent>
+            <PagerContent>
+                <MudTablePager RowsPerPageString="На странице:" InfoFormat="{first_item}-{last_item} из {all_items}" />
+            </PagerContent>
+        </MudTable>
+    </GlassCard>
+</div>
 
 @code {
     private MudTable<PatientListItemDto>? _table;

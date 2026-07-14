@@ -1,3 +1,4 @@
+@using DentalLocal.Shared.Contracts.Icd
 @inject ApiClient Api
 @inject ISnackbar Snackbar
 
@@ -90,6 +91,7 @@
                     </MudStack>
                 </MudPaper>
             }
+
         }
         else if (_currentStep == 2)
         {
@@ -155,21 +157,24 @@
         else if (_currentStep == 4)
         {
             <!-- STEP 4: DIAGNOSIS -->
-            <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-3">Поставить диагноз</MudText>
+            <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-3">Шаг 4: Поставить диагноз</MudText>
 
-            <MudText Typo="Typo.subtitle2" Class="font-weight-bold mb-2">Лечение:</MudText>
-            <MudList T="string" ReadOnly="true" Dense="true" Class="mb-4">
-                @{ var index = 0; }
-                @foreach (var item in _items.Where(i => i.ProcedureId != Guid.Empty))
-                {
-                    index++;
-                    var procName = _procedures.FirstOrDefault(p => p.Id == item.ProcedureId)?.Name ?? "Неизвестная услуга";
-                    <MudListItem T="string">@index. @procName @(item.ToothNumber.HasValue ? $"(Зуб {item.ToothNumber})" : "")</MudListItem>
-                }
-            </MudList>
-
-            <MudTextField @bind-Value="_diagnosis" Label="Диагноз" Required="true" RequiredError="Диагноз обязателен для заполнения."
-                          Lines="3" Variant="Variant.Outlined" HelperText="Впишите диагноз своими словами (при необходимости — с кодом МКБ-10/11)." />
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudAutocomplete T="IcdCodeDto" Label="Поиск по МКБ-10" @bind-Value="_selectedIcd10" SearchFunc="SearchIcd10Async"
+                                     ToStringFunc="@(x => x == null ? "" : $"{x.Code} — {x.Description}")"
+                                     ResetValueOnEmptyText="true" CoerceText="true" CoerceValue="false" Class="mb-3" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudAutocomplete T="IcdCodeDto" Label="Поиск по МКБ-11" @bind-Value="_selectedIcd11" SearchFunc="SearchIcd11Async"
+                                     ToStringFunc="@(x => x == null ? "" : $"{x.Code} — {x.Description}")"
+                                     ResetValueOnEmptyText="true" CoerceText="true" CoerceValue="false" Class="mb-3" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_diagnosis" Label="Диагноз (Текст)" Required="true" RequiredError="Диагноз обязателен."
+                                  HelperText="Например: Кариес дентина (K02.1)" Lines="2" Variant="Variant.Outlined" />
+                </MudItem>
+            </MudGrid>
         }
         else if (_currentStep == 5)
         {
@@ -285,6 +290,8 @@
 
     // Step 4 variables
     private string _diagnosis = "";
+    private IcdCodeDto? _selectedIcd10;
+    private IcdCodeDto? _selectedIcd11;
 
     private IEnumerable<ProcedureDto> FilteredProcedures =>
         _selectedCategoryId is null ? _procedures : _procedures.Where(p => p.CategoryId == _selectedCategoryId);
@@ -330,6 +337,28 @@
         {
             return Array.Empty<PatientListItemDto>();
         }
+    }
+
+    private async Task<IEnumerable<IcdCodeDto>> SearchIcd10Async(string search, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(search) || search.Length < 2) return [];
+        try 
+        { 
+            var codes = await Api.SearchIcd10Async(search, ct);
+            return codes;
+        }
+        catch { return []; }
+    }
+
+    private async Task<IEnumerable<IcdCodeDto>> SearchIcd11Async(string search, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(search) || search.Length < 2) return [];
+        try 
+        { 
+            var codes = await Api.SearchIcd11Async(search, ct);
+            return codes;
+        }
+        catch { return []; }
     }
 
     private async Task CreatePatientAsync()
@@ -403,6 +432,20 @@
         if (CanGoNext())
         {
             _errorMessage = null;
+            if (_currentStep == 4)
+            {
+                // Auto-append selected ICD codes if they were chosen
+                var icdText = "";
+                if (_selectedIcd10 != null)
+                    icdText += $" (МКБ-10: {_selectedIcd10.Code})";
+                if (_selectedIcd11 != null)
+                    icdText += $" (МКБ-11: {_selectedIcd11.Code})";
+
+                if (!string.IsNullOrWhiteSpace(icdText) && !_diagnosis.Contains(icdText))
+                {
+                    _diagnosis += icdText;
+                }
+            }
             _currentStep++;
         }
     }

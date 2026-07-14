@@ -7,11 +7,21 @@
 <PageTitle>Календарь приемов — DentalLocal</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <PageHeader Title="Календарь приемов" Icon="@Icons.Material.Filled.CalendarMonth" Subtitle="Недельное расписание визитов">
+        <Actions>
+            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.HourglassEmpty" OnClick="OpenWaitingListAsync" Class="mr-2">
+                Лист ожидания
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateFlowAsync">
+                Записать прием
+            </MudButton>
+        </Actions>
+    </PageHeader>
+
     <!-- Header with controls -->
-    <MudPaper Class="pa-4 mb-4 border-radius-12" Elevation="2">
+    <div class="glass-card pa-4 mb-4">
         <MudGrid AlignItems="AlignItems.Center">
             <MudItem xs="12" md="4" Class="d-flex align-center">
-                <MudText Typo="Typo.h5" Class="font-weight-bold mr-4">Календарь приемов</MudText>
                 <MudChip T="string" Color="Color.Primary" Size="Size.Small">Недельный вид</MudChip>
             </MudItem>
             <MudItem xs="12" md="4" Class="d-flex justify-center align-center">
@@ -29,23 +39,18 @@
                         <MudSelectItem Value="@doc">@doc</MudSelectItem>
                     }
                 </MudSelect>
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateFlowAsync">
-                    Записать прием
-                </MudButton>
             </MudItem>
         </MudGrid>
-    </MudPaper>
+    </div>
 
     <!-- Calendar Table -->
     @if (_loading)
     {
-        <div class="d-flex justify-center align-center" style="height: 50vh;">
-            <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
-        </div>
+        <div class="skeleton" style="height: 55vh; border-radius: var(--app-radius-md);"></div>
     }
     else
     {
-        <div class="calendar-card overflow-x-auto border-radius-12">
+        <div class="calendar-card glass-card overflow-x-auto">
             <table class="calendar-table w-full">
                 <thead>
                     <tr>
@@ -111,9 +116,7 @@
 
 <style>
     .calendar-card {
-        background-color: var(--mud-palette-background);
-        border: 1px solid var(--mud-palette-divider);
-        box-shadow: var(--mud-elevation-2);
+        padding: 8px;
     }
     .calendar-table {
         border-collapse: collapse;
@@ -338,6 +341,12 @@
     private async Task OpenCreateFlowAsync()
     {
         await OpenCreateFlowAsync(DateTime.Today, DateTime.Now.TimeOfDay);
+    }
+
+    private async Task OpenWaitingListAsync()
+    {
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+        await DialogService.ShowAsync<Components.WaitingListDialog>("Лист ожидания", options);
     }
 
     private async Task OpenCreateFlowAsync(DateTime date, TimeSpan time)

@@ -1,0 +1,22 @@
+@* Оверлей загрузки поверх содержимого блока *@
+
+<div class="loading-overlay-host">
+    @ChildContent
+
+    @if (Loading)
+    {
+        <div class="loading-overlay-mask">
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+            @if (!string.IsNullOrWhiteSpace(Text))
+            {
+                <MudText Typo="Typo.body2" Class="mt-2">@Text</MudText>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public bool Loading { get; set; }
+    [Parameter] public string? Text { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

@@ -66,6 +66,7 @@ app.MapPatientsEndpoints();
 app.MapVisitsEndpoints();
 app.MapProceduresEndpoints();
 app.MapTeethEndpoints();
+app.MapIcdEndpoints();
 app.MapPaymentsEndpoints();
 app.MapDashboardEndpoints();
 app.MapMaterialsEndpoints();
@@ -74,6 +75,11 @@ app.MapReportEndpoints();
 app.MapSettingsEndpoints();
 app.MapRemindersEndpoints();
 app.MapTreatmentPlansEndpoints();
+app.MapCurrenciesEndpoints();
+app.MapDiscountsEndpoints();
+app.MapWaitingListEndpoints();
+app.MapPrescriptionsEndpoints();
+app.MapWarrantiesEndpoints();
 
 app.MapGet(DentalLocal.Shared.Common.ApiRoutes.System.Health, () => Results.Ok(new { status = "ok" }));
 

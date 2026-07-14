@@ -17,6 +17,8 @@ public class PatientFile : Entity
 
     public DateTimeOffset UploadedAt { get; private set; }
     public string? Description { get; private set; }
+    public string? Sha256Hash { get; private set; }
+    public string? BeforeAfterType { get; private set; } // e.g., "Before", "After"
 
     public const long MaxFileSizeBytes = 200L * 1024 * 1024;
 
@@ -36,7 +38,9 @@ public class PatientFile : Entity
         string contentType,
         long sizeBytes,
         string storedPath,
-        string? description)
+        string? description,
+        string? sha256Hash = null,
+        string? beforeAfterType = null)
     {
         if (string.IsNullOrWhiteSpace(fileName))
             throw new ArgumentException("Имя файла обязательно.", nameof(fileName));
@@ -57,6 +61,8 @@ public class PatientFile : Entity
             SizeBytes = sizeBytes,
             StoredPath = storedPath,
             Description = description,
+            Sha256Hash = sha256Hash,
+            BeforeAfterType = beforeAfterType,
             UploadedAt = DateTimeOffset.UtcNow,
         };
     }

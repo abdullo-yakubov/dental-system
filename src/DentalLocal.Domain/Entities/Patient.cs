@@ -21,6 +21,7 @@ public class Patient : Entity, IImmutableRecord
     public string? ChronicDiseases { get; private set; }
     public string? Comments { get; private set; }
     public string? DoctorNotes { get; private set; }
+    public string? Source { get; private set; }
     public Guid? PhotoFileId { get; private set; }
     public DateTimeOffset RegisteredAt { get; private set; }
     public DateTimeOffset? LastVisitAt { get; private set; }
@@ -42,7 +43,8 @@ public class Patient : Entity, IImmutableRecord
         string? allergies,
         string? chronicDiseases,
         string? comments,
-        string? doctorNotes)
+        string? doctorNotes,
+        string? source = null)
     {
         ValidateName(lastName, nameof(lastName));
         ValidateName(firstName, nameof(firstName));
@@ -64,6 +66,7 @@ public class Patient : Entity, IImmutableRecord
             ChronicDiseases = chronicDiseases,
             Comments = comments,
             DoctorNotes = doctorNotes,
+            Source = source,
             RegisteredAt = DateTimeOffset.UtcNow,
             IsArchived = false,
         };
@@ -81,7 +84,8 @@ public class Patient : Entity, IImmutableRecord
         string? allergies,
         string? chronicDiseases,
         string? comments,
-        string? doctorNotes)
+        string? doctorNotes,
+        string? source = null)
     {
         ValidateName(lastName, nameof(lastName));
         ValidateName(firstName, nameof(firstName));
@@ -101,6 +105,7 @@ public class Patient : Entity, IImmutableRecord
         ChronicDiseases = chronicDiseases;
         Comments = comments;
         DoctorNotes = doctorNotes;
+        Source = source;
         Touch();
     }
 
