@@ -1,0 +1,340 @@
+@page "/settings"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<PageTitle>Настройки — DentalLocal</PageTitle>
+
+<MudText Typo="Typo.h5" Class="font-weight-bold mb-4" Color="Color.Primary">Настройки</MudText>
+
+<MudTabs Elevation="2" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
+    <MudTabPanel Text="Общие" Icon="@Icons.Material.Filled.Tune">
+        @if (_settingsLoaded)
+        {
+            <MudStack Spacing="4" Style="max-width: 480px;">
+                <MudTextField @bind-Value="_doctorName" Label="ФИО врача" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="_clinicName" Label="Название клиники" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="_currency" Label="Валюта" Variant="Variant.Outlined" />
+                <MudSelect T="string" @bind-Value="_theme" Label="Тема оформления" Variant="Variant.Outlined">
+                    <MudSelectItem Value="@("system")">Системная</MudSelectItem>
+                    <MudSelectItem Value="@("light")">Светлая</MudSelectItem>
+                    <MudSelectItem Value="@("dark")">Тёмная</MudSelectItem>
+                    <MudSelectItem Value="@("blue")">Синяя</MudSelectItem>
+                    <MudSelectItem Value="@("teal")">Бирюзовая</MudSelectItem>
+                </MudSelect>
+                <MudSelect T="string" @bind-Value="_language" Label="Язык интерфейса" Variant="Variant.Outlined">
+                    <MudSelectItem Value="@("ru")">Русский</MudSelectItem>
+                    <MudSelectItem Value="@("uz")">Oʻzbek</MudSelectItem>
+                    <MudSelectItem Value="@("en")">English</MudSelectItem>
+                </MudSelect>
+                <MudTextField @bind-Value="_backupTime" Label="Время автобэкапа (HH:mm)" Variant="Variant.Outlined" />
+                <MudNumericField @bind-Value="_backupRetentionDays" Label="Хранить бэкапы, дней" Variant="Variant.Outlined" Min="1" />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSettingsAsync" Disabled="_isSavingSettings">
+                    Сохранить
+                </MudButton>
+            </MudStack>
+        }
+        else
+        {
+            <MudProgressCircular Indeterminate="true" />
+        }
+    </MudTabPanel>
+
+    <MudTabPanel Text="Безопасность" Icon="@Icons.Material.Filled.Lock">
+        <MudStack Spacing="4" Style="max-width: 480px;">
+            <MudTextField @bind-Value="_oldCode" Label="Текущий код доступа" Variant="Variant.Outlined" InputType="InputType.Password" />
+            <MudTextField @bind-Value="_newCode" Label="Новый код доступа" Variant="Variant.Outlined" InputType="InputType.Password" />
+            <MudTextField @bind-Value="_newCodeConfirm" Label="Повторите новый код" Variant="Variant.Outlined" InputType="InputType.Password" />
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ChangeCodeAsync" Disabled="_isChangingCode">
+                Сменить код доступа
+            </MudButton>
+        </MudStack>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Резервные копии" Icon="@Icons.Material.Filled.Backup">
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+            <MudText Typo="Typo.subtitle1">Резервные копии базы данных</MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="OpenCreateBackupDialogAsync">
+                Создать сейчас
+            </MudButton>
+        </MudStack>
+
+        <MudTable Items="_backups" Hover="true" Loading="_isLoadingBackups" Elevation="0">
+            <HeaderContent>
+                <MudTh>Файл</MudTh>
+                <MudTh>Создан</MudTh>
+                <MudTh>Размер</MudTh>
+                <MudTh>Триггер</MudTh>
+                <MudTh>Статус</MudTh>
+                <MudTh>Заметка</MudTh>
+                <MudTh></MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Файл">@context.FileName</MudTd>
+                <MudTd DataLabel="Создан">@context.CreatedAt.LocalDateTime.ToString("dd.MM.yyyy HH:mm")</MudTd>
+                <MudTd DataLabel="Размер">@FormatSize(context.SizeBytes)</MudTd>
+                <MudTd DataLabel="Триггер">@FormatTrigger(context.Trigger)</MudTd>
+                <MudTd DataLabel="Статус">
+                    @if (context.IsValid)
+                    {
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small">Проверено</MudChip>
+                    }
+                    else
+                    {
+                        <MudChip T="string" Color="Color.Default" Size="Size.Small">Не проверено</MudChip>
+                    }
+                </MudTd>
+                <MudTd DataLabel="Заметка">@context.Note</MudTd>
+                <MudTd>
+                    <MudStack Row="true" Spacing="1">
+                        <MudIconButton Icon="@Icons.Material.Filled.VerifiedUser" Size="Size.Small" Color="Color.Info"
+                                       OnClick="@(() => ValidateBackupAsync(context.FileName))" title="Проверить целостность" />
+                        <MudIconButton Icon="@Icons.Material.Filled.SettingsBackupRestore" Size="Size.Small" Color="Color.Warning"
+                                       OnClick="@(() => OpenRestoreDialogAsync(context.FileName))" title="Восстановить" />
+                    </MudStack>
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText>Резервные копии ещё не создавались.</MudText>
+            </NoRecordsContent>
+        </MudTable>
+    </MudTabPanel>
+
+    <MudTabPanel Text="Журнал действий" Icon="@Icons.Material.Filled.History">
+        <MudTable Items="_auditLogs" Hover="true" Loading="_isLoadingAudit" Elevation="0">
+            <HeaderContent>
+                <MudTh>Дата</MudTh>
+                <MudTh>Действие</MudTh>
+                <MudTh>Сущность</MudTh>
+                <MudTh>Детали</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Дата">@context.OccurredAt.LocalDateTime.ToString("dd.MM.yyyy HH:mm:ss")</MudTd>
+                <MudTd DataLabel="Действие">@context.Action</MudTd>
+                <MudTd DataLabel="Сущность">@context.Entity</MudTd>
+                <MudTd DataLabel="Детали">@context.DetailsJson</MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText>Записей аудита пока нет.</MudText>
+            </NoRecordsContent>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new[] { 20, 50, 100 }" />
+            </PagerContent>
+        </MudTable>
+    </MudTabPanel>
+</MudTabs>
+
+@code {
+    private bool _settingsLoaded;
+    private bool _isSavingSettings;
+
+    private string _doctorName = string.Empty;
+    private string _clinicName = string.Empty;
+    private string _currency = string.Empty;
+    private string _theme = "system";
+    private string _language = "ru";
+    private string _backupTime = string.Empty;
+    private int _backupRetentionDays = 30;
+
+    private string _oldCode = string.Empty;
+    private string _newCode = string.Empty;
+    private string _newCodeConfirm = string.Empty;
+    private bool _isChangingCode;
+
+    private List<BackupDto> _backups = [];
+    private bool _isLoadingBackups = true;
+
+    private List<AuditLogDto> _auditLogs = [];
+    private bool _isLoadingAudit = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.WhenAll(LoadSettingsAsync(), LoadBackupsAsync(), LoadAuditLogsAsync());
+    }
+
+    private async Task LoadSettingsAsync()
+    {
+        try
+        {
+            var settings = await Api.GetSettingsAsync();
+            _doctorName = settings.DoctorName;
+            _clinicName = settings.ClinicName;
+            _currency = settings.Currency;
+            _theme = settings.Theme;
+            _language = settings.Language;
+            _backupTime = settings.BackupTime;
+            _backupRetentionDays = settings.BackupRetentionDays;
+            _settingsLoaded = true;
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Ошибка загрузки настроек: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task SaveSettingsAsync()
+    {
+        _isSavingSettings = true;
+        try
+        {
+            var request = new UpdateSettingsRequest(
+                _doctorName, _clinicName, _currency, _theme, _language, _backupTime, _backupRetentionDays);
+
+            var settings = await Api.UpdateSettingsAsync(request);
+            _doctorName = settings.DoctorName;
+            _clinicName = settings.ClinicName;
+            _currency = settings.Currency;
+            _theme = settings.Theme;
+            _language = settings.Language;
+            _backupTime = settings.BackupTime;
+            _backupRetentionDays = settings.BackupRetentionDays;
+            Snackbar.Add("Настройки сохранены.", Severity.Success);
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось сохранить настройки: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isSavingSettings = false;
+        }
+    }
+
+    private async Task ChangeCodeAsync()
+    {
+        if (_newCode != _newCodeConfirm)
+        {
+            Snackbar.Add("Новый код и подтверждение не совпадают.", Severity.Warning);
+            return;
+        }
+
+        _isChangingCode = true;
+        try
+        {
+            await Api.ChangeAccessCodeAsync(_oldCode, _newCode);
+            Snackbar.Add("Код доступа изменён.", Severity.Success);
+            _oldCode = _newCode = _newCodeConfirm = string.Empty;
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось сменить код: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isChangingCode = false;
+        }
+    }
+
+    private async Task LoadBackupsAsync()
+    {
+        _isLoadingBackups = true;
+        try
+        {
+            _backups = (await Api.GetBackupsAsync()).ToList();
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Ошибка загрузки бэкапов: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoadingBackups = false;
+        }
+    }
+
+    private async Task LoadAuditLogsAsync()
+    {
+        _isLoadingAudit = true;
+        try
+        {
+            var result = await Api.GetAuditLogsAsync(1, 50);
+            _auditLogs = result.Items.ToList();
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Ошибка загрузки журнала действий: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoadingAudit = false;
+        }
+    }
+
+    private async Task OpenCreateBackupDialogAsync()
+    {
+        var pin = await PromptPinAsync();
+        if (string.IsNullOrWhiteSpace(pin))
+            return;
+
+        try
+        {
+            await Api.CreateBackupAsync(new CreateBackupRequest(pin, "Ручное создание"));
+            Snackbar.Add("Резервная копия создана.", Severity.Success);
+            await LoadBackupsAsync();
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось создать резервную копию: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OpenRestoreDialogAsync(string fileName)
+    {
+        var pin = await PromptPinAsync();
+        if (string.IsNullOrWhiteSpace(pin))
+            return;
+
+        try
+        {
+            await Api.RestoreBackupAsync(new RestoreBackupRequest(pin, fileName));
+            Snackbar.Add("База данных восстановлена из резервной копии.", Severity.Success);
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось восстановить резервную копию: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ValidateBackupAsync(string fileName)
+    {
+        try
+        {
+            var isValid = await Api.ValidateBackupAsync(fileName);
+            Snackbar.Add(isValid ? "Резервная копия целостна." : "Резервная копия повреждена!", isValid ? Severity.Success : Severity.Error);
+            await LoadBackupsAsync();
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось проверить резервную копию: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task<string?> PromptPinAsync()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<PinPromptDialog>("Введите код доступа", options);
+        var result = await dialog.Result;
+
+        return result is { Canceled: false, Data: string pin } ? pin : null;
+    }
+
+    private static string FormatSize(long bytes)
+    {
+        if (bytes >= 1024 * 1024)
+            return $"{bytes / (1024.0 * 1024.0):N1} МБ";
+        if (bytes >= 1024)
+            return $"{bytes / 1024.0:N1} КБ";
+        return $"{bytes} Б";
+    }
+
+    private static string FormatTrigger(short trigger) => trigger switch
+    {
+        1 => "Ежедневно (авто)",
+        2 => "Перед обновлением",
+        3 => "Вручную",
+        4 => "Перед восстановлением",
+        _ => "—",
+    };
+}

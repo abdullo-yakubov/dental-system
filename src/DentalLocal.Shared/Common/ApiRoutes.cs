@@ -80,6 +80,11 @@ public static class ApiRoutes
         public const string Base = $"{Prefix}/settings";
     }
 
+    public static class AuditLogs
+    {
+        public const string Base = $"{Prefix}/audit-logs";
+    }
+
     public static class System
     {
         public const string Health = $"{Prefix}/system/health";

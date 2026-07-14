@@ -71,6 +71,7 @@ app.MapDashboardEndpoints();
 app.MapMaterialsEndpoints();
 app.MapBackupEndpoints();
 app.MapReportEndpoints();
+app.MapSettingsEndpoints();
 
 app.MapGet(DentalLocal.Shared.Common.ApiRoutes.System.Health, () => Results.Ok(new { status = "ok" }));
 

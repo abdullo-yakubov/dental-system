@@ -10,6 +10,7 @@ using DentalLocal.Shared.Contracts.Payments;
 using DentalLocal.Shared.Contracts.Analytics;
 using DentalLocal.Shared.Contracts.Materials;
 using DentalLocal.Shared.Contracts.Backups;
+using DentalLocal.Shared.Contracts.Settings;
 using DentalLocal.Shared.Enums;
 
 namespace DentalLocal.Client.Services;
@@ -215,6 +216,17 @@ public sealed class ApiClient(HttpClient http)
 
     public Task<bool> ValidateBackupAsync(string fileName, CancellationToken ct = default) =>
         SendAsync<bool>(() => http.GetAsync($"{ApiRoutes.Backups.Base}/validate?fileName={Uri.EscapeDataString(fileName)}", ct));
+
+    // ── Settings & Audit ─────────────────────────────────────────────────────
+
+    public Task<SettingsDto> GetSettingsAsync(CancellationToken ct = default) =>
+        SendAsync<SettingsDto>(() => http.GetAsync(ApiRoutes.Settings.Base, ct));
+
+    public Task<SettingsDto> UpdateSettingsAsync(UpdateSettingsRequest request, CancellationToken ct = default) =>
+        SendAsync<SettingsDto>(() => http.PutAsJsonAsync(ApiRoutes.Settings.Base, request, ct));
+
+    public Task<PagedResult<AuditLogDto>> GetAuditLogsAsync(int page, int pageSize, CancellationToken ct = default) =>
+        SendAsync<PagedResult<AuditLogDto>>(() => http.GetAsync($"{ApiRoutes.AuditLogs.Base}?page={page}&pageSize={pageSize}", ct));
 
     private static async Task<T> SendAsync<T>(Func<Task<HttpResponseMessage>> send)
     {
