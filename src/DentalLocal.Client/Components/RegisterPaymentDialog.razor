@@ -1,0 +1,89 @@
+@inject ApiClient Api
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>Принять оплату</TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form">
+            <MudNumericField T="decimal" @bind-Value="_amount" Label="Сумма оплаты (сум)" 
+                             Required="true" Min="1" Max="RemainingAmount" Format="N0" Class="mb-3" />
+            
+            <MudSelect T="PaymentMethod" @bind-Value="_method" Label="Способ оплаты" Class="mb-3">
+                <MudSelectItem Value="PaymentMethod.Cash">Наличные</MudSelectItem>
+                <MudSelectItem Value="PaymentMethod.Card">Карта</MudSelectItem>
+                <MudSelectItem Value="PaymentMethod.Transfer">Перевод</MudSelectItem>
+            </MudSelect>
+
+            <MudSelect T="PaymentKind" @bind-Value="_kind" Label="Тип оплаты" Class="mb-3">
+                <MudSelectItem Value="PaymentKind.AtTreatment">Оплата лечения</MudSelectItem>
+                <MudSelectItem Value="PaymentKind.DebtRepayment">Погашение долга</MudSelectItem>
+            </MudSelect>
+
+            <MudTextField @bind-Value="_note" Label="Примечание" Lines="2" />
+        </MudForm>
+
+        @if (_errorMessage is not null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-3">@_errorMessage</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Отмена</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SubmitAsync" Disabled="_isBusy">
+            @(_isBusy ? "Сохранение..." : "Подтвердить")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Guid VisitId { get; set; }
+    [Parameter] public Guid PatientId { get; set; }
+    [Parameter] public decimal RemainingAmount { get; set; }
+    [Parameter] public PaymentKind InitialKind { get; set; } = PaymentKind.AtTreatment;
+
+    private MudForm? _form;
+    private decimal _amount;
+    private PaymentMethod _method = PaymentMethod.Cash;
+    private PaymentKind _kind = PaymentKind.AtTreatment;
+    private string? _note;
+    private string? _errorMessage;
+    private bool _isBusy;
+
+    protected override void OnParametersSet()
+    {
+        _amount = RemainingAmount;
+        _kind = InitialKind;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SubmitAsync()
+    {
+        await _form!.Validate();
+        if (!_form.IsValid)
+        {
+            _errorMessage = "Заполните обязательные поля.";
+            return;
+        }
+
+        _isBusy = true;
+        _errorMessage = null;
+
+        try
+        {
+            var request = new RegisterPaymentRequest(VisitId, PatientId, _amount, _method, _kind, _note);
+            var payment = await Api.RegisterPaymentAsync(request);
+            Snackbar.Add($"Оплата на сумму {payment.Amount.ToString("N0")} сум успешно принята.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(payment));
+        }
+        catch (ApiException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+}

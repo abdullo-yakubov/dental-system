@@ -1,0 +1,70 @@
+@inject ApiClient Api
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        Изменение остатка: @Material.Name
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Class="mb-3">
+            Текущий остаток: <strong>@Material.QuantityInStock.ToString("N2") @Material.Unit</strong>
+        </MudText>
+        <MudForm @ref="_form">
+            <MudNumericField T="decimal" @bind-Value="_amount" Label="Количество" 
+                             Required="true" HelperText="Укажите положительное число для прихода, отрицательное для списания" Class="mb-3" />
+        </MudForm>
+
+        @if (_errorMessage is not null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-3">@_errorMessage</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Отмена</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SubmitAsync" Disabled="_isBusy">
+            @(_isBusy ? "Сохранение..." : "Применить")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public MaterialDto Material { get; set; } = null!;
+
+    private MudForm? _form;
+    private decimal _amount;
+    private string? _errorMessage;
+    private bool _isBusy;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SubmitAsync()
+    {
+        await _form!.Validate();
+        if (!_form.IsValid) return;
+
+        if (_amount == 0)
+        {
+            _errorMessage = "Количество не должно быть равно нулю.";
+            return;
+        }
+
+        _isBusy = true;
+        _errorMessage = null;
+
+        try
+        {
+            var result = await Api.AdjustMaterialStockAsync(Material.Id, new AdjustStockRequest(_amount));
+            Snackbar.Add($"Остаток материала изменен на {(_amount > 0 ? "+" : "")}{_amount.ToString("N2")} {Material.Unit}.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(result));
+        }
+        catch (ApiException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+}

@@ -12,6 +12,8 @@ public class DebtRepository(DentalDbContext context) : RepositoryBase<Debt>(cont
 
     public async Task<IReadOnlyList<Debt>> GetByPatientIdAsync(Guid patientId, CancellationToken cancellationToken = default) =>
         await Set.AsNoTracking()
+            .Include(d => d.Patient)
+            .Include(d => d.Visit)
             .Where(d => d.PatientId == patientId)
             .OrderByDescending(d => d.AroseAt)
             .ToListAsync(cancellationToken);
@@ -23,7 +25,10 @@ public class DebtRepository(DentalDbContext context) : RepositoryBase<Debt>(cont
         int pageSize,
         CancellationToken cancellationToken = default)
     {
-        var query = Set.AsNoTracking().Include(d => d.Patient).AsQueryable();
+        var query = Set.AsNoTracking()
+            .Include(d => d.Patient)
+            .Include(d => d.Visit)
+            .AsQueryable();
 
         if (status is not null)
             query = query.Where(d => d.Status == status);

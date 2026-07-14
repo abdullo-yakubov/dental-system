@@ -2,7 +2,7 @@
 @inject ISnackbar Snackbar
 
 <MudDialog>
-    <TitleContent>Новый пациент</TitleContent>
+    <TitleContent>@(Patient == null ? "Новый пациент" : "Редактировать пациента")</TitleContent>
     <DialogContent>
         <MudForm @ref="_form" Model="this">
             <MudTextField @bind-Value="_lastName" Label="Фамилия" Required="true" Class="mb-2" />
@@ -31,6 +31,7 @@
 
 @code {
     [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public PatientDto? Patient { get; set; }
 
     private MudForm? _form;
     private string _lastName = string.Empty;
@@ -44,6 +45,22 @@
     private string? _chronicDiseases;
     private string? _errorMessage;
     private bool _isBusy;
+
+    protected override void OnParametersSet()
+    {
+        if (Patient != null)
+        {
+            _lastName = Patient.LastName;
+            _firstName = Patient.FirstName;
+            _middleName = Patient.MiddleName;
+            _gender = Patient.Gender;
+            _birthDate = Patient.BirthDate.ToDateTime(TimeOnly.MinValue);
+            _phone = Patient.Phone;
+            _address = Patient.Address;
+            _allergies = Patient.Allergies;
+            _chronicDiseases = Patient.ChronicDiseases;
+        }
+    }
 
     private void Cancel() => MudDialog.Cancel();
 
@@ -61,13 +78,26 @@
 
         try
         {
-            var request = new CreatePatientRequest(
-                _lastName, _firstName, _middleName, _gender, DateOnly.FromDateTime(_birthDate.Value),
-                _phone, null, _address, _allergies, _chronicDiseases, null, null);
+            if (Patient != null)
+            {
+                var updateRequest = new UpdatePatientRequest(
+                    _lastName, _firstName, _middleName, _gender, DateOnly.FromDateTime(_birthDate.Value),
+                    _phone, Patient.PhoneExtra, _address, _allergies, _chronicDiseases, Patient.Comments, Patient.DoctorNotes);
 
-            var patient = await Api.CreatePatientAsync(request);
-            Snackbar.Add($"Пациент «{patient.FullName}» добавлен.", Severity.Success);
-            MudDialog.Close(DialogResult.Ok(patient));
+                var updated = await Api.UpdatePatientAsync(Patient.Id, updateRequest);
+                Snackbar.Add($"Пациент «{updated.FullName}» изменен.", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(updated));
+            }
+            else
+            {
+                var request = new CreatePatientRequest(
+                    _lastName, _firstName, _middleName, _gender, DateOnly.FromDateTime(_birthDate.Value),
+                    _phone, null, _address, _allergies, _chronicDiseases, null, null);
+
+                var created = await Api.CreatePatientAsync(request);
+                Snackbar.Add($"Пациент «{created.FullName}» добавлен.", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(created));
+            }
         }
         catch (ApiException ex)
         {

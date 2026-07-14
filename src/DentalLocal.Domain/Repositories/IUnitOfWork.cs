@@ -15,6 +15,8 @@ public interface IUnitOfWork
     IBackupRecordRepository BackupRecords { get; }
     IAuditLogRepository AuditLogs { get; }
     IAppSettingRepository AppSettings { get; }
+    IMaterialRepository Materials { get; }
+    IMaterialUsageRepository MaterialUsages { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 

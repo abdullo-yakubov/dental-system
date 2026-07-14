@@ -12,6 +12,9 @@ public class PatientFileRepository(DentalDbContext context) : RepositoryBase<Pat
             .OrderByDescending(f => f.UploadedAt)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<PatientFile>> GetAllAsync(CancellationToken cancellationToken = default) =>
+        await Set.AsNoTracking().ToListAsync(cancellationToken);
+
     public Task<bool> IsAttachedToVisitAsync(Guid fileId, CancellationToken cancellationToken = default) =>
         Context.Set<Patient>().AnyAsync(p => p.PhotoFileId == fileId, cancellationToken);
 

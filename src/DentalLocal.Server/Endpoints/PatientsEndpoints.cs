@@ -58,5 +58,62 @@ public static class PatientsEndpoints
             var result = await sender.Send(new UnarchivePatientCommand(id), ct);
             return result.ToApiResult();
         });
+
+        // GET /api/v1/patients/{id}/timeline
+        group.MapGet("/{id:guid}/timeline", async (Guid id, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetPatientTimelineQuery(id), ct);
+            return result.ToApiResult();
+        });
+
+        // GET /api/v1/patients/{id}/files
+        group.MapGet("/{id:guid}/files", async (Guid id, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetPatientFilesQuery(id), ct);
+            return result.ToApiResult();
+        });
+
+        // POST /api/v1/patients/{id}/files
+        group.MapPost("/{id:guid}/files", async (Guid id, HttpRequest request, ISender sender) =>
+        {
+            if (!request.HasFormContentType)
+                return Results.BadRequest("Invalid content type.");
+
+            var form = await request.ReadFormAsync();
+            var file = form.Files.GetFile("file");
+            if (file is null)
+                return Results.BadRequest("No file uploaded.");
+
+            short fileType = 0;
+            if (form.TryGetValue("fileType", out var ftVal) && short.TryParse(ftVal, out var ft))
+            {
+                fileType = ft;
+            }
+
+            string? description = form.TryGetValue("description", out var descVal) ? descVal.ToString() : null;
+
+            using var memoryStream = new MemoryStream();
+            await file.CopyToAsync(memoryStream);
+            var fileBytes = memoryStream.ToArray();
+
+            var command = new UploadPatientFileCommand(
+                id,
+                fileType,
+                file.FileName,
+                file.ContentType,
+                file.Length,
+                fileBytes,
+                description);
+
+            var result = await sender.Send(command);
+            return result.ToApiResult();
+        }).DisableAntiforgery();
+
+        // DELETE /api/v1/patients/files/{id}
+        app.MapDelete($"{ApiRoutes.Patients.Base}/files/{{id:guid}}", async (Guid id, ISender sender) =>
+        {
+            var result = await sender.Send(new DeletePatientFileCommand(id));
+            return result.ToApiResult();
+        }).WithTags("Patients");
     }
 }

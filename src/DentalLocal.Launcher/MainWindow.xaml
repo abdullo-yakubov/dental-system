@@ -1,12 +1,89 @@
-﻿<Window x:Class="DentalLocal.Launcher.MainWindow"
+<Window x:Class="DentalLocal.Launcher.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:DentalLocal.Launcher"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="DentalLocal Launcher" Height="380" Width="480"
+        WindowStartupLocation="CenterScreen" ResizeMode="CanMinimize"
+        Background="#F4F6F9" FontFamily="Segoe UI, Arial" Icon="pack://application:,,/logo.jpg"
+        Closing="Window_Closing" StateChanged="Window_StateChanged">
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
 
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
+            <Image Source="pack://application:,,/logo.jpg" Width="48" Height="48" Margin="0,0,12,0"/>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="DentalLocal" FontSize="20" FontWeight="Bold" Foreground="#1E293B"/>
+                <TextBlock Text="Локальный сервер и управление базой" FontSize="12" Foreground="#64748B"/>
+            </StackPanel>
+        </StackPanel>
+
+        <!-- Status Card -->
+        <Border Grid.Row="1" CornerRadius="12" Background="White" BorderThickness="1" BorderBrush="#E2E8F0" Padding="16" Margin="0,0,0,16">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse x:Name="StatusDot" Width="14" Height="14" Fill="#F59E0B" Margin="0,0,8,0"/>
+                    <TextBlock x:Name="StatusText" Text="Запуск сервера..." FontSize="15" FontWeight="SemiBold" Foreground="#475569"/>
+                </StackPanel>
+
+                <TextBlock Grid.Row="1" x:Name="DetailsText" Text="Инициализация базы данных PostgreSQL и запуск веб-сервисов..." 
+                           FontSize="13" Foreground="#64748B" TextWrapping="Wrap" Margin="0,12,0,0" LineHeight="18"/>
+            </Grid>
+        </Border>
+
+        <!-- Actions -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Orientation="Vertical" Margin="0,0,8,0">
+                <Button x:Name="BtnOpenBrowser" Content="Открыть Dental IS" Height="36" FontWeight="SemiBold"
+                        Background="#2563EB" Foreground="White" BorderThickness="0" Cursor="Hand" Margin="0,0,0,8" Click="BtnOpenBrowser_Click">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="6"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+                <Button x:Name="BtnRestart" Content="Перезапустить" Height="32" 
+                        Background="White" Foreground="#475569" BorderThickness="1" BorderBrush="#CBD5E1" Cursor="Hand" Click="BtnRestart_Click">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="6"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Vertical" Margin="8,0,0,0">
+                <Button x:Name="BtnMinimizeToTray" Content="Свернуть в трей" Height="36" 
+                        Background="White" Foreground="#2563EB" BorderThickness="1" BorderBrush="#2563EB" Cursor="Hand" Margin="0,0,0,8" Click="BtnMinimizeToTray_Click">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="6"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+                <Button x:Name="BtnStop" Content="Остановить и выйти" Height="32" 
+                        Background="White" Foreground="#EF4444" BorderThickness="1" BorderBrush="#FCA5A5" Cursor="Hand" Click="BtnStop_Click">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="6"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>

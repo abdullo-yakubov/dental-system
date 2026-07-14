@@ -1,0 +1,327 @@
+@page "/calendar"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Календарь приемов — DentalLocal</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="mt-4">
+    <!-- Header with controls -->
+    <MudPaper Class="pa-4 mb-4 border-radius-12" Elevation="2">
+        <MudGrid AlignItems="AlignItems.Center">
+            <MudItem xs="12" md="4" Class="d-flex align-center">
+                <MudText Typo="Typo.h5" Class="font-weight-bold mr-4">Календарь приемов</MudText>
+                <MudChip T="string" Color="Color.Primary" Size="Size.Small">Недельный вид</MudChip>
+            </MudItem>
+            <MudItem xs="12" md="4" Class="d-flex justify-center align-center">
+                <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft" OnClick="PrevWeek" />
+                <MudButton Variant="Variant.Text" OnClick="GoToToday" Class="mx-2 font-weight-bold">
+                    @_weekStart.ToString("dd MMMM") — @_weekEnd.ToString("dd MMMM yyyy")
+                </MudButton>
+                <MudIconButton Icon="@Icons.Material.Filled.ChevronRight" OnClick="NextWeek" />
+            </MudItem>
+            <MudItem xs="12" md="4" Class="d-flex justify-end align-center">
+                <MudSelect T="string" Label="Фильтр по врачу" @bind-Value="_selectedDoctor" Dense="true" Class="max-width-200 mr-3">
+                    <MudSelectItem Value="@("Все")">Все врачи</MudSelectItem>
+                    @foreach (var doc in _doctorsList)
+                    {
+                        <MudSelectItem Value="@doc">@doc</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateFlowAsync">
+                    Записать прием
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <!-- Calendar Table -->
+    @if (_loading)
+    {
+        <div class="d-flex justify-center align-center" style="height: 50vh;">
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+        </div>
+    }
+    else
+    {
+        <div class="calendar-card overflow-x-auto border-radius-12">
+            <table class="calendar-table w-full">
+                <thead>
+                    <tr>
+                        <th class="time-header-cell">Время</th>
+                        @foreach (var day in _weekDays)
+                        {
+                            <th class="day-header-cell @(day.Date == DateTime.Today ? "today-cell" : "")">
+                                <div class="font-weight-bold">@day.DayOfWeekName</div>
+                                <div class="text-secondary font-size-12">@day.Date.ToString("dd.MM")</div>
+                            </th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var slot in _timeSlots)
+                    {
+                        <tr>
+                            <td class="time-cell font-weight-bold">@slot.ToString(@"hh\:mm")</td>
+                            @foreach (var day in _weekDays)
+                            {
+                                var cellVisits = GetVisitsForCell(day.Date, slot);
+                                <td class="calendar-cell @(day.Date == DateTime.Today ? "today-cell-bg" : "")" @onclick="() => CellClickedAsync(day.Date, slot)">
+                                    @if (cellVisits.Any())
+                                    {
+                                        @foreach (var visit in cellVisits)
+                                        {
+                                            <div class="appointment-block @GetVisitStatusClass(visit.Status)" @onclick:stopPropagation="true" @onclick="() => ViewVisitDetail(visit.PatientId)">
+                                                <div class="font-weight-bold font-size-12 text-truncate">@visit.PatientFullName</div>
+                                                <div class="font-size-11 text-truncate" style="opacity: 0.85;">Врач: @visit.DoctorName</div>
+                                                <div class="font-size-11 text-truncate" style="opacity: 0.85;">@visit.VisitTime.ToString("HH:mm") • @visit.TotalCost.ToString("N0") сум</div>
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="cell-hover-plus">
+                                            <MudIcon Icon="@Icons.Material.Filled.Add" Size="Size.Small" Color="Color.Primary" />
+                                        </div>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</MudContainer>
+
+<style>
+    .calendar-card {
+        background-color: var(--mud-palette-background);
+        border: 1px solid var(--mud-palette-divider);
+        box-shadow: var(--mud-elevation-2);
+    }
+    .calendar-table {
+        border-collapse: collapse;
+        min-width: 900px;
+    }
+    .calendar-table th, .calendar-table td {
+        border: 1px solid var(--mud-palette-divider);
+        vertical-align: top;
+        position: relative;
+    }
+    .time-header-cell {
+        width: 80px;
+        background-color: var(--mud-palette-background-grey);
+        text-align: center;
+        padding: 12px 6px;
+    }
+    .day-header-cell {
+        background-color: var(--mud-palette-background-grey);
+        text-align: center;
+        padding: 12px 6px;
+        width: calc(100% / 6);
+    }
+    .time-cell {
+        background-color: var(--mud-palette-background-grey);
+        text-align: center;
+        padding: 14px 6px;
+        color: var(--mud-palette-text-secondary);
+        font-size: 13px;
+    }
+    .calendar-cell {
+        height: 80px;
+        padding: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    .calendar-cell:hover {
+        background-color: var(--mud-palette-action-hover);
+    }
+    .today-cell {
+        background-color: rgba(var(--mud-palette-primary-rgb), 0.1) !important;
+        border-bottom: 2px solid var(--mud-palette-primary) !important;
+    }
+    .today-cell-bg {
+        background-color: rgba(var(--mud-palette-primary-rgb), 0.02);
+    }
+    .appointment-block {
+        border-radius: 6px;
+        padding: 6px;
+        margin-bottom: 4px;
+        color: white;
+        box-shadow: var(--mud-elevation-1);
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .appointment-block:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--mud-elevation-3);
+    }
+    .status-planned {
+        background-color: var(--mud-palette-primary);
+    }
+    .status-completed {
+        background-color: var(--mud-palette-success);
+    }
+    .status-cancelled {
+        background-color: var(--mud-palette-error);
+    }
+    .cell-hover-plus {
+        display: none;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+    }
+    .calendar-cell:hover .cell-hover-plus {
+        display: block;
+    }
+    .max-width-200 {
+        max-width: 200px;
+    }
+</style>
+
+@code {
+    private bool _loading = true;
+    private DateTime _currentDate = DateTime.Today;
+    private DateTime _weekStart;
+    private DateTime _weekEnd;
+    private string _selectedDoctor = "Все";
+    private List<string> _doctorsList = [];
+    private List<VisitListItemDto> _visits = [];
+
+    private sealed record DayInfo(DateTime Date, string DayOfWeekName);
+
+    private readonly List<DayInfo> _weekDays = [];
+    private readonly List<TimeSpan> _timeSlots = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Define time slots from 09:00 to 18:00
+        for (int h = 9; h <= 18; h++)
+        {
+            _timeSlots.Add(new TimeSpan(h, 0, 0));
+        }
+
+        await LoadWeekDataAsync();
+    }
+
+    private async Task LoadWeekDataAsync()
+    {
+        _loading = true;
+
+        // Calculate Monday of current week
+        int diff = (7 + (int)_currentDate.DayOfWeek - (int)DayOfWeek.Monday) % 7;
+        _weekStart = _currentDate.AddDays(-1 * diff).Date;
+        _weekEnd = _weekStart.AddDays(5).Date; // Saturday included, Sunday skipped
+
+        _weekDays.Clear();
+        var culture = new System.Globalization.CultureInfo("ru-RU");
+        for (int i = 0; i < 6; i++)
+        {
+            var date = _weekStart.AddDays(i);
+            var dayName = culture.DateTimeFormat.GetDayName(date.DayOfWeek);
+            dayName = char.ToUpper(dayName[0]) + dayName[1..];
+            _weekDays.Add(new DayInfo(date, dayName));
+        }
+
+        try
+        {
+            // Query 7 days ahead
+            var from = DateOnly.FromDateTime(_weekStart);
+            var visits = await Api.GetUpcomingVisitsAsync(7, from);
+            _visits = visits.ToList();
+
+            // Populate doctors
+            _doctorsList = _visits
+                .Select(v => v.DoctorName)
+                .Where(n => !string.IsNullOrWhiteSpace(n))
+                .Distinct()
+                .ToList();
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось загрузить календарь: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private IEnumerable<VisitListItemDto> GetVisitsForCell(DateTime date, TimeSpan timeSlot)
+    {
+        var dateOnly = DateOnly.FromDateTime(date);
+        var filtered = _visits
+            .Where(v => v.VisitDate == dateOnly && v.VisitTime.Hour == timeSlot.Hours);
+
+        if (_selectedDoctor != "Все")
+        {
+            filtered = filtered.Where(v => v.DoctorName == _selectedDoctor);
+        }
+
+        return filtered;
+    }
+
+    private string GetVisitStatusClass(VisitStatus status) => status switch
+    {
+        VisitStatus.Planned => "status-planned",
+        VisitStatus.Completed => "status-completed",
+        VisitStatus.Cancelled => "status-cancelled",
+        _ => "status-planned"
+    };
+
+    private void ViewVisitDetail(Guid patientId)
+    {
+        Navigation.NavigateTo($"/patients/{patientId}");
+    }
+
+    private async Task CellClickedAsync(DateTime date, TimeSpan timeSlot)
+    {
+        await OpenCreateFlowAsync(date, timeSlot);
+    }
+
+    private async Task PrevWeek()
+    {
+        _currentDate = _currentDate.AddDays(-7);
+        await LoadWeekDataAsync();
+    }
+
+    private async Task NextWeek()
+    {
+        _currentDate = _currentDate.AddDays(7);
+        await LoadWeekDataAsync();
+    }
+
+    private async Task GoToToday()
+    {
+        _currentDate = DateTime.Today;
+        await LoadWeekDataAsync();
+    }
+
+    private async Task OpenCreateFlowAsync()
+    {
+        await OpenCreateFlowAsync(DateTime.Today, DateTime.Now.TimeOfDay);
+    }
+
+    private async Task OpenCreateFlowAsync(DateTime date, TimeSpan time)
+    {
+        var parameters = new DialogParameters<Components.CreateAppointmentFlowDialog>
+        {
+            { x => x.InitialDate, date },
+            { x => x.InitialTime, time }
+        };
+
+        var options = new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<Components.CreateAppointmentFlowDialog>("Запись на прием (Шаг за шагом)", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            await LoadWeekDataAsync();
+        }
+    }
+}

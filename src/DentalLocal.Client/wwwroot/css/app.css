@@ -137,3 +137,114 @@ code {
     20%, 60% { transform: translateX(-8px); }
     40%, 80% { transform: translateX(8px); }
 }
+
+/* ── Odontogram Styles ────────────────────────────────────────────────────── */
+.odontogram-container {
+    background-color: var(--mud-palette-background-grey);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: var(--mud-elevation-2);
+}
+
+.odontogram-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--mud-palette-surface);
+    border-radius: 8px;
+    padding: 20px;
+    overflow-x: auto;
+}
+
+.jaw-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--mud-palette-text-secondary);
+    margin: 8px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.jaw-row {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    margin-bottom: 24px;
+    justify-content: center;
+    min-width: 780px;
+}
+
+.jaw-row.lower {
+    margin-bottom: 8px;
+}
+
+.tooth-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 48px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.tooth-cell:hover {
+    transform: translateY(-4px);
+    background-color: var(--mud-palette-background-hover);
+}
+
+.tooth-number {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: var(--mud-palette-text-primary);
+    margin-top: 4px;
+}
+
+.tooth-svg {
+    width: 100%;
+    height: 52px;
+    transition: filter 0.2s ease;
+}
+
+.tooth-surface {
+    cursor: pointer;
+    transition: fill 0.2s ease, stroke 0.2s ease;
+}
+
+.tooth-surface:hover {
+    filter: brightness(0.9);
+    stroke: var(--mud-palette-primary) !important;
+    stroke-width: 1.5px !important;
+}
+
+/* Legend */
+.odontogram-legend {
+    background-color: var(--mud-palette-surface);
+    border-radius: 8px;
+    border: 1px solid var(--mud-palette-divider);
+}
+
+.legend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.legend-text {
+    font-size: 0.85rem;
+    color: var(--mud-palette-text-secondary);
+}

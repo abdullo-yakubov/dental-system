@@ -33,15 +33,44 @@ builder.Services.AddPersistence(connectionString);
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var postgresBootstrap = scope.ServiceProvider.GetRequiredService<DentalLocal.Application.Common.IPostgresBootstrapService>();
+    await postgresBootstrap.BootstrapAsync();
+
+    var lifetime = scope.ServiceProvider.GetRequiredService<IHostApplicationLifetime>();
+    lifetime.ApplicationStopping.Register(() =>
+    {
+        postgresBootstrap.ShutdownAsync().GetAwaiter().GetResult();
+    });
+}
+
 await app.Services.MigrateDatabaseAsync();
 
 app.UseSerilogRequestLogging();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseCors(ClientOrigin);
+
+var filesDir = Path.Combine(app.Environment.ContentRootPath, "Data", "Files");
+Directory.CreateDirectory(filesDir);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(filesDir),
+    RequestPath = "/api/v1/files"
+});
+
 app.UseMiddleware<BearerAuthMiddleware>();
 
 app.MapAuthEndpoints();
 app.MapPatientsEndpoints();
+app.MapVisitsEndpoints();
+app.MapProceduresEndpoints();
+app.MapTeethEndpoints();
+app.MapPaymentsEndpoints();
+app.MapDashboardEndpoints();
+app.MapMaterialsEndpoints();
+app.MapBackupEndpoints();
+app.MapReportEndpoints();
 
 app.MapGet(DentalLocal.Shared.Common.ApiRoutes.System.Health, () => Results.Ok(new { status = "ok" }));
 

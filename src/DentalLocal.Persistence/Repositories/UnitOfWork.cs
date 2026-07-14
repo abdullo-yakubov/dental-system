@@ -20,7 +20,9 @@ public class UnitOfWork : IUnitOfWork
         IAppointmentRepository appointments,
         IBackupRecordRepository backupRecords,
         IAuditLogRepository auditLogs,
-        IAppSettingRepository appSettings)
+        IAppSettingRepository appSettings,
+        IMaterialRepository materials,
+        IMaterialUsageRepository materialUsages)
     {
         _context = context;
         Patients = patients;
@@ -36,6 +38,8 @@ public class UnitOfWork : IUnitOfWork
         BackupRecords = backupRecords;
         AuditLogs = auditLogs;
         AppSettings = appSettings;
+        Materials = materials;
+        MaterialUsages = materialUsages;
     }
 
     public IPatientRepository Patients { get; }
@@ -51,6 +55,8 @@ public class UnitOfWork : IUnitOfWork
     public IBackupRecordRepository BackupRecords { get; }
     public IAuditLogRepository AuditLogs { get; }
     public IAppSettingRepository AppSettings { get; }
+    public IMaterialRepository Materials { get; }
+    public IMaterialUsageRepository MaterialUsages { get; }
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
         _context.SaveChangesAsync(cancellationToken);

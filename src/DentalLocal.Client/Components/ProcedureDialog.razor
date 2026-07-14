@@ -1,0 +1,116 @@
+@inject ApiClient Api
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        @(Procedure == null ? "Добавить процедуру" : "Редактировать процедуру")
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form">
+            <MudTextField T="string" @bind-Value="_name" Label="Название процедуры" Required="true" Class="mb-3" />
+            
+            <MudSelect T="Guid" @bind-Value="_categoryId" Label="Категория" Required="true" Class="mb-3">
+                @foreach (var cat in Categories)
+                {
+                    <MudSelectItem Value="cat.Id">@cat.Name</MudSelectItem>
+                }
+            </MudSelect>
+
+            <MudTextField T="string" @bind-Value="_description" Label="Описание" Lines="2" Class="mb-3" />
+            
+            <MudNumericField T="decimal" @bind-Value="_price" Label="Стоимость (сум)" Required="true" Min="0" Format="N0" Class="mb-3" />
+            <MudNumericField T="int" @bind-Value="_durationMinutes" Label="Длительность (минут)" Required="true" Min="1" Class="mb-3" />
+
+            <MudCheckBox T="bool" @bind-Value="_requiresTooth" Label="Требует указания зуба" Class="mb-3" />
+
+            @if (Procedure != null)
+            {
+                <MudCheckBox T="bool" @bind-Value="_isActive" Label="Активна" Class="mb-3" />
+            }
+        </MudForm>
+
+        @if (_errorMessage is not null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-3">@_errorMessage</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Отмена</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SubmitAsync" Disabled="_isBusy">
+            @(_isBusy ? "Сохранение..." : "Сохранить")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public ProcedureDto? Procedure { get; set; }
+    [Parameter] public IReadOnlyList<ProcedureCategoryDto> Categories { get; set; } = [];
+
+    private MudForm? _form;
+    private string _name = string.Empty;
+    private Guid _categoryId;
+    private string? _description;
+    private decimal _price;
+    private int _durationMinutes = 30;
+    private bool _requiresTooth;
+    private bool _isActive = true;
+
+    private string? _errorMessage;
+    private bool _isBusy;
+
+    protected override void OnParametersSet()
+    {
+        if (Procedure != null)
+        {
+            _name = Procedure.Name;
+            _categoryId = Procedure.CategoryId ?? Guid.Empty;
+            _description = Procedure.Description;
+            _price = Procedure.Price;
+            _durationMinutes = Procedure.DurationMinutes ?? 30;
+            _requiresTooth = Procedure.RequiresTooth;
+            _isActive = Procedure.IsActive;
+        }
+        else if (Categories.Count > 0 && _categoryId == Guid.Empty)
+        {
+            _categoryId = Categories[0].Id;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SubmitAsync()
+    {
+        await _form!.Validate();
+        if (!_form.IsValid) return;
+
+        _isBusy = true;
+        _errorMessage = null;
+
+        try
+        {
+            if (Procedure == null)
+            {
+                var request = new CreateProcedureRequest(_name, _description, _price, _durationMinutes, _categoryId, _requiresTooth);
+                var result = await Api.CreateProcedureAsync(request);
+                Snackbar.Add($"Процедура «{result.Name}» успешно добавлена.", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(result));
+            }
+            else
+            {
+                var request = new UpdateProcedureRequest(_name, _description, _price, _durationMinutes, _categoryId, _requiresTooth, _isActive);
+                var result = await Api.UpdateProcedureAsync(Procedure.Id, request);
+                Snackbar.Add($"Процедура «{result.Name}» успешно обновлена.", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(result));
+            }
+        }
+        catch (ApiException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+}

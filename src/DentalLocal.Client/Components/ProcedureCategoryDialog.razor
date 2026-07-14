@@ -1,0 +1,72 @@
+@inject ApiClient Api
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        Добавить категорию
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form">
+            <MudTextField T="string" @bind-Value="_name" Label="Название категории" Required="true" Class="mb-3" />
+            
+            <MudText Typo="Typo.subtitle2" Class="mb-1">Цвет категории (HEX)</MudText>
+            <div class="d-flex align-center gap-4 mb-3">
+                <MudTextField T="string" @bind-Value="_color" Label="Цвет (например: #3b82f6)" Required="true" 
+                              Matches="^#[0-9A-Fa-f]{6}$" HelperText="Формат HEX (#RRGGBB)" />
+                <span style="width: 36px; height: 36px; border-radius: 4px; border: 1px solid #ccc; background-color: @(IsValidHex(_color) ? _color : "#ccc")"></span>
+            </div>
+        </MudForm>
+
+        @if (_errorMessage is not null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-3">@_errorMessage</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Отмена</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SubmitAsync" Disabled="_isBusy">
+            @(_isBusy ? "Сохранение..." : "Сохранить")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+
+    private MudForm? _form;
+    private string _name = string.Empty;
+    private string _color = "#3b82f6";
+    
+    private string? _errorMessage;
+    private bool _isBusy;
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private bool IsValidHex(string hex) => 
+        System.Text.RegularExpressions.Regex.IsMatch(hex, "^#[0-9A-Fa-f]{6}$");
+
+    private async Task SubmitAsync()
+    {
+        await _form!.Validate();
+        if (!_form.IsValid) return;
+
+        _isBusy = true;
+        _errorMessage = null;
+
+        try
+        {
+            var request = new CreateProcedureCategoryRequest(_name, null, _color);
+            var result = await Api.CreateProcedureCategoryAsync(request);
+            Snackbar.Add($"Категория «{result.Name}» успешно добавлена.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(result));
+        }
+        catch (ApiException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+}

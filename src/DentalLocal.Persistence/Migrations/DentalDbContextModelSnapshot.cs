@@ -282,6 +282,103 @@ namespace DentalLocal.Persistence.Migrations
                     b.ToTable("debts", "dental");
                 });
 
+            modelBuilder.Entity("DentalLocal.Domain.Entities.Material", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<decimal>("MinStockThreshold")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(10,2)")
+                        .HasDefaultValue(0m)
+                        .HasColumnName("min_stock_threshold");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("name");
+
+                    b.Property<decimal>("PricePerUnit")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(12,2)")
+                        .HasDefaultValue(0m)
+                        .HasColumnName("price_per_unit");
+
+                    b.Property<decimal>("QuantityInStock")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(10,2)")
+                        .HasDefaultValue(0m)
+                        .HasColumnName("quantity_in_stock");
+
+                    b.Property<string>("Unit")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("unit");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_materials");
+
+                    b.HasIndex("Name")
+                        .HasDatabaseName("ix_materials_name");
+
+                    b.ToTable("materials", "dental");
+                });
+
+            modelBuilder.Entity("DentalLocal.Domain.Entities.MaterialUsage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("MaterialId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("material_id");
+
+                    b.Property<decimal>("QuantityUsed")
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("quantity_used");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<DateTimeOffset>("UsedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("used_at");
+
+                    b.Property<Guid>("VisitId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("visit_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_material_usages");
+
+                    b.HasIndex("MaterialId")
+                        .HasDatabaseName("ix_material_usages_material_id");
+
+                    b.HasIndex("VisitId")
+                        .HasDatabaseName("ix_material_usages_visit_id");
+
+                    b.ToTable("material_usages", "dental");
+                });
+
             modelBuilder.Entity("DentalLocal.Domain.Entities.Patient", b =>
                 {
                     b.Property<Guid>("Id")
@@ -913,6 +1010,27 @@ namespace DentalLocal.Persistence.Migrations
                         .HasConstraintName("fk_debts_visits_visit_id");
 
                     b.Navigation("Patient");
+
+                    b.Navigation("Visit");
+                });
+
+            modelBuilder.Entity("DentalLocal.Domain.Entities.MaterialUsage", b =>
+                {
+                    b.HasOne("DentalLocal.Domain.Entities.Material", "Material")
+                        .WithMany()
+                        .HasForeignKey("MaterialId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_material_usages_materials_material_id");
+
+                    b.HasOne("DentalLocal.Domain.Entities.Visit", "Visit")
+                        .WithMany()
+                        .HasForeignKey("VisitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_material_usages_visits_visit_id");
+
+                    b.Navigation("Material");
 
                     b.Navigation("Visit");
                 });

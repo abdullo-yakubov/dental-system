@@ -1,0 +1,262 @@
+@inject ApiClient Api
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
+
+<MudStack Spacing="4">
+    <!-- Upload Section -->
+    <MudPaper Class="pa-4 border-radius-12" Elevation="2">
+        <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-3">Загрузить файл / снимок</MudText>
+        <MudForm @ref="_form">
+            <MudGrid>
+                <MudItem xs="12" sm="4">
+                    <MudSelect T="short" @bind-Value="_fileType" Label="Тип документа" Required="true">
+                        <MudSelectItem Value="((short)1)">Фотография (Photo)</MudSelectItem>
+                        <MudSelectItem Value="((short)2)">Рентген (X-Ray)</MudSelectItem>
+                        <MudSelectItem Value="((short)3)">КТ (CT)</MudSelectItem>
+                        <MudSelectItem Value="((short)4)">Документ (Doc)</MudSelectItem>
+                        <MudSelectItem Value="((short)5)">PDF</MudSelectItem>
+                        <MudSelectItem Value="((short)6)">Видео (Video)</MudSelectItem>
+                        <MudSelectItem Value="((short)7)">Другое (Other)</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" sm="8">
+                    <MudTextField T="string" @bind-Value="_description" Label="Описание / комментарий к файлу" MaxLength="500" />
+                </MudItem>
+                <MudItem xs="12" sm="8">
+                    <InputFile OnChange="OnFileSelected" class="d-none" id="file-upload-input" />
+                    <MudButton HtmlTag="label" Variant="Variant.Filled" Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.CloudUpload" for="file-upload-input">
+                        @(_selectedFile == null ? "Выбрать файл" : _selectedFile.Name)
+                    </MudButton>
+                    @if (_selectedFile != null)
+                    {
+                        <MudText Typo="Typo.caption" Class="mt-1 d-block text-secondary">
+                            Размер: @FormatSize(_selectedFile.Size)
+                        </MudText>
+                    }
+                </MudItem>
+                <MudItem xs="12" sm="4" Class="d-flex align-end justify-end">
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.UploadFile"
+                               OnClick="UploadFileAsync" Disabled="_isUploading || _selectedFile == null">
+                        @(_isUploading ? "Загрузка..." : "Загрузить")
+                    </MudButton>
+                </MudItem>
+            </MudGrid>
+        </MudForm>
+    </MudPaper>
+
+    <!-- Gallery Section -->
+    <MudText Typo="Typo.h6" Class="font-weight-bold mt-2">Архив файлов пациента</MudText>
+    
+    @if (_isLoading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+    }
+    else if (_files.Count == 0)
+    {
+        <MudText Typo="Typo.body2" Class="text-muted text-center py-4">Нет загруженных файлов.</MudText>
+    }
+    else
+    {
+        <MudGrid>
+            @foreach (var file in _files)
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudCard Class="h-100 border-radius-12" Elevation="2">
+                        @if (IsImage(file.FileName))
+                        {
+                            <MudCardMedia Image="@GetFileUrl(file)" Height="160" />
+                        }
+                        else
+                        {
+                            <div class="d-flex align-center justify-center bg-light text-secondary" style="height: 160px;">
+                                <MudIcon Icon="@GetFileIcon(file.FileType)" Size="Size.Large" Style="font-size: 64px;" />
+                            </div>
+                        }
+                        <MudCardContent>
+                            <div class="d-flex justify-space-between align-center">
+                                <MudText Typo="Typo.subtitle2" Class="font-weight-bold text-truncate" Style="max-width: 70%;">
+                                    @file.FileName
+                                </MudText>
+                                <MudChip T="string" Color="Color.Primary" Size="Size.Small">
+                                    @GetFileTypeLabel(file.FileType)
+                                </MudChip>
+                            </div>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="d-block mt-1">
+                                Загружен: @file.UploadedAt.ToString("g") • @FormatSize(file.SizeBytes)
+                            </MudText>
+                            @if (!string.IsNullOrWhiteSpace(file.Description))
+                            {
+                                <MudText Typo="Typo.body2" Class="mt-2 text-secondary text-truncate" Style="max-height: 40px;">
+                                    @file.Description
+                                </MudText>
+                            }
+                        </MudCardContent>
+                        <MudCardActions Class="d-flex justify-space-between">
+                            <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.Material.Filled.OpenInNew"
+                                       Href="@GetFileUrl(file)" Target="_blank">
+                                Открыть
+                            </MudButton>
+                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                                           OnClick="() => DeleteFileAsync(file.Id)" />
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudStack>
+
+@code {
+    [Parameter] public Guid PatientId { get; set; }
+
+    private List<PatientFileDto> _files = [];
+    private bool _isLoading = true;
+    private bool _isUploading;
+
+    private MudForm? _form;
+    private short _fileType = 1;
+    private string? _description;
+    private IBrowserFile? _selectedFile;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadFilesAsync();
+    }
+
+    private async Task LoadFilesAsync()
+    {
+        _isLoading = true;
+        try
+        {
+            var res = await Api.GetPatientFilesAsync(PatientId);
+            _files = res.ToList();
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Ошибка загрузки файлов: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void OnFileSelected(InputFileChangeEventArgs e)
+    {
+        _selectedFile = e.File;
+    }
+
+    private async Task UploadFileAsync()
+    {
+        if (_selectedFile == null) return;
+
+        _isUploading = true;
+        try
+        {
+            // Read file content
+            using var stream = _selectedFile.OpenReadStream(maxAllowedSize: 200 * 1024 * 1024);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var fileBytes = ms.ToArray();
+
+            await Api.UploadPatientFileAsync(
+                PatientId,
+                _fileType,
+                _selectedFile.Name,
+                fileBytes,
+                _description);
+
+            Snackbar.Add("Файл успешно загружен.", Severity.Success);
+            
+            // Reset form
+            _selectedFile = null;
+            _description = null;
+            _fileType = 1;
+
+            await LoadFilesAsync();
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Ошибка загрузки файла: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isUploading = false;
+        }
+    }
+
+    private async Task DeleteFileAsync(Guid fileId)
+    {
+        var parameters = new DialogParameters
+        {
+            { "ContentText", "Вы действительно хотите удалить этот файл? Это действие необратимо." },
+            { "ButtonText", "Удалить" },
+            { "Color", Color.Error }
+        };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Удаление файла", parameters);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            try
+            {
+                await Api.DeletePatientFileAsync(fileId);
+                Snackbar.Add("Файл успешно удален.", Severity.Success);
+                await LoadFilesAsync();
+            }
+            catch (ApiException ex)
+            {
+                Snackbar.Add($"Ошибка при удалении файла: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private bool IsImage(string fileName)
+    {
+        var ext = Path.GetExtension(fileName).ToLowerInvariant();
+        return ext is ".jpg" or ".jpeg" or ".png" or ".webp" or ".bmp";
+    }
+
+    private string GetFileUrl(PatientFileDto file)
+    {
+        // Path matches static files middleware path
+        var fileId = file.Id;
+        var ext = Path.GetExtension(file.FileName);
+        return $"{Navigation.BaseUri}api/v1/files/{file.PatientId}/{fileId}{ext}";
+    }
+
+    private string FormatSize(long bytes)
+    {
+        string[] suffix = ["B", "KB", "MB", "GB"];
+        double doubleBytes = bytes;
+        int i = 0;
+        while (doubleBytes >= 1024 && i < suffix.Length - 1)
+        {
+            doubleBytes /= 1024;
+            i++;
+        }
+        return $"{doubleBytes:N1} {suffix[i]}";
+    }
+
+    private string GetFileTypeLabel(short type) => type switch
+    {
+        1 => "Фото",
+        2 => "Рентген",
+        3 => "КТ",
+        4 => "Документ",
+        5 => "PDF",
+        6 => "Видео",
+        _ => "Другое"
+    };
+
+    private string GetFileIcon(short type) => type switch
+    {
+        4 => Icons.Material.Filled.Description,
+        5 => Icons.Material.Filled.PictureAsPdf,
+        6 => Icons.Material.Filled.VideoFile,
+        _ => Icons.Material.Filled.InsertDriveFile
+    };
+}

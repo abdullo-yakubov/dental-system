@@ -1,0 +1,442 @@
+@page "/patients/{Id:guid}"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
+
+<PageTitle>Карточка пациента — DentalLocal</PageTitle>
+
+@if (_loading)
+{
+    <div class="d-flex justify-center align-center" style="height: 80vh;">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+    </div>
+}
+else if (_patient == null)
+{
+    <MudAlert Severity="Severity.Error" Class="ma-4">Пациент не найден.</MudAlert>
+}
+else
+{
+    <!-- Breadcrumbs / Top Actions -->
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudButton StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="BackToPatients" Variant="Variant.Text">
+            К списку пациентов
+        </MudButton>
+        <MudStack Row="true" Spacing="2">
+            @if (_patient.IsArchived)
+            {
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" StartIcon="@Icons.Material.Filled.Unarchive" OnClick="UnarchivePatientAsync">
+                    Восстановить
+                </MudButton>
+            }
+            else
+            {
+                <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Archive" OnClick="ArchivePatientAsync">
+                    Архивировать
+                </MudButton>
+            }
+            <MudMenu Label="Печать документов" StartIcon="@Icons.Material.Filled.Print" Variant="Variant.Outlined" Color="Color.Info" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                <MudMenuItem Href="@($"/api/v1/reports/patients/{_patient.Id}/agreement")" Target="_blank" Icon="@Icons.Material.Filled.Description">Договор</MudMenuItem>
+                <MudMenuItem Href="@($"/api/v1/reports/patients/{_patient.Id}/consent")" Target="_blank" Icon="@Icons.Material.Filled.FactCheck">Согласие</MudMenuItem>
+            </MudMenu>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit" OnClick="OpenEditDialogAsync">
+                Редактировать
+            </MudButton>
+        </MudStack>
+    </MudStack>
+
+    <!-- Main Header Card -->
+    <MudCard Class="border-radius-12 mb-6" Elevation="4">
+        <MudCardContent>
+            <MudGrid>
+                <MudItem xs="12" sm="8" md="9">
+                    <MudStack Spacing="1">
+                        <MudText Typo="Typo.h4" Class="font-weight-bold">
+                            @_patient.LastName @_patient.FirstName @_patient.MiddleName
+                            @if (_patient.IsArchived)
+                            {
+                                <span class="text-danger ml-2">(Архив)</span>
+                            }
+                        </MudText>
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="4" Class="mt-2 text-secondary">
+                            <MudText Typo="Typo.body1"><MudIcon Icon="@Icons.Material.Filled.Badge" Size="Size.Small" Class="mr-1" /> Карта: <b>@_patient.CardNumberDisplay</b></MudText>
+                            <MudText Typo="Typo.body1"><MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" Class="mr-1" /> Телефон: <b>@_patient.Phone</b></MudText>
+                            <MudText Typo="Typo.body1"><MudIcon Icon="@Icons.Material.Filled.Cake" Size="Size.Small" Class="mr-1" /> Возраст: <b>@_patient.Age</b> (@_patient.BirthDate.ToString("dd.MM.yyyy"))</MudText>
+                            <MudText Typo="Typo.body1"><MudIcon Icon="@Icons.Material.Filled.Event" Size="Size.Small" Class="mr-1" /> Последний визит: <b>@(_patient.LastVisitAt?.ToString("dd.MM.yyyy") ?? "—")</b></MudText>
+                        </MudStack>
+                    </MudStack>
+                </MudItem>
+                <MudItem xs="12" sm="4" md="3" Class="d-flex align-center justify-end">
+                    <MudStack AlignItems="AlignItems.End" Spacing="1">
+                        <MudText Typo="Typo.subtitle2" Class="text-secondary">Баланс пациента</MudText>
+                        <MudText Typo="Typo.h5" Class="@(_totalDebt > 0 ? "text-danger font-weight-bold" : "text-success font-weight-bold")">
+                            @(_totalDebt > 0 ? $"-{_totalDebt.ToString("N0")} сум" : "В расчете (0 сум)")
+                        </MudText>
+                        @if (_totalDebt > 0)
+                        {
+                            <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Filled.Payment" OnClick="OpenPaymentDialogAsync">
+                                Погасить долг
+                            </MudButton>
+                        }
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+        </MudCardContent>
+    </MudCard>
+
+    <!-- Allergies Alert -->
+    @if (!string.IsNullOrWhiteSpace(_patient.Allergies))
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Square="false" Class="mb-6 font-weight-bold border-radius-8">
+            ВНИМАНИЕ: У пациента есть аллергии: @_patient.Allergies
+        </MudAlert>
+    }
+
+    <!-- Tabs Layout -->
+    <MudTabs Elevation="2" Rounded="true">
+        <!-- Overview Tab -->
+        <MudTabPanel Text="Обзор" Icon="@Icons.Material.Filled.Info">
+            <MudGrid>
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.h6" Class="font-weight-bold mb-4">Личная информация</MudText>
+                    <MudStack Spacing="3">
+                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                            <MudText Class="text-secondary">Пол</MudText>
+                            <MudText Class="font-weight-bold">@(_patient.Gender == Gender.Male ? "Мужской" : "Женский")</MudText>
+                        </MudStack>
+                        <MudDivider />
+                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                            <MudText Class="text-secondary">Дата рождения</MudText>
+                            <MudText Class="font-weight-bold">@_patient.BirthDate.ToString("dd.MM.yyyy")</MudText>
+                        </MudStack>
+                        <MudDivider />
+                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                            <MudText Class="text-secondary">Телефон основной</MudText>
+                            <MudText Class="font-weight-bold">@_patient.Phone</MudText>
+                        </MudStack>
+                        <MudDivider />
+                        @if (!string.IsNullOrWhiteSpace(_patient.PhoneExtra))
+                        {
+                            <MudStack Row="true" Justify="Justify.SpaceBetween">
+                                <MudText Class="text-secondary">Телефон доп.</MudText>
+                                <MudText Class="font-weight-bold">@_patient.PhoneExtra</MudText>
+                            </MudStack>
+                            <MudDivider />
+                        }
+                        <MudStack Row="true" Justify="Justify.SpaceBetween">
+                            <MudText Class="text-secondary">Адрес</MudText>
+                            <MudText Class="font-weight-bold">@(string.IsNullOrWhiteSpace(_patient.Address) ? "Не указан" : _patient.Address)</MudText>
+                        </MudStack>
+                    </MudStack>
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.h6" Class="font-weight-bold mb-4">Медицинская карта</MudText>
+                    <MudStack Spacing="4">
+                        <div>
+                            <MudText Typo="Typo.subtitle2" Class="text-secondary mb-1">Хронические заболевания</MudText>
+                            <MudPaper Class="pa-3 bg-light border-radius-8" Elevation="0">
+                                <MudText>@(string.IsNullOrWhiteSpace(_patient.ChronicDiseases) ? "Нет записей" : _patient.ChronicDiseases)</MudText>
+                            </MudPaper>
+                        </div>
+                        <div>
+                            <MudText Typo="Typo.subtitle2" Class="text-secondary mb-1">Заметки / Комментарии</MudText>
+                            <MudPaper Class="pa-3 bg-light border-radius-8" Elevation="0">
+                                <MudText>@(string.IsNullOrWhiteSpace(_patient.Comments) ? "Нет записей" : _patient.Comments)</MudText>
+                            </MudPaper>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(_patient.DoctorNotes))
+                        {
+                            <div>
+                                <MudText Typo="Typo.subtitle2" Class="text-secondary mb-1">Особые отметки врача</MudText>
+                                <MudPaper Class="pa-3 bg-light border-radius-8 border-warning" Elevation="0">
+                                    <MudText>@_patient.DoctorNotes</MudText>
+                                </MudPaper>
+                            </div>
+                        }
+                    </MudStack>
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
+        <!-- Odontogram Tab -->
+        <MudTabPanel Text="Одонтограмма" Icon="@Icons.Material.Filled.HealthAndSafety">
+            <OdontogramSvg PatientId="_patient.Id" />
+        </MudTabPanel>
+
+        <!-- Visits Tab -->
+        <MudTabPanel Text="Визиты" Icon="@Icons.Material.Filled.CalendarMonth">
+            <MudStack Spacing="4">
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.h6" Class="font-weight-bold">История приемов</MudText>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateVisitDialogAsync">
+                        Записать визит
+                    </MudButton>
+                </MudStack>
+
+                @if (_visits.Count == 0)
+                {
+                    <MudText Class="text-secondary text-center py-6">Визиты еще не записаны.</MudText>
+                }
+                else
+                {
+                    @foreach (var visit in _visits.OrderByDescending(v => v.VisitDate).ThenByDescending(v => v.VisitTime))
+                    {
+                        <MudCard Outlined="true" Class="border-radius-8 mb-3">
+                            <MudCardHeader>
+                                <CardHeaderContent>
+                                    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                                        <MudStack Spacing="0">
+                                            <MudText Typo="Typo.subtitle1" Class="font-weight-bold">
+                                                Визит от @visit.VisitDate.ToString("dd.MM.yyyy") в @visit.VisitTime.ToString("HH:mm")
+                                            </MudText>
+                                            <MudText Typo="Typo.caption" Class="text-secondary">Врач: @visit.DoctorName</MudText>
+                                        </MudStack>
+                                        <MudChip T="string" Color="@(visit.TotalCost == 0 ? Color.Default : (visit.TotalCost > 0 ? Color.Success : Color.Info))" Size="Size.Small">
+                                            Стоимость: @visit.TotalCost.ToString("N0") сум
+                                        </MudChip>
+                                    </MudStack>
+                                </CardHeaderContent>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <div class="mb-3">
+                                    <MudText Typo="Typo.body2">Процедур выполнено: <b>@visit.ProcedureCount</b></MudText>
+                                </div>
+                            </MudCardContent>
+                            <MudCardActions>
+                                <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.Material.Filled.Receipt" Href="@($"/api/v1/reports/visits/{visit.Id}/invoice")" Target="_blank" Size="Size.Small">
+                                    Квитанция об оплате (Чек)
+                                </MudButton>
+                                <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.Material.Filled.MedicalServices" Href="@($"/api/v1/reports/visits/{visit.Id}/prescription")" Target="_blank" Size="Size.Small">
+                                    Рецепт / Назначение
+                                </MudButton>
+                            </MudCardActions>
+                        </MudCard>
+                    }
+                }
+            </MudStack>
+        </MudTabPanel>
+
+        <!-- Finances Tab -->
+        <MudTabPanel Text="Финансы" Icon="@Icons.Material.Filled.Payments">
+            <MudGrid Spacing="4">
+                <MudItem xs="12" md="6">
+                    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-3">
+                        <MudText Typo="Typo.h6" Class="font-weight-bold">Платежи</MudText>
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenPaymentDialogAsync">
+                            Принять оплату
+                        </MudButton>
+                    </MudStack>
+
+                    @if (_payments.Count == 0)
+                    {
+                        <MudText Class="text-secondary py-4 text-center">Оплат от пациента не зафиксировано.</MudText>
+                    }
+                    else
+                    {
+                        <MudTable Items="_payments" Hover="true" Dense="true" Elevation="0">
+                            <HeaderContent>
+                                <MudTh>Дата</MudTh>
+                                <MudTh>Сумма</MudTh>
+                                <MudTh>Способ</MudTh>
+                                <MudTh>Тип</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@context.PaidAt.ToString("dd.MM.yyyy HH:mm")</MudTd>
+                                <MudTd Class="font-weight-bold text-success">@context.Amount.ToString("N0") сум</MudTd>
+                                <MudTd>@GetPaymentMethodLabel(context.Method)</MudTd>
+                                <MudTd>@GetPaymentKindLabel(context.Kind)</MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
+                </MudItem>
+
+                <MudItem xs="12" md="6">
+                    <MudText Typo="Typo.h6" Class="font-weight-bold mb-3">Задолженности</MudText>
+                    @if (_debts.Count == 0)
+                    {
+                        <MudText Class="text-secondary py-4 text-center">Задолженностей не обнаружено.</MudText>
+                    }
+                    else
+                    {
+                        <MudTable Items="_debts" Hover="true" Dense="true" Elevation="0">
+                            <HeaderContent>
+                                <MudTh>Дата</MudTh>
+                                <MudTh>Сумма долга</MudTh>
+                                <MudTh>Статус</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd>@context.AroseAt.ToString("dd.MM.yyyy")</MudTd>
+                                <MudTd Class="font-weight-bold text-danger">@context.RemainingAmount.ToString("N0") сум</MudTd>
+                                <MudTd>
+                                    <MudChip T="string" Color="@(context.Status == DebtStatus.Closed ? Color.Success : Color.Error)" Size="Size.Small">
+                                        @(context.Status == DebtStatus.Closed ? "Оплачен" : "Активен")
+                                    </MudChip>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
+                </MudItem>
+            </MudGrid>
+        </MudTabPanel>
+
+        <!-- Documents/Files Tab -->
+        <MudTabPanel Text="Файлы" Icon="@Icons.Material.Filled.AttachFile">
+            <PatientFilesGallery PatientId="_patient.Id" />
+        </MudTabPanel>
+
+        <!-- Timeline Tab -->
+        <MudTabPanel Text="Лента" Icon="@Icons.Material.Filled.History">
+            <PatientTimeline PatientId="_patient.Id" />
+        </MudTabPanel>
+    </MudTabs>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private PatientDto? _patient;
+    private List<VisitListItemDto> _visits = [];
+    private List<PaymentDto> _payments = [];
+    private List<DebtDto> _debts = [];
+    private decimal _totalDebt;
+
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _loading = true;
+        try
+        {
+            var patientTask = Api.GetPatientAsync(Id);
+            var visitTask = Api.GetPatientVisitsAsync(Id);
+            var paymentsTask = Api.GetPatientPaymentsAsync(Id);
+            var debtsTask = Api.GetPatientDebtsAsync(Id);
+
+            await Task.WhenAll(patientTask, visitTask, paymentsTask, debtsTask);
+
+            _patient = await patientTask;
+            _visits = (await visitTask).ToList();
+            _payments = (await paymentsTask).ToList();
+            _debts = (await debtsTask).ToList();
+
+            _totalDebt = _debts.Where(d => d.Status != DebtStatus.Closed).Sum(d => d.RemainingAmount);
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось загрузить данные пациента: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void BackToPatients() => Navigation.NavigateTo("/patients");
+
+    private async Task OpenEditDialogAsync()
+    {
+        var parameters = new DialogParameters<Components.CreatePatientDialog>
+        {
+            { x => x.Patient, _patient }
+        };
+
+        var dialog = await DialogService.ShowAsync<Components.CreatePatientDialog>("Редактировать пациента", parameters);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+            await LoadDataAsync();
+    }
+
+    private async Task ArchivePatientAsync()
+    {
+        bool? confirm = await DialogService.ShowMessageBoxAsync(
+            "Архивация пациента",
+            "Вы действительно хотите архивировать данные этого пациента?",
+            yesText: "Архивировать", cancelText: "Отмена");
+
+        if (confirm == true)
+        {
+            try
+            {
+                await Api.ArchivePatientAsync(Id);
+                Snackbar.Add("Пациент отправлен в архив.", Severity.Warning);
+                await LoadDataAsync();
+            }
+            catch (ApiException ex)
+            {
+                Snackbar.Add($"Ошибка архивации: {ex.Message}", Severity.Error);
+            }
+        }
+    }
+
+    private async Task UnarchivePatientAsync()
+    {
+        try
+        {
+            await Api.UnarchivePatientAsync(Id);
+            Snackbar.Add("Пациент успешно восстановлен из архива.", Severity.Success);
+            await LoadDataAsync();
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Ошибка восстановления: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task OpenCreateVisitDialogAsync()
+    {
+        var parameters = new DialogParameters<Components.CreateVisitDialog>
+        {
+            { x => x.PatientId, Id }
+        };
+
+        var dialog = await DialogService.ShowAsync<Components.CreateVisitDialog>("Новый визит", parameters);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            await LoadDataAsync();
+        }
+    }
+
+    private async Task OpenPaymentDialogAsync()
+    {
+        var parameters = new DialogParameters<Components.RegisterPaymentDialog>
+        {
+            { x => x.PatientId, Id },
+            { x => x.RemainingAmount, _totalDebt },
+            { x => x.InitialKind, PaymentKind.DebtRepayment }
+        };
+
+        var dialog = await DialogService.ShowAsync<Components.RegisterPaymentDialog>("Погасить долг", parameters);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            await LoadDataAsync();
+        }
+    }
+
+    private static string GetPaymentMethodLabel(PaymentMethod method) => method switch
+    {
+        PaymentMethod.Cash => "Наличные",
+        PaymentMethod.Card => "Карта",
+        PaymentMethod.Transfer => "Перевод",
+        _ => method.ToString()
+    };
+
+    private static string GetPaymentKindLabel(PaymentKind kind) => kind switch
+    {
+        PaymentKind.AtTreatment => "Оплата услуг",
+        PaymentKind.DebtRepayment => "Погашение долга",
+        _ => kind.ToString()
+    };
+}

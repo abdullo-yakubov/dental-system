@@ -50,6 +50,11 @@ public static class ApiRoutes
         public const string Base = $"{Prefix}/debts";
     }
 
+    public static class Payments
+    {
+        public const string Base = $"{Prefix}/payments";
+    }
+
     public static class Appointments
     {
         public const string Base = $"{Prefix}/appointments";
@@ -58,6 +63,11 @@ public static class ApiRoutes
     public static class Analytics
     {
         public const string Base = $"{Prefix}/analytics";
+    }
+
+    public static class Materials
+    {
+        public const string Base = $"{Prefix}/materials";
     }
 
     public static class Backups

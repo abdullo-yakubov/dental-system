@@ -1,0 +1,180 @@
+@page "/procedures"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Каталог процедур — DentalLocal</PageTitle>
+
+<MudText Typo="Typo.h5" Class="font-weight-bold mb-4" Color="Color.Primary">Справочники клиники</MudText>
+
+<MudTabs Elevation="2" Rounded="true" ApplyEffectsToInnerViews="true" Class="border-radius-12">
+    <!-- Procedures Tab -->
+    <MudTabPanel Text="Услуги и Процедуры">
+        <MudCard Elevation="0" Class="pa-4">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+                <MudText Typo="Typo.h6">Каталог услуг</MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="() => OpenProcedureCreateAsync()" Disabled="_loading">
+                    Добавить процедуру
+                </MudButton>
+            </MudStack>
+
+            <MudStack Row="true" Class="mb-4">
+                <MudCheckBox T="bool" @bind-Value="_includeInactive" Label="Показать неактивные" Color="Color.Primary"
+                             CheckChanged="LoadDataAsync" />
+            </MudStack>
+
+            <MudTable Items="_procedures" Hover="true" Loading="_loading" Elevation="0">
+                <HeaderContent>
+                    <MudTh>Название</MudTh>
+                    <MudTh>Категория</MudTh>
+                    <MudTh>Длительность</MudTh>
+                    <MudTh>Стоимость</MudTh>
+                    <MudTh>Статус</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Название" Class="font-weight-bold">@context.Name</MudTd>
+                    <MudTd DataLabel="Категория">
+                        <MudChip T="string" Color="Color.Default" Style="@($"background-color: {GetCategoryColor(context.CategoryId)}; color: #fff;")" Size="Size.Small">
+                            @context.CategoryName
+                        </MudChip>
+                    </MudTd>
+                    <MudTd DataLabel="Длительность">@context.DurationMinutes мин</MudTd>
+                    <MudTd DataLabel="Стоимость">@context.Price.ToString("N0") сум</MudTd>
+                    <MudTd DataLabel="Статус">
+                        <MudChip T="string" Color="@(context.IsActive ? Color.Success : Color.Error)" Size="Size.Small">
+                            @(context.IsActive ? "Активна" : "Неактивна")
+                        </MudChip>
+                    </MudTd>
+                    <MudTd>
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                                       OnClick="@(() => OpenProcedureEditAsync(context))" />
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText>Процедуры не найдены.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudCard>
+    </MudTabPanel>
+
+    <!-- Categories Tab -->
+    <MudTabPanel Text="Категории">
+        <MudCard Elevation="0" Class="pa-4">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+                <MudText Typo="Typo.h6">Категории процедур</MudText>
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="() => OpenCategoryCreateAsync()" Disabled="_loading">
+                    Добавить категорию
+                </MudButton>
+            </MudStack>
+
+            <MudTable Items="_categories" Hover="true" Loading="_loading" Elevation="0">
+                <HeaderContent>
+                    <MudTh>Название категории</MudTh>
+                    <MudTh>Цвет для календаря</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Название категории" Class="font-weight-bold">@context.Name</MudTd>
+                    <MudTd DataLabel="Цвет для календаря">
+                        <MudChip T="string" Style="@($"background-color: {context.Color}; color: #fff; width: 120px; text-align: center;")" Size="Size.Small">
+                            @context.Color
+                        </MudChip>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText>Категории не найдены.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        </MudCard>
+    </MudTabPanel>
+</MudTabs>
+
+@code {
+    private List<ProcedureDto> _procedures = [];
+    private List<ProcedureCategoryDto> _categories = [];
+    private bool _includeInactive;
+    private bool _loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _loading = true;
+        try
+        {
+            var catTask = Api.GetProcedureCategoriesAsync();
+            var procTask = Api.GetProceduresAsync(_includeInactive);
+
+            await Task.WhenAll(catTask, procTask);
+
+            _categories = (await catTask).ToList();
+            _procedures = (await procTask).ToList();
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Ошибка загрузки справочников: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private string GetCategoryColor(Guid? categoryId)
+    {
+        if (categoryId == null) return "#9CA3AF";
+        var category = _categories.FirstOrDefault(c => c.Id == categoryId);
+        return category?.Color ?? "#9CA3AF"; // Default grey if not found
+    }
+
+    private async Task OpenProcedureCreateAsync()
+    {
+        var parameters = new DialogParameters 
+        { 
+            { "Categories", _categories } 
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ProcedureDialog>("Добавить процедуру", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            await LoadDataAsync();
+        }
+    }
+
+    private async Task OpenProcedureEditAsync(ProcedureDto procedure)
+    {
+        var parameters = new DialogParameters 
+        { 
+            { "Procedure", procedure },
+            { "Categories", _categories }
+        };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ProcedureDialog>("Редактировать процедуру", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            await LoadDataAsync();
+        }
+    }
+
+    private async Task OpenCategoryCreateAsync()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<ProcedureCategoryDialog>("Добавить категорию", options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            await LoadDataAsync();
+        }
+    }
+}

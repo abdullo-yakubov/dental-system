@@ -1,0 +1,405 @@
+@inject ApiClient Api
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6" Class="font-weight-bold">Запись на прием (Шаг @_currentStep из 4)</MudText>
+    </TitleContent>
+    <DialogContent>
+        <!-- Stepper Indicator -->
+        <MudStack Row="true" Justify="Justify.SpaceAround" Class="mb-6 px-4">
+            <div class="d-flex flex-column align-center">
+                <MudAvatar Color="@(_currentStep >= 1 ? Color.Primary : Color.Default)" Size="Size.Small">1</MudAvatar>
+                <MudText Typo="Typo.caption" Class="mt-1 font-weight-bold">Пациент</MudText>
+            </div>
+            <div class="d-flex flex-column align-center">
+                <MudAvatar Color="@(_currentStep >= 2 ? Color.Primary : Color.Default)" Size="Size.Small">2</MudAvatar>
+                <MudText Typo="Typo.caption" Class="mt-1">Дата и врач</MudText>
+            </div>
+            <div class="d-flex flex-column align-center">
+                <MudAvatar Color="@(_currentStep >= 3 ? Color.Primary : Color.Default)" Size="Size.Small">3</MudAvatar>
+                <MudText Typo="Typo.caption" Class="mt-1">Услуги</MudText>
+            </div>
+            <div class="d-flex flex-column align-center">
+                <MudAvatar Color="@(_currentStep >= 4 ? Color.Primary : Color.Default)" Size="Size.Small">4</MudAvatar>
+                <MudText Typo="Typo.caption" Class="mt-1">Проверка</MudText>
+            </div>
+        </MudStack>
+
+        <MudDivider Class="mb-6" />
+
+        @if (_currentStep == 1)
+        {
+            <!-- STEP 1: SELECT OR CREATE PATIENT -->
+            <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-3">Шаг 1: Выберите пациента</MudText>
+            @if (!_isCreatingNewPatient)
+            {
+                <MudAutocomplete T="PatientListItemDto"
+                                 Label="Начните вводить ФИО пациента..."
+                                 @bind-Value="_selectedPatient"
+                                 SearchFunc="SearchPatientsAsync"
+                                 ToStringFunc="@(x => x == null ? "" : $"{x.FullName} (Карта: {x.CardNumberDisplay})")"
+                                 ResetValueOnEmptyText="true"
+                                 CoerceText="true"
+                                 CoerceValue="false"
+                                 Class="mb-4"
+                                 AdornmentIcon="@Icons.Material.Filled.Search" />
+
+                <div class="d-flex justify-center mt-2">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="() => _isCreatingNewPatient = true">
+                        Создать нового пациента
+                    </MudButton>
+                </div>
+            }
+            else
+            {
+                <MudPaper Class="pa-4 bg-light border-radius-12" Elevation="0">
+                    <MudText Typo="Typo.subtitle2" Class="font-weight-bold mb-3">Новый пациент</MudText>
+                    <MudGrid>
+                        <MudItem xs="12" sm="4">
+                            <MudTextField @bind-Value="_newLastName" Label="Фамилия" Required="true" Dense="true" />
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudTextField @bind-Value="_newFirstName" Label="Имя" Required="true" Dense="true" />
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudTextField @bind-Value="_newMiddleName" Label="Отчество" Dense="true" />
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudDatePicker @bind-Date="_newBirthDate" Label="Дата рождения" Required="true" Dense="true" />
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudTextField @bind-Value="_newPhone" Label="Телефон" Required="true" Dense="true" />
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudSelect T="Gender" @bind-Value="_newGender" Label="Пол" Dense="true">
+                                <MudSelectItem Value="Gender.Male">Мужской</MudSelectItem>
+                                <MudSelectItem Value="Gender.Female">Женский</MudSelectItem>
+                            </MudSelect>
+                        </MudItem>
+                    </MudGrid>
+                    <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-4">
+                        <MudButton Variant="Variant.Text" OnClick="() => _isCreatingNewPatient = false">Отмена</MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreatePatientAsync" Disabled="_isBusy">
+                            @(_isBusy ? "Сохранение..." : "Создать и выбрать")
+                        </MudButton>
+                    </MudStack>
+                </MudPaper>
+            }
+        }
+        else if (_currentStep == 2)
+        {
+            <!-- STEP 2: DATE, TIME & DOCTOR -->
+            <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-3">Шаг 2: Укажите дату, время и врача</MudText>
+            <MudGrid>
+                <MudItem xs="12" sm="6">
+                    <MudDatePicker @bind-Date="_visitDate" Label="Дата приема" Required="true" />
+                </MudItem>
+                <MudItem xs="12" sm="6">
+                    <MudTimePicker @bind-Time="_visitTime" Label="Время приема" Required="true" AmPm="false" />
+                </MudItem>
+                <MudItem xs="12">
+                    <MudTextField @bind-Value="_doctorName" Label="Врач" Required="true" />
+                </MudItem>
+            </MudGrid>
+        }
+        else if (_currentStep == 3)
+        {
+            <!-- STEP 3: PROCEDURES & NOTES -->
+            <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-3">Шаг 3: Выберите процедуры</MudText>
+            
+            @foreach (var item in _items)
+            {
+                <MudGrid Spacing="2" Class="mb-3 align-center">
+                    <MudItem xs="5">
+                        <MudSelect T="Guid" @bind-Value="item.ProcedureId" Label="Процедура" Dense="true" SelectedValuesChanged="() => ProcedureChanged(item)">
+                            @foreach (var p in _procedures)
+                            {
+                                <MudSelectItem Value="@p.Id">@p.Name (@p.Price.ToString("N0") сум)</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="2">
+                        <MudNumericField T="short?" @bind-Value="item.ToothNumber" Label="Зуб" Dense="true" />
+                    </MudItem>
+                    <MudItem xs="2">
+                        <MudNumericField T="decimal" @bind-Value="item.Price" Label="Цена" Dense="true" Min="0" />
+                    </MudItem>
+                    <MudItem xs="2">
+                        <MudNumericField T="int" @bind-Value="item.Quantity" Label="Кол-во" Dense="true" Min="1" />
+                    </MudItem>
+                    <MudItem xs="1" Class="d-flex justify-center">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="() => RemoveItem(item)" />
+                    </MudItem>
+                </MudGrid>
+            }
+
+            <MudButton StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="AddItem" Class="mb-4">
+                Добавить процедуру
+            </MudButton>
+
+            <MudTextField @bind-Value="_notes" Label="Заметки врача / жалобы" Lines="3" Class="mt-2" />
+        }
+        else if (_currentStep == 4)
+        {
+            <!-- STEP 4: REVIEW & CONFIRM -->
+            <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-3">Шаг 4: Проверьте и подтвердите запись</MudText>
+            
+            <MudPaper Class="pa-4 bg-light border-radius-12" Elevation="0">
+                <MudGrid>
+                    <MudItem xs="12" sm="6">
+                        <MudText Typo="Typo.caption" Class="text-secondary">Пациент</MudText>
+                        <MudText Typo="Typo.body1" Class="font-weight-bold">@_selectedPatient?.FullName</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudText Typo="Typo.caption" Class="text-secondary">Телефон</MudText>
+                        <MudText Typo="Typo.body1">@_selectedPatient?.Phone</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudText Typo="Typo.caption" Class="text-secondary">Дата и время</MudText>
+                        <MudText Typo="Typo.body1" Class="font-weight-bold">
+                            @_visitDate?.ToString("dd.MM.yyyy") в @_visitTime?.ToString(@"hh\:mm")
+                        </MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="6">
+                        <MudText Typo="Typo.caption" Class="text-secondary">Врач</MudText>
+                        <MudText Typo="Typo.body1">@_doctorName</MudText>
+                    </MudItem>
+                </MudGrid>
+
+                <MudDivider Class="my-4" />
+
+                <MudText Typo="Typo.subtitle2" Class="font-weight-bold mb-2">Процедуры к выполнению:</MudText>
+                @foreach (var item in _items.Where(i => i.ProcedureId != Guid.Empty))
+                {
+                    var procName = _procedures.FirstOrDefault(p => p.Id == item.ProcedureId)?.Name ?? "Неизвестная услуга";
+                    <div class="d-flex justify-space-between py-1 font-size-14">
+                        <span>@procName @(item.ToothNumber.HasValue ? $"(Зуб {item.ToothNumber})" : "") x @item.Quantity</span>
+                        <span class="font-weight-bold">@((item.Price * item.Quantity).ToString("N0")) сум</span>
+                    </div>
+                }
+
+                <MudDivider Class="my-3" />
+
+                <div class="d-flex justify-space-between align-center font-weight-bold">
+                    <MudText Typo="Typo.subtitle1">Итоговая стоимость:</MudText>
+                    <MudText Typo="Typo.h6" Color="Color.Success">@CalculateTotal().ToString("N0") сум</MudText>
+                </div>
+            </MudPaper>
+        }
+
+        @if (_errorMessage != null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-4">@_errorMessage</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <div class="d-flex w-full px-6 pb-6 align-center">
+            @if (_currentStep > 1)
+            {
+                <MudButton Variant="Variant.Outlined" OnClick="PrevStep" Class="mr-2">Назад</MudButton>
+            }
+            <MudSpacer />
+            <MudButton Variant="Variant.Text" OnClick="Cancel" Class="mr-2">Отмена</MudButton>
+            @if (_currentStep < 4)
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="NextStep" Disabled="@(!CanGoNext())">Далее</MudButton>
+            }
+            else
+            {
+                <MudButton Variant="Variant.Filled" Color="Color.Success" OnClick="SubmitAsync" Disabled="_isBusy">
+                    @(_isBusy ? "Сохранение..." : "Записать прием")
+                </MudButton>
+            }
+        </div>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    
+    [Parameter] public DateTime? InitialDate { get; set; }
+    [Parameter] public TimeSpan? InitialTime { get; set; }
+
+    private int _currentStep = 1;
+    private bool _isBusy;
+    private string? _errorMessage;
+
+    // Step 1 variables
+    private PatientListItemDto? _selectedPatient;
+    private bool _isCreatingNewPatient;
+    private string _newLastName = "";
+    private string _newFirstName = "";
+    private string? _newMiddleName;
+    private DateTime? _newBirthDate;
+    private string _newPhone = "";
+    private Gender _newGender = Gender.Male;
+
+    // Step 2 variables
+    private DateTime? _visitDate;
+    private TimeSpan? _visitTime;
+    private string _doctorName = "";
+
+    // Step 3 variables
+    private List<ProcedureDto> _procedures = [];
+    private List<VisitItemModel> _items = [new()];
+    private string? _notes;
+
+    private sealed class VisitItemModel
+    {
+        public Guid ProcedureId { get; set; }
+        public short? ToothNumber { get; set; }
+        public decimal Price { get; set; }
+        public int Quantity { get; set; } = 1;
+        public string? Comment { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _visitDate = InitialDate ?? DateTime.Today;
+        _visitTime = InitialTime ?? DateTime.Now.TimeOfDay;
+
+        try
+        {
+            _procedures = (await Api.GetProceduresAsync()).ToList();
+        }
+        catch (ApiException ex)
+        {
+            _errorMessage = $"Не удалось загрузить процедуры: {ex.Message}";
+        }
+    }
+
+    private async Task<IEnumerable<PatientListItemDto>> SearchPatientsAsync(string search, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(search) || search.Length < 2)
+            return Array.Empty<PatientListItemDto>();
+
+        try
+        {
+            var result = await Api.SearchPatientsAsync(search, false, 1, 10, cancellationToken);
+            return result.Items;
+        }
+        catch
+        {
+            return Array.Empty<PatientListItemDto>();
+        }
+    }
+
+    private async Task CreatePatientAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_newLastName) || string.IsNullOrWhiteSpace(_newFirstName) || string.IsNullOrWhiteSpace(_newPhone) || _newBirthDate == null)
+        {
+            _errorMessage = "Заполните все обязательные поля.";
+            return;
+        }
+
+        _isBusy = true;
+        _errorMessage = null;
+
+        try
+        {
+            var req = new CreatePatientRequest(
+                _newLastName, _newFirstName, _newMiddleName, _newGender, DateOnly.FromDateTime(_newBirthDate.Value),
+                _newPhone, null, null, null, null, null, null);
+
+            var patient = await Api.CreatePatientAsync(req);
+            _selectedPatient = new PatientListItemDto(patient.Id, patient.CardNumberDisplay, patient.FullName, patient.Age, patient.Phone, null, null, false);
+            _isCreatingNewPatient = false;
+            Snackbar.Add($"Пациент «{patient.FullName}» создан и выбран.", Severity.Success);
+        }
+        catch (ApiException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private void ProcedureChanged(VisitItemModel item)
+    {
+        var proc = _procedures.FirstOrDefault(p => p.Id == item.ProcedureId);
+        if (proc != null)
+        {
+            item.Price = proc.Price;
+        }
+    }
+
+    private void AddItem() => _items.Add(new VisitItemModel());
+    private void RemoveItem(VisitItemModel item)
+    {
+        if (_items.Count > 1)
+        {
+            _items.Remove(item);
+        }
+    }
+
+    private decimal CalculateTotal()
+    {
+        return _items
+            .Where(i => i.ProcedureId != Guid.Empty)
+            .Sum(i => i.Price * i.Quantity);
+    }
+
+    private bool CanGoNext() => _currentStep switch
+    {
+        1 => _selectedPatient != null,
+        2 => _visitDate != null && _visitTime != null && !string.IsNullOrWhiteSpace(_doctorName),
+        3 => _items.Any(i => i.ProcedureId != Guid.Empty),
+        _ => true
+    };
+
+    private void NextStep()
+    {
+        if (CanGoNext())
+        {
+            _errorMessage = null;
+            _currentStep++;
+        }
+    }
+
+    private void PrevStep()
+    {
+        _errorMessage = null;
+        _currentStep--;
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SubmitAsync()
+    {
+        _isBusy = true;
+        _errorMessage = null;
+
+        try
+        {
+            var treatmentItems = _items
+                .Where(i => i.ProcedureId != Guid.Empty)
+                .Select(i => new CreateTreatmentItemRequest(i.ProcedureId, i.ToothNumber, i.Price, i.Quantity, i.Comment))
+                .ToList();
+
+            var req = new CreateVisitRequest(
+                _selectedPatient!.Id,
+                DateOnly.FromDateTime(_visitDate!.Value),
+                TimeOnly.FromTimeSpan(_visitTime!.Value),
+                _doctorName,
+                _notes,
+                null,
+                null,
+                treatmentItems);
+
+            var visit = await Api.CreateVisitAsync(req);
+            Snackbar.Add("Визит успешно запланирован.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(visit));
+        }
+        catch (ApiException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+}

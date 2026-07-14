@@ -1,0 +1,81 @@
+@inject ApiClient Api
+@inject ISnackbar Snackbar
+
+@if (_isLoading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+}
+else if (_events.Count == 0)
+{
+    <MudText Typo="Typo.body2" Class="text-muted text-center py-4">Событий в истории пациента пока нет.</MudText>
+}
+else
+{
+    <MudTimeline TimelineOrientation="TimelineOrientation.Vertical" TimelinePosition="TimelinePosition.Left">
+        @foreach (var ev in _events)
+        {
+            <MudTimelineItem Color="GetColor(ev.Color)" Icon="@GetIcon(ev.Icon)" Elevation="1">
+                <MudCard Elevation="1" Class="border-radius-8">
+                    <MudCardContent>
+                        <MudText Typo="Typo.subtitle2" Class="font-weight-bold">@ev.Title</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary">@ev.Timestamp.ToString("g")</MudText>
+                        @if (!string.IsNullOrWhiteSpace(ev.Description))
+                        {
+                            <MudText Typo="Typo.body2" Class="mt-2 text-secondary">@ev.Description</MudText>
+                        }
+                    </MudCardContent>
+                </MudCard>
+            </MudTimelineItem>
+        }
+    </MudTimeline>
+}
+
+@code {
+    [Parameter] public Guid PatientId { get; set; }
+
+    private List<PatientTimelineEventDto> _events = [];
+    private bool _isLoading = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadTimelineAsync();
+    }
+
+    private async Task LoadTimelineAsync()
+    {
+        _isLoading = true;
+        try
+        {
+            var res = await Api.GetPatientTimelineAsync(PatientId);
+            _events = res.ToList();
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось загрузить историю пациента: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private Color GetColor(string color) => color switch
+    {
+        "Primary" => Color.Primary,
+        "Success" => Color.Success,
+        "Warning" => Color.Warning,
+        "Info" => Color.Info,
+        "Secondary" => Color.Secondary,
+        _ => Color.Default
+    };
+
+    private string GetIcon(string icon) => icon switch
+    {
+        "Icons.Material.Filled.Event" => Icons.Material.Filled.Event,
+        "Icons.Material.Filled.Payments" => Icons.Material.Filled.Payments,
+        "Icons.Material.Filled.Undo" => Icons.Material.Filled.Undo,
+        "Icons.Material.Filled.HealthAndSafety" => Icons.Material.Filled.HealthAndSafety,
+        "Icons.Material.Filled.AttachFile" => Icons.Material.Filled.AttachFile,
+        _ => Icons.Material.Filled.Circle
+    };
+}

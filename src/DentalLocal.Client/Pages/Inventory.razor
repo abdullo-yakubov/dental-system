@@ -1,0 +1,153 @@
+@page "/inventory"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<PageTitle>Склад и Материалы — DentalLocal</PageTitle>
+
+<MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+    <MudText Typo="Typo.h5" Class="font-weight-bold" Color="Color.Primary">Склад материалов</MudText>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="(() => OpenCreateDialogAsync())">
+        Добавить материал
+    </MudButton>
+</MudStack>
+
+@if (_lowStockMaterials.Count > 0)
+{
+    <MudAlert Severity="Severity.Warning" Class="mb-4 border-radius-8" Variant="Variant.Filled">
+        <MudText Typo="Typo.subtitle2" Class="font-weight-bold">Низкий остаток материалов!</MudText>
+        <div class="mt-1">
+            @string.Join(", ", _lowStockMaterials.Select(m => $"{m.Name} ({m.QuantityInStock.ToString("N2")} {m.Unit})"))
+        </div>
+    </MudAlert>
+}
+
+<MudStack Row="true" Spacing="4" Class="mb-4">
+    <MudTextField T="string" Label="Поиск материала" Adornment="Adornment.Start"
+                   AdornmentIcon="@Icons.Material.Filled.Search" Immediate="true"
+                   DebounceInterval="300" ValueChanged="OnSearchChanged" Value="_search" Class="flex-grow-1" />
+</MudStack>
+
+<MudTable Items="_materials" Hover="true" Loading="_isLoading" Elevation="2" Class="border-radius-12">
+    <HeaderContent>
+        <MudTh>Название</MudTh>
+        <MudTh>Ед. изм.</MudTh>
+        <MudTh>Остаток</MudTh>
+        <MudTh>Порог алертов</MudTh>
+        <MudTh>Цена за единицу</MudTh>
+        <MudTh>Стоимость склада</MudTh>
+        <MudTh></MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Название" Class="font-weight-bold">@context.Name</MudTd>
+        <MudTd DataLabel="Ед. изм.">@context.Unit</MudTd>
+        <MudTd DataLabel="Остаток">
+            <span class="@(context.QuantityInStock <= context.MinStockThreshold ? "text-danger font-weight-bold" : "")">
+                @context.QuantityInStock.ToString("N2")
+            </span>
+            @if (context.QuantityInStock <= context.MinStockThreshold)
+            {
+                <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error" Size="Size.Small" Class="ml-1" Style="vertical-align: middle;" />
+            }
+        </MudTd>
+        <MudTd DataLabel="Порог алертов">@context.MinStockThreshold.ToString("N2")</MudTd>
+        <MudTd DataLabel="Цена за единицу">@context.PricePerUnit.ToString("N0") сум</MudTd>
+        <MudTd DataLabel="Стоимость склада">
+            @((context.QuantityInStock * context.PricePerUnit).ToString("N0")) сум
+        </MudTd>
+        <MudTd>
+            <MudStack Row="true" Spacing="1">
+                <MudButton Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.SwapVert"
+                           OnClick="@(() => OpenAdjustDialogAsync(context))">
+                    Приход/Расход
+                </MudButton>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                               OnClick="@(() => OpenEditDialogAsync(context))" />
+            </MudStack>
+        </MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>Материалы на складе не найдены.</MudText>
+    </NoRecordsContent>
+</MudTable>
+
+@code {
+    private List<MaterialDto> _materials = [];
+    private List<MaterialDto> _lowStockMaterials = [];
+    private string _search = string.Empty;
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _isLoading = true;
+        try
+        {
+            var matTask = Api.GetMaterialsAsync(_search);
+            var lowTask = Api.GetLowStockMaterialsAsync();
+
+            await Task.WhenAll(matTask, lowTask);
+
+            _materials = (await matTask).ToList();
+            _lowStockMaterials = (await lowTask).ToList();
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Ошибка загрузки склада: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task OnSearchChanged(string value)
+    {
+        _search = value;
+        await LoadDataAsync();
+    }
+
+    private async Task OpenCreateDialogAsync()
+    {
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<MaterialDialog>("Добавить материал", options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            await LoadDataAsync();
+        }
+    }
+
+    private async Task OpenEditDialogAsync(MaterialDto material)
+    {
+        var parameters = new DialogParameters { { "Material", material } };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<MaterialDialog>("Редактировать материал", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            await LoadDataAsync();
+        }
+    }
+
+    private async Task OpenAdjustDialogAsync(MaterialDto material)
+    {
+        var parameters = new DialogParameters { { "Material", material } };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var dialog = await DialogService.ShowAsync<AdjustStockDialog>("Приход / Расход", parameters, options);
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            await LoadDataAsync();
+        }
+    }
+}

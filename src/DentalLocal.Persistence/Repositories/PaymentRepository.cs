@@ -8,12 +8,14 @@ public class PaymentRepository(DentalDbContext context) : RepositoryBase<Payment
 {
     public async Task<IReadOnlyList<Payment>> GetByPatientIdAsync(Guid patientId, CancellationToken cancellationToken = default) =>
         await Set.AsNoTracking()
+            .Include(p => p.Patient)
             .Where(p => p.PatientId == patientId)
             .OrderByDescending(p => p.PaidAt)
             .ToListAsync(cancellationToken);
 
     public async Task<IReadOnlyList<Payment>> GetByVisitIdAsync(Guid visitId, CancellationToken cancellationToken = default) =>
         await Set.AsNoTracking()
+            .Include(p => p.Patient)
             .Where(p => p.VisitId == visitId)
             .OrderByDescending(p => p.PaidAt)
             .ToListAsync(cancellationToken);

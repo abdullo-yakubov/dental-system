@@ -1,0 +1,144 @@
+@inject ApiClient Api
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>Новый визит</TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form">
+            <MudDatePicker @bind-Date="_visitDate" Label="Дата визита" Required="true" Class="mb-2"
+                           MaxDate="DateTime.Today.AddDays(1)" />
+            <MudTimePicker @bind-Time="_visitTime" Label="Время" Class="mb-2" AmPm="false" />
+            <MudTextField @bind-Value="_doctorName" Label="Врач" Required="true" Class="mb-3" />
+
+            <MudText Typo="Typo.subtitle2" Class="mb-2">Процедуры</MudText>
+
+            @foreach (var item in _items)
+            {
+                <MudGrid Spacing="2" Class="mb-2">
+                    <MudItem xs="5">
+                        <MudSelect T="Guid" @bind-Value="item.ProcedureId" Label="Процедура" Dense="true">
+                            @foreach (var p in _procedures)
+                            {
+                                <MudSelectItem Value="@p.Id">@p.Name (@p.Price.ToString("N0") сум)</MudSelectItem>
+                            }
+                        </MudSelect>
+                    </MudItem>
+                    <MudItem xs="2">
+                        <MudNumericField T="short?" @bind-Value="item.ToothNumber" Label="Зуб" Dense="true" />
+                    </MudItem>
+                    <MudItem xs="2">
+                        <MudNumericField T="decimal" @bind-Value="item.Price" Label="Цена" Dense="true" Min="0" />
+                    </MudItem>
+                    <MudItem xs="2">
+                        <MudNumericField T="int" @bind-Value="item.Quantity" Label="Кол." Dense="true" Min="1" />
+                    </MudItem>
+                    <MudItem xs="1" Class="d-flex align-center">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                                       OnClick="@(() => RemoveItem(item))" />
+                    </MudItem>
+                </MudGrid>
+            }
+
+            <MudButton StartIcon="@Icons.Material.Filled.Add" Size="Size.Small"
+                       OnClick="AddItem" Class="mb-3">Добавить процедуру</MudButton>
+
+            <MudTextField @bind-Value="_notes" Label="Заметки врача" Lines="3" Class="mb-2" />
+        </MudForm>
+
+        @if (_errorMessage is not null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-3">@_errorMessage</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Отмена</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                   OnClick="SubmitAsync" Disabled="_isBusy">
+            @(_isBusy ? "Сохранение..." : "Сохранить")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public Guid PatientId { get; set; }
+
+    private MudForm? _form;
+    private DateTime? _visitDate = DateTime.Today;
+    private TimeSpan? _visitTime = DateTime.Now.TimeOfDay;
+    private string _doctorName = string.Empty;
+    private string? _notes;
+    private string? _errorMessage;
+    private bool _isBusy;
+
+    private List<ProcedureDto> _procedures = [];
+    private List<VisitItemModel> _items = [new()];
+
+    private sealed class VisitItemModel
+    {
+        public Guid ProcedureId { get; set; }
+        public short? ToothNumber { get; set; }
+        public decimal Price { get; set; }
+        public int Quantity { get; set; } = 1;
+        public string? Comment { get; set; }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _procedures = (await Api.GetProceduresAsync()).ToList();
+        }
+        catch (ApiException ex)
+        {
+            _errorMessage = $"Не удалось загрузить процедуры: {ex.Message}";
+        }
+    }
+
+    private void AddItem() => _items.Add(new VisitItemModel());
+    private void RemoveItem(VisitItemModel item) => _items.Remove(item);
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SubmitAsync()
+    {
+        await _form!.Validate();
+        if (!_form.IsValid || _visitDate is null)
+        {
+            _errorMessage = "Заполните обязательные поля.";
+            return;
+        }
+
+        _isBusy = true;
+        _errorMessage = null;
+
+        try
+        {
+            var items = _items
+                .Where(i => i.ProcedureId != Guid.Empty)
+                .Select(i => new CreateTreatmentItemRequest(i.ProcedureId, i.ToothNumber, i.Price, i.Quantity, i.Comment))
+                .ToList();
+
+            var request = new CreateVisitRequest(
+                PatientId,
+                DateOnly.FromDateTime(_visitDate.Value),
+                TimeOnly.FromTimeSpan(_visitTime ?? TimeSpan.Zero),
+                _doctorName,
+                _notes,
+                null,
+                null,
+                items);
+
+            var visit = await Api.CreateVisitAsync(request);
+            Snackbar.Add($"Визит от {visit.VisitDate:dd.MM.yyyy} записан.", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(visit));
+        }
+        catch (ApiException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+}

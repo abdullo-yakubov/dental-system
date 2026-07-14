@@ -1,0 +1,44 @@
+using AutoMapper;
+using DentalLocal.Application.Common;
+using DentalLocal.Domain.Repositories;
+using DentalLocal.Shared.Contracts.Visits;
+using FluentValidation;
+using MediatR;
+
+namespace DentalLocal.Application.Features.Visits;
+
+public sealed record UpdateVisitCommand(
+    Guid Id,
+    DateOnly VisitDate,
+    TimeOnly VisitTime,
+    string DoctorName,
+    string? Notes,
+    string? Prescriptions,
+    string? MaterialsUsed) : ICommand<VisitDto>;
+
+public sealed class UpdateVisitCommandValidator : AbstractValidator<UpdateVisitCommand>
+{
+    public UpdateVisitCommandValidator()
+    {
+        RuleFor(x => x.Id).NotEmpty();
+        RuleFor(x => x.DoctorName).NotEmpty().MaximumLength(200).WithMessage("Укажите имя врача.");
+    }
+}
+
+public sealed class UpdateVisitCommandHandler(IUnitOfWork unitOfWork, IMapper mapper)
+    : IRequestHandler<UpdateVisitCommand, Result<VisitDto>>
+{
+    public async Task<Result<VisitDto>> Handle(UpdateVisitCommand request, CancellationToken cancellationToken)
+    {
+        var visit = await unitOfWork.Visits.GetByIdWithItemsAsync(request.Id, cancellationToken);
+        if (visit is null)
+            return Result.Failure<VisitDto>(Error.NotFound("Visit.NotFound", "Визит не найден."));
+
+        visit.UpdateNotes(request.Notes, request.Prescriptions, request.MaterialsUsed);
+
+        await unitOfWork.AuditLogs.AddAsync(
+            Domain.Entities.AuditLog.Create("VISIT_UPDATED", "Visit", visit.Id, null), cancellationToken);
+
+        return Result.Success(mapper.Map<VisitDto>(visit));
+    }
+}

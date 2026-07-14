@@ -1,0 +1,97 @@
+@inject ApiClient Api
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        @(Material == null ? "Добавить материал" : "Редактировать материал")
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="_form">
+            <MudTextField T="string" @bind-Value="_name" Label="Название материала" Required="true" Class="mb-3" />
+            <MudTextField T="string" @bind-Value="_unit" Label="Единица измерения (например: шт, мл, г)" Required="true" Class="mb-3" />
+            
+            @if (Material == null)
+            {
+                <MudNumericField T="decimal" @bind-Value="_quantityInStock" Label="Начальное количество" Required="true" Min="0" Class="mb-3" />
+            }
+
+            <MudNumericField T="decimal" @bind-Value="_minStockThreshold" Label="Минимальный порог остатка" Required="true" Min="0" Class="mb-3" />
+            <MudNumericField T="decimal" @bind-Value="_pricePerUnit" Label="Цена за единицу (сум)" Required="true" Min="0" Format="N0" Class="mb-3" />
+        </MudForm>
+
+        @if (_errorMessage is not null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mt-3">@_errorMessage</MudAlert>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Отмена</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SubmitAsync" Disabled="_isBusy">
+            @(_isBusy ? "Сохранение..." : "Сохранить")
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; } = null!;
+    [Parameter] public MaterialDto? Material { get; set; }
+
+    private MudForm? _form;
+    private string _name = string.Empty;
+    private string _unit = string.Empty;
+    private decimal _quantityInStock;
+    private decimal _minStockThreshold;
+    private decimal _pricePerUnit;
+    
+    private string? _errorMessage;
+    private bool _isBusy;
+
+    protected override void OnParametersSet()
+    {
+        if (Material != null)
+        {
+            _name = Material.Name;
+            _unit = Material.Unit;
+            _quantityInStock = Material.QuantityInStock;
+            _minStockThreshold = Material.MinStockThreshold;
+            _pricePerUnit = Material.PricePerUnit;
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private async Task SubmitAsync()
+    {
+        await _form!.Validate();
+        if (!_form.IsValid) return;
+
+        _isBusy = true;
+        _errorMessage = null;
+
+        try
+        {
+            if (Material == null)
+            {
+                var request = new CreateMaterialRequest(_name, _unit, _quantityInStock, _minStockThreshold, _pricePerUnit);
+                var result = await Api.CreateMaterialAsync(request);
+                Snackbar.Add($"Материал «{result.Name}» успешно добавлен.", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(result));
+            }
+            else
+            {
+                var request = new UpdateMaterialRequest(_name, _unit, _minStockThreshold, _pricePerUnit);
+                var result = await Api.UpdateMaterialAsync(Material.Id, request);
+                Snackbar.Add($"Материал «{result.Name}» успешно изменен.", Severity.Success);
+                MudDialog.Close(DialogResult.Ok(result));
+            }
+        }
+        catch (ApiException ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+}
