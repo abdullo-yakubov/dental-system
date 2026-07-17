@@ -78,18 +78,22 @@ public sealed class ApiClient(HttpClient http)
     public Task<IReadOnlyList<PatientFileDto>> GetPatientFilesAsync(Guid patientId, CancellationToken ct = default) =>
         SendAsync<IReadOnlyList<PatientFileDto>>(() => http.GetAsync($"{ApiRoutes.Patients.Base}/{patientId}/files", ct));
 
-    public async Task<PatientFileDto> UploadPatientFileAsync(Guid patientId, short fileType, string fileName, byte[] fileBytes, string? description, CancellationToken ct = default)
+    public async Task<PatientFileDto> UploadPatientFileAsync(Guid patientId, short fileType, string fileName, byte[] fileBytes, string? description, string? beforeAfterTag = null, CancellationToken ct = default)
     {
         using var content = new MultipartFormDataContent();
-        
+
         var fileContent = new ByteArrayContent(fileBytes);
         fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(GetMimeType(fileName));
         content.Add(fileContent, "file", fileName);
-        
+
         content.Add(new StringContent(fileType.ToString()), "fileType");
         if (description != null)
         {
             content.Add(new StringContent(description), "description");
+        }
+        if (beforeAfterTag != null)
+        {
+            content.Add(new StringContent(beforeAfterTag), "beforeAfterTag");
         }
 
         using var response = await http.PostAsync($"{ApiRoutes.Patients.Base}/{patientId}/files", content, ct);
@@ -145,9 +149,36 @@ public sealed class ApiClient(HttpClient http)
     public Task<VisitDto> ConfirmVisitAsync(Guid id, CancellationToken ct = default) =>
         SendAsync<VisitDto>(() => http.PostAsync($"{ApiRoutes.Visits.Base}/{id}/confirm", null, ct));
 
+    public Task<VisitDto> CancelVisitAsync(Guid id, CancellationToken ct = default) =>
+        SendAsync<VisitDto>(() => http.PostAsync($"{ApiRoutes.Visits.Base}/{id}/cancel", null, ct));
+
     public async Task<byte[]> GetVisitInvoicePdfAsync(Guid visitId, CancellationToken ct = default)
     {
         using var response = await http.GetAsync($"{ApiRoutes.Reports.Base}/visits/{visitId}/invoice", ct);
+        await EnsureSuccessAsync(response);
+        return await response.Content.ReadAsByteArrayAsync(ct);
+    }
+
+    // ── Excel export ─────────────────────────────────────────────────────────
+
+    public async Task<byte[]> ExportDebtorsExcelAsync(CancellationToken ct = default)
+    {
+        using var response = await http.GetAsync($"{ApiRoutes.Reports.Base}/debtors/export", ct);
+        await EnsureSuccessAsync(response);
+        return await response.Content.ReadAsByteArrayAsync(ct);
+    }
+
+    public async Task<byte[]> ExportTopProceduresExcelAsync(int count = 20, CancellationToken ct = default)
+    {
+        using var response = await http.GetAsync($"{ApiRoutes.Reports.Base}/procedures/export?count={count}", ct);
+        await EnsureSuccessAsync(response);
+        return await response.Content.ReadAsByteArrayAsync(ct);
+    }
+
+    public async Task<byte[]> ExportWorkloadExcelAsync(DateOnly? from = null, DateOnly? to = null, CancellationToken ct = default)
+    {
+        var query = (from.HasValue ? $"?from={from.Value:yyyy-MM-dd}" : "") + (to.HasValue ? $"{(from.HasValue ? "&" : "?")}to={to.Value:yyyy-MM-dd}" : "");
+        using var response = await http.GetAsync($"{ApiRoutes.Reports.Base}/workload/export{query}", ct);
         await EnsureSuccessAsync(response);
         return await response.Content.ReadAsByteArrayAsync(ct);
     }

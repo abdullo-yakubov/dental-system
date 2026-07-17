@@ -82,5 +82,12 @@ public static class VisitsEndpoints
             var result = await sender.Send(new ConfirmVisitCommand(id), ct);
             return result.ToApiResult();
         });
+
+        // POST /api/v1/visits/{id}/cancel
+        group.MapPost("/{id:guid}/cancel", async (Guid id, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new CancelVisitCommand(id), ct);
+            return result.ToApiResult();
+        });
     }
 }

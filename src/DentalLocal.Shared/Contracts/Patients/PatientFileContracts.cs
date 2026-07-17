@@ -9,4 +9,5 @@ public sealed record PatientFileDto(
     long SizeBytes,
     string StoredPath,
     DateTimeOffset UploadedAt,
-    string? Description);
+    string? Description,
+    string? BeforeAfterTag);

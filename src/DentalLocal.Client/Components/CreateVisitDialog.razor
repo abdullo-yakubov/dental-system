@@ -180,6 +180,8 @@
             var visit = await Api.CreateVisitAsync(request);
             await Drafts.ClearAsync(DraftKey);
             Snackbar.Add($"Визит от {visit.VisitDate:dd.MM.yyyy} записан.", Severity.Success);
+            if (!string.IsNullOrWhiteSpace(visit.ScheduleWarning))
+                Snackbar.Add(visit.ScheduleWarning, Severity.Warning);
             MudDialog.Close(DialogResult.Ok(visit));
         }
         catch (ApiException ex)

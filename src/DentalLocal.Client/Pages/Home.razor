@@ -3,6 +3,7 @@
 @inject ApiClient Api
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
+@inject IJSRuntime JsRuntime
 
 <PageTitle>Дашборд — DentalLocal</PageTitle>
 
@@ -133,6 +134,11 @@ else
         <!-- Right Side: Top Procedures -->
         <MudItem xs="12" md="4">
             <GlassCard Title="Популярные процедуры" Style="height: 100%;">
+                <HeaderActions>
+                    <MudIconButton Icon="@Icons.Material.Filled.FileDownload" Size="Size.Small"
+                                   OnClick="ExportTopProceduresAsync" Disabled="_isExportingProcedures" title="Экспорт в Excel" />
+                </HeaderActions>
+                <ChildContent>
                 @if (_topProcedures.Count > 0)
                 {
                     <div class="d-flex flex-column align-center">
@@ -155,11 +161,19 @@ else
                 {
                     <EmptyState Icon="@Icons.Material.Filled.PieChart" Title="Нет данных о процедурах" />
                 }
+                </ChildContent>
             </GlassCard>
         </MudItem>
     </MudGrid>
 
     <GlassCard Title="Загрузка врача (последние 30 дней)" Class="mt-6">
+        <HeaderActions>
+            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.FileDownload"
+                       OnClick="ExportWorkloadAsync" Disabled="_isExportingWorkload">
+                Экспорт в Excel
+            </MudButton>
+        </HeaderActions>
+        <ChildContent>
         @if (_workload is null)
         {
             <EmptyState Icon="@Icons.Material.Filled.Insights" Title="Нет данных о загрузке" />
@@ -227,6 +241,7 @@ else
                 </MudTable>
             }
         }
+        </ChildContent>
     </GlassCard>
     </div>
 }
@@ -247,6 +262,48 @@ else
     private string[] _donutLabels = [];
     private string _greeting = "Добро пожаловать";
     private DoctorWorkloadStatsDto? _workload;
+    private bool _isExportingWorkload;
+    private bool _isExportingProcedures;
+
+    private const string ExcelMimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+    private async Task ExportWorkloadAsync()
+    {
+        _isExportingWorkload = true;
+        try
+        {
+            var bytes = await Api.ExportWorkloadExcelAsync();
+            var base64 = Convert.ToBase64String(bytes);
+            await JsRuntime.InvokeVoidAsync("dentalLocal.downloadFileFromBytes", base64, "Загрузка_врача.xlsx", ExcelMimeType);
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось экспортировать: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isExportingWorkload = false;
+        }
+    }
+
+    private async Task ExportTopProceduresAsync()
+    {
+        _isExportingProcedures = true;
+        try
+        {
+            var bytes = await Api.ExportTopProceduresExcelAsync();
+            var base64 = Convert.ToBase64String(bytes);
+            await JsRuntime.InvokeVoidAsync("dentalLocal.downloadFileFromBytes", base64, "Популярные_процедуры.xlsx", ExcelMimeType);
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось экспортировать: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isExportingProcedures = false;
+        }
+    }
 
     private static readonly DayOfWeek[] _heatmapDays =
     [

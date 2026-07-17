@@ -12,6 +12,7 @@ public static class DependencyInjection
         services.AddSingleton<IPostgresBootstrapService, Database.PostgresBootstrapService>();
         services.AddScoped<IBackupService, Services.BackupService>();
         services.AddScoped<IPdfService, Services.PdfService>();
+        services.AddScoped<IExcelExportService, Services.ExcelExportService>();
         services.AddHostedService<BackgroundServices.DailyMaintenanceBackgroundService>();
 
         return services;

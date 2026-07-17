@@ -115,4 +115,14 @@ public class Visit : Entity, IImmutableRecord
     }
 
     public decimal RemainingAmount => TotalCost - TotalPaid;
+
+    /// <summary>Отмена визита (см. п. 17.2 ТЗ — история не удаляется, только помечается отменённой).</summary>
+    public void Cancel()
+    {
+        if (Status is VisitStatus.Completed or VisitStatus.Cancelled)
+            throw new DomainException("Можно отменить только запланированный или подтверждённый визит.");
+
+        Status = VisitStatus.Cancelled;
+        Touch();
+    }
 }

@@ -20,6 +20,7 @@ public sealed class PatientMappingProfile : Profile
             .ForCtorParam(nameof(PatientListItemDto.FullName), opt => opt.MapFrom(p => p.FullName))
             .ForCtorParam(nameof(PatientListItemDto.Age), opt => opt.MapFrom(p => p.GetAge(today())));
         CreateMap<PatientFile, PatientFileDto>()
-            .ForCtorParam(nameof(PatientFileDto.FileType), opt => opt.MapFrom(pf => (short)pf.FileType));
+            .ForCtorParam(nameof(PatientFileDto.FileType), opt => opt.MapFrom(pf => (short)pf.FileType))
+            .ForCtorParam(nameof(PatientFileDto.BeforeAfterTag), opt => opt.MapFrom(pf => pf.BeforeAfterType));
     }
 }

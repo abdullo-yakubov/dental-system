@@ -1,13 +1,13 @@
 window.dentalLocal = window.dentalLocal || {};
 
-window.dentalLocal.openPdfFromBytes = (base64, fileName) => {
+window.dentalLocal.downloadFileFromBytes = (base64, fileName, mimeType) => {
     const byteChars = atob(base64);
     const byteNumbers = new Array(byteChars.length);
     for (let i = 0; i < byteChars.length; i++) {
         byteNumbers[i] = byteChars.charCodeAt(i);
     }
     const byteArray = new Uint8Array(byteNumbers);
-    const blob = new Blob([byteArray], { type: "application/pdf" });
+    const blob = new Blob([byteArray], { type: mimeType });
     const url = URL.createObjectURL(blob);
 
     const link = document.createElement("a");
@@ -21,3 +21,6 @@ window.dentalLocal.openPdfFromBytes = (base64, fileName) => {
 
     setTimeout(() => URL.revokeObjectURL(url), 30000);
 };
+
+window.dentalLocal.openPdfFromBytes = (base64, fileName) =>
+    window.dentalLocal.downloadFileFromBytes(base64, fileName, "application/pdf");

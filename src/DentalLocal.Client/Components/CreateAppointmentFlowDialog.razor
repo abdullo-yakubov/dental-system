@@ -483,6 +483,8 @@
 
             var visit = await Api.CreateVisitAsync(req);
             Snackbar.Add("Визит успешно запланирован.", Severity.Success);
+            if (!string.IsNullOrWhiteSpace(visit.ScheduleWarning))
+                Snackbar.Add(visit.ScheduleWarning, Severity.Warning);
             MudDialog.Close(DialogResult.Ok(visit));
         }
         catch (ApiException ex)

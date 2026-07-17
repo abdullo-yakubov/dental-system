@@ -4,11 +4,16 @@
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
+@inject IJSRuntime JsRuntime
 
 <PageTitle>Долги и Оплаты — DentalLocal</PageTitle>
 
 <PageHeader Title="Должники" Icon="@Icons.Material.Filled.MoneyOff" Subtitle="Задолженности пациентов и их погашение">
     <Actions>
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.FileDownload"
+                   OnClick="ExportToExcelAsync" Disabled="_isExporting">
+            Экспорт в Excel
+        </MudButton>
         <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenCreatePatientDialogAsync">
             Добавить пациента
         </MudButton>
@@ -87,6 +92,27 @@
     private string _search = string.Empty;
     private DebtStatus? _status = DebtStatus.Open; // Default show only active debts
     private bool _isLoading;
+    private bool _isExporting;
+
+    private async Task ExportToExcelAsync()
+    {
+        _isExporting = true;
+        try
+        {
+            var bytes = await Api.ExportDebtorsExcelAsync();
+            var base64 = Convert.ToBase64String(bytes);
+            await JsRuntime.InvokeVoidAsync("dentalLocal.downloadFileFromBytes", base64, "Должники.xlsx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось экспортировать: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isExporting = false;
+        }
+    }
 
     private async Task<TableData<DebtListItemDto>> LoadDebtsAsync(TableState state, CancellationToken ct)
     {

@@ -20,6 +20,12 @@
                         <MudSelectItem Value="((short)7)">Другое (Other)</MudSelectItem>
                     </MudSelect>
                 </MudItem>
+                <MudItem xs="12" sm="4">
+                    <MudSelect T="string" @bind-Value="_beforeAfterTag" Label="Фотопротокол" Clearable="true">
+                        <MudSelectItem Value="@("Before")">До лечения</MudSelectItem>
+                        <MudSelectItem Value="@("After")">После лечения</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
                 <MudItem xs="12" sm="8">
                     <MudTextField T="string" @bind-Value="_description" Label="Описание / комментарий к файлу" MaxLength="500" />
                 </MudItem>
@@ -45,6 +51,18 @@
             </MudGrid>
         </MudForm>
     </MudPaper>
+
+    <!-- Before/After comparison -->
+    @{
+        var pair = GetLatestBeforeAfterPair();
+    }
+    @if (pair is not null)
+    {
+        <MudPaper Class="pa-4 border-radius-12" Elevation="2">
+            <MudText Typo="Typo.subtitle1" Class="font-weight-bold mb-3">Фотопротокол: до / после</MudText>
+            <BeforeAfterSlider BeforeImageUrl="@GetFileUrl(pair.Value.Before)" AfterImageUrl="@GetFileUrl(pair.Value.After)" />
+        </MudPaper>
+    }
 
     <!-- Gallery Section -->
     <MudText Typo="Typo.h6" Class="font-weight-bold mt-2">Архив файлов пациента</MudText>
@@ -79,9 +97,17 @@
                                 <MudText Typo="Typo.subtitle2" Class="font-weight-bold text-truncate" Style="max-width: 70%;">
                                     @file.FileName
                                 </MudText>
-                                <MudChip T="string" Color="Color.Primary" Size="Size.Small">
-                                    @GetFileTypeLabel(file.FileType)
-                                </MudChip>
+                                <MudStack Row="true" Spacing="1">
+                                    @if (file.BeforeAfterTag is not null)
+                                    {
+                                        <MudChip T="string" Color="Color.Tertiary" Size="Size.Small">
+                                            @(file.BeforeAfterTag == "Before" ? "До" : "После")
+                                        </MudChip>
+                                    }
+                                    <MudChip T="string" Color="Color.Primary" Size="Size.Small">
+                                        @GetFileTypeLabel(file.FileType)
+                                    </MudChip>
+                                </MudStack>
                             </div>
                             <MudText Typo="Typo.caption" Color="Color.Secondary" Class="d-block mt-1">
                                 Загружен: @file.UploadedAt.ToString("g") • @FormatSize(file.SizeBytes)
@@ -118,7 +144,15 @@
     private MudForm? _form;
     private short _fileType = 1;
     private string? _description;
+    private string? _beforeAfterTag;
     private IBrowserFile? _selectedFile;
+
+    private (PatientFileDto Before, PatientFileDto After)? GetLatestBeforeAfterPair()
+    {
+        var before = _files.Where(f => f.BeforeAfterTag == "Before").OrderByDescending(f => f.UploadedAt).FirstOrDefault();
+        var after = _files.Where(f => f.BeforeAfterTag == "After").OrderByDescending(f => f.UploadedAt).FirstOrDefault();
+        return before is not null && after is not null ? (before, after) : null;
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -166,14 +200,16 @@
                 _fileType,
                 _selectedFile.Name,
                 fileBytes,
-                _description);
+                _description,
+                _beforeAfterTag);
 
             Snackbar.Add("Файл успешно загружен.", Severity.Success);
-            
+
             // Reset form
             _selectedFile = null;
             _description = null;
             _fileType = 1;
+            _beforeAfterTag = null;
 
             await LoadFilesAsync();
         }

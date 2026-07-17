@@ -27,9 +27,21 @@
                             <MudButton StartIcon="@Icons.Material.Filled.DarkMode" Variant="@(ThemeService.IsDark ? Variant.Filled : Variant.Outlined)" OnClick="@(() => SetThemeModeAsync(true))">Тёмная</MudButton>
                         </MudButtonGroup>
                         <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary">
-                            <MudButton Variant="@(ThemeService.Accent == AppAccent.Blue ? Variant.Filled : Variant.Outlined)" OnClick="@(() => SetThemeAccentAsync(AppAccent.Blue))">Синяя</MudButton>
-                            <MudButton Variant="@(ThemeService.Accent == AppAccent.Teal ? Variant.Filled : Variant.Outlined)" OnClick="@(() => SetThemeAccentAsync(AppAccent.Teal))">Бирюзовая</MudButton>
+                            <MudButton Variant="@(ThemeService.CustomAccentColor is null && ThemeService.Accent == AppAccent.Blue ? Variant.Filled : Variant.Outlined)" OnClick="@(() => SetThemeAccentAsync(AppAccent.Blue))">Синяя</MudButton>
+                            <MudButton Variant="@(ThemeService.CustomAccentColor is null && ThemeService.Accent == AppAccent.Teal ? Variant.Filled : Variant.Outlined)" OnClick="@(() => SetThemeAccentAsync(AppAccent.Teal))">Бирюзовая</MudButton>
                         </MudButtonGroup>
+                    </MudStack>
+                </div>
+                <div>
+                    <MudText Typo="Typo.body2" Class="mb-2 mud-text-secondary">Свой акцентный цвет</MudText>
+                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                        <MudColorPicker @bind-Text="_customAccentColor" Label="Цвет" Variant="Variant.Outlined"
+                                        DisableToolbar="true" ColorPickerView="ColorPickerView.Palette" Style="width: 220px;" />
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ApplyCustomAccentAsync">Применить</MudButton>
+                        @if (ThemeService.CustomAccentColor is not null)
+                        {
+                            <MudButton Variant="Variant.Text" OnClick="ResetCustomAccentAsync">Сбросить на стандартный</MudButton>
+                        }
                     </MudStack>
                 </div>
                 <MudSelect T="string" @bind-Value="_language" Label="Язык интерфейса" Variant="Variant.Outlined">
@@ -387,9 +399,12 @@
         }
     }
 
+    private string _customAccentColor = "#3E63DD";
+
     protected override void OnInitialized()
     {
         ThemeService.Changed += OnThemeChanged;
+        _customAccentColor = ThemeService.CustomAccentColor ?? "#3E63DD";
     }
 
     private void OnThemeChanged() => InvokeAsync(StateHasChanged);
@@ -404,7 +419,28 @@
 
     private async Task SetThemeAccentAsync(AppAccent accent)
     {
+        if (ThemeService.CustomAccentColor is not null)
+            await ThemeService.ResetCustomAccentAsync();
+
         await ThemeService.SetAccentAsync(accent);
+    }
+
+    private async Task ApplyCustomAccentAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_customAccentColor))
+        {
+            Snackbar.Add("Укажите цвет.", Severity.Warning);
+            return;
+        }
+
+        await ThemeService.SetCustomAccentAsync(_customAccentColor);
+        Snackbar.Add("Акцентный цвет применён.", Severity.Success);
+    }
+
+    private async Task ResetCustomAccentAsync()
+    {
+        await ThemeService.ResetCustomAccentAsync();
+        _customAccentColor = "#3E63DD";
     }
 
     private async Task SaveSettingsAsync()

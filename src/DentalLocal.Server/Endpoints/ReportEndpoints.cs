@@ -1,11 +1,16 @@
 using DentalLocal.Application.Common;
+using DentalLocal.Application.Features.Analytics;
+using DentalLocal.Application.Features.Payments;
 using DentalLocal.Domain.Repositories;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace DentalLocal.Server.Endpoints;
 
 public static class ReportEndpoints
 {
+    private const string ExcelMimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
     public static void MapReportEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/v1/reports").WithTags("Reports");
@@ -60,6 +65,39 @@ public static class ReportEndpoints
 
             var pdfBytes = pdfService.GenerateInvoicePdf(visit);
             return Results.File(pdfBytes, "application/pdf", $"Чек_{visit.Patient?.LastName ?? ""}.pdf");
+        });
+
+        // GET /api/v1/reports/debtors/export
+        group.MapGet("/debtors/export", async (ISender sender, IExcelExportService excel, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new SearchDebtsQuery(null, null, 1, 100_000), ct);
+            if (result.IsFailure)
+                return Results.Problem(result.Error.Message);
+
+            var bytes = excel.ExportDebtors(result.Value.Items);
+            return Results.File(bytes, ExcelMimeType, "Должники.xlsx");
+        });
+
+        // GET /api/v1/reports/procedures/export
+        group.MapGet("/procedures/export", async (int? count, ISender sender, IExcelExportService excel, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetTopProceduresQuery(count ?? 20), ct);
+            if (result.IsFailure)
+                return Results.Problem(result.Error.Message);
+
+            var bytes = excel.ExportTopProcedures(result.Value);
+            return Results.File(bytes, ExcelMimeType, "Топ_процедур.xlsx");
+        });
+
+        // GET /api/v1/reports/workload/export
+        group.MapGet("/workload/export", async (DateOnly? from, DateOnly? to, ISender sender, IExcelExportService excel, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetDoctorWorkloadStatsQuery(from, to), ct);
+            if (result.IsFailure)
+                return Results.Problem(result.Error.Message);
+
+            var bytes = excel.ExportWorkloadStats(result.Value);
+            return Results.File(bytes, ExcelMimeType, "Загрузка_врача.xlsx");
         });
     }
 }

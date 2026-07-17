@@ -12,12 +12,19 @@ public sealed class ThemeService
 {
     private const string ModeKey = "dental-theme-mode";
     private const string AccentKey = "dental-theme-accent";
+    private const string CustomAccentKey = "dental-theme-custom-accent";
 
     private readonly IJSRuntime _js;
 
     public bool IsDark { get; private set; }
     public AppAccent Accent { get; private set; } = AppAccent.Blue;
-    public MudTheme CurrentTheme => AppThemes.Get(IsDark, Accent);
+
+    /// <summary>Произвольный акцентный цвет (hex), заданный через color picker в Настройках. Null — используется стандартный Blue/Teal (раздел 16 ТЗ).</summary>
+    public string? CustomAccentColor { get; private set; }
+
+    public MudTheme CurrentTheme => CustomAccentColor is not null
+        ? AppThemes.GetCustom(IsDark, CustomAccentColor)
+        : AppThemes.Get(IsDark, Accent);
 
     public event Action? Changed;
 
@@ -30,9 +37,11 @@ public sealed class ThemeService
     {
         var mode = await GetItemAsync(ModeKey);
         var accent = await GetItemAsync(AccentKey);
+        var customAccent = await GetItemAsync(CustomAccentKey);
 
         IsDark = mode == "dark";
         Accent = accent == "teal" ? AppAccent.Teal : AppAccent.Blue;
+        CustomAccentColor = string.IsNullOrWhiteSpace(customAccent) ? null : customAccent;
 
         await ApplyHtmlAttributesAsync();
         Changed?.Invoke();
@@ -54,11 +63,30 @@ public sealed class ThemeService
         Changed?.Invoke();
     }
 
+    /// <summary>Задаёт произвольный акцентный цвет (hex, например "#7C3AED"), имеет приоритет над Blue/Teal.</summary>
+    public async Task SetCustomAccentAsync(string hexColor)
+    {
+        CustomAccentColor = hexColor;
+        await SetItemAsync(CustomAccentKey, hexColor);
+        await ApplyHtmlAttributesAsync();
+        Changed?.Invoke();
+    }
+
+    /// <summary>Сбрасывает кастомный акцент — интерфейс возвращается к переключателю Blue/Teal в шапке.</summary>
+    public async Task ResetCustomAccentAsync()
+    {
+        CustomAccentColor = null;
+        await SetItemAsync(CustomAccentKey, string.Empty);
+        await ApplyHtmlAttributesAsync();
+        Changed?.Invoke();
+    }
+
     private async Task ApplyHtmlAttributesAsync()
     {
         try
         {
-            await _js.InvokeVoidAsync("dentalTheme.apply", IsDark ? "dark" : "light", Accent == AppAccent.Teal ? "teal" : "blue");
+            var accentAttr = CustomAccentColor ?? (Accent == AppAccent.Teal ? "teal" : "blue");
+            await _js.InvokeVoidAsync("dentalTheme.apply", IsDark ? "dark" : "light", accentAttr);
         }
         catch (JSException)
         {

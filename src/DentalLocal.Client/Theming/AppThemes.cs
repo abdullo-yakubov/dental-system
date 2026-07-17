@@ -31,13 +31,23 @@ public static class AppThemes
         _ => LightBlue
     };
 
-    private static MudTheme BuildTheme(bool isDark, AppAccent accent)
+    /// <summary>Тема с произвольным акцентным цветом, заданным пользователем через color picker в Настройках (раздел 16 ТЗ).</summary>
+    public static MudTheme GetCustom(bool isDark, string primaryHex) =>
+        BuildTheme(isDark, AppAccent.Blue, customPrimaryHex: primaryHex);
+
+    private static MudTheme BuildTheme(bool isDark, AppAccent accent, string? customPrimaryHex = null)
     {
         var (primary, primaryDarken, secondary) = accent switch
         {
             AppAccent.Teal => ("#0F9B8E", "#0B7A70", "#5E60CE"),
             _ => ("#3E63DD", "#2F4FBF", "#00B8A9")
         };
+
+        if (customPrimaryHex is not null)
+        {
+            primary = customPrimaryHex;
+            primaryDarken = Darken(customPrimaryHex, 0.18);
+        }
 
         return new MudTheme
         {
@@ -97,5 +107,23 @@ public static class AppThemes
                 }
             }
         };
+    }
+
+    /// <summary>Затемняет hex-цвет на заданную долю (0-1) — используется для PrimaryDarken кастомного акцента.</summary>
+    private static string Darken(string hex, double amount)
+    {
+        hex = hex.TrimStart('#');
+        if (hex.Length != 6 || !int.TryParse(hex, System.Globalization.NumberStyles.HexNumber, null, out var value))
+            return hex.Length == 6 ? $"#{hex}" : "#2F4FBF";
+
+        var r = (value >> 16) & 0xFF;
+        var g = (value >> 8) & 0xFF;
+        var b = value & 0xFF;
+
+        r = (int)(r * (1 - amount));
+        g = (int)(g * (1 - amount));
+        b = (int)(b * (1 - amount));
+
+        return $"#{r:X2}{g:X2}{b:X2}";
     }
 }

@@ -1,0 +1,18 @@
+@* Простое сравнение "до/после" слайдером через CSS clip-path — без внешних библиотек. *@
+<div class="before-after-slider" style="position: relative; width: 100%; max-width: 480px; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 12px; user-select: none;">
+    <img src="@AfterImageUrl" alt="После" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;" />
+    <img src="@BeforeImageUrl" alt="До" style="position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; clip-path: inset(0 @(100 - _position)% 0 0);" />
+    <div style="position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.6); color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 12px;">До</div>
+    <div style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 12px;">После</div>
+    <div style="position: absolute; top: 0; bottom: 0; left: @(_position)%; width: 2px; background: #fff; box-shadow: 0 0 4px rgba(0,0,0,0.5);"></div>
+</div>
+<MudSlider T="double" Value="_position" ValueChanged="OnPositionChanged" Min="0" Max="100" Class="mt-2" />
+
+@code {
+    [Parameter] public string BeforeImageUrl { get; set; } = string.Empty;
+    [Parameter] public string AfterImageUrl { get; set; } = string.Empty;
+
+    private double _position = 50;
+
+    private void OnPositionChanged(double value) => _position = value;
+}

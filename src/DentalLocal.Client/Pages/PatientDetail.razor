@@ -426,12 +426,18 @@ else
 
     private async Task ArchivePatientAsync()
     {
-        bool? confirm = await DialogService.ShowMessageBoxAsync(
-            "Архивация пациента",
-            "Вы действительно хотите архивировать данные этого пациента?",
-            yesText: "Архивировать", cancelText: "Отмена");
+        var parameters = new DialogParameters
+        {
+            { "Title", "Архивация пациента" },
+            { "Message", "Вы действительно хотите архивировать данные этого пациента? Медицинская история сохранится, но пациент перестанет отображаться в активных списках." },
+            { "ConfirmButtonText", "Архивировать" }
+        };
 
-        if (confirm == true)
+        var dialog = await DialogService.ShowAsync<Components.Shared.TypedConfirmDialog>("Архивация пациента", parameters,
+            new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true });
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
         {
             try
             {

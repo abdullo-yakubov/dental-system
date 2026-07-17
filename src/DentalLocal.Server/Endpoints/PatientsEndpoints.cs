@@ -105,6 +105,9 @@ public static class PatientsEndpoints
             }
 
             string? description = form.TryGetValue("description", out var descVal) ? descVal.ToString() : null;
+            string? beforeAfterTag = form.TryGetValue("beforeAfterTag", out var tagVal) && !string.IsNullOrWhiteSpace(tagVal)
+                ? tagVal.ToString()
+                : null;
 
             using var memoryStream = new MemoryStream();
             await file.CopyToAsync(memoryStream);
@@ -117,7 +120,8 @@ public static class PatientsEndpoints
                 file.ContentType,
                 file.Length,
                 fileBytes,
-                description);
+                description,
+                beforeAfterTag);
 
             var result = await sender.Send(command);
             return result.ToApiResult();

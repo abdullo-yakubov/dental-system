@@ -1,6 +1,8 @@
 @inject ApiClient Api
 @inject ISnackbar Snackbar
 @inject IJSRuntime JsRuntime
+@inject IDialogService DialogService
+@inject NavigationManager Navigation
 
 <MudDialog>
     <TitleContent>
@@ -49,6 +51,22 @@
                 @if (!string.IsNullOrWhiteSpace(_visit.Diagnosis))
                 {
                     <MudAlert Severity="Severity.Info" Dense="true">Диагноз: @_visit.Diagnosis</MudAlert>
+                }
+
+                @if (_waitingSuggestions.Count > 0)
+                {
+                    <MudAlert Severity="Severity.Info" Dense="true">
+                        <MudText Typo="Typo.body2" Class="font-weight-bold mb-1">Пациенты из листа ожидания на эту процедуру:</MudText>
+                        @foreach (var w in _waitingSuggestions)
+                        {
+                            <div class="d-flex justify-space-between align-center">
+                                <span>@w.PatientFullName</span>
+                                <MudButton Variant="Variant.Text" Size="Size.Small" OnClick="@(() => Navigation.NavigateTo($"/patients/{w.PatientId}"))">
+                                    Открыть карточку
+                                </MudButton>
+                            </div>
+                        }
+                    </MudAlert>
                 }
 
                 <MudDivider />
@@ -122,6 +140,12 @@
             <MudButton Variant="Variant.Outlined" Color="Color.Info" OnClick="@(() => _reminderExpanded = true)">
                 Напомнить
             </MudButton>
+            @if (_visit?.Status is VisitStatus.Planned or VisitStatus.Confirmed)
+            {
+                <MudButton Variant="Variant.Outlined" Color="Color.Error" OnClick="CancelVisitAsync" Disabled="_isBusy">
+                    Отменить визит
+                </MudButton>
+            }
             @if (_visit?.Status == VisitStatus.Planned)
             {
                 <MudButton Variant="Variant.Filled" Color="Color.Tertiary" OnClick="ConfirmAsync" Disabled="_isBusy">
@@ -156,6 +180,8 @@
     private string _newMedication = string.Empty;
     private string _newDosage = string.Empty;
     private string _newInstructions = string.Empty;
+
+    private List<WaitingListEntryDto> _waitingSuggestions = [];
 
     private string WhatsAppLink => $"https://wa.me/{new string(_patientPhone.Where(char.IsDigit).ToArray())}";
 
@@ -262,6 +288,35 @@
         catch (ApiException ex)
         {
             Snackbar.Add($"Не удалось создать напоминание: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private async Task CancelVisitAsync()
+    {
+        if (_visit is null)
+            return;
+
+        _isBusy = true;
+        try
+        {
+            _visit = await Api.CancelVisitAsync(_visit.Id);
+            _changed = true;
+            Snackbar.Add("Визит отменён.", Severity.Success);
+
+            var procedureId = _visit.Items.Select(i => i.ProcedureId).FirstOrDefault();
+            if (procedureId != Guid.Empty)
+            {
+                var waiting = await Api.GetWaitingListAsync("Waiting");
+                _waitingSuggestions = waiting.Where(w => w.ProcedureId == procedureId).ToList();
+            }
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось отменить визит: {ex.Message}", Severity.Error);
         }
         finally
         {

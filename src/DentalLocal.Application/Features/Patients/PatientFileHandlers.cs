@@ -37,7 +37,8 @@ public sealed record UploadPatientFileCommand(
     string ContentType,
     long SizeBytes,
     byte[] FileContent,
-    string? Description) : ICommand<PatientFileDto>;
+    string? Description,
+    string? BeforeAfterTag = null) : ICommand<PatientFileDto>;
 
 public sealed class UploadPatientFileCommandValidator : AbstractValidator<UploadPatientFileCommand>
 {
@@ -90,7 +91,8 @@ public sealed class UploadPatientFileCommandHandler(IUnitOfWork unitOfWork, IMap
                 request.ContentType,
                 request.SizeBytes,
                 relativePath,
-                request.Description);
+                request.Description,
+                beforeAfterType: request.BeforeAfterTag);
         }
         catch (ArgumentException ex)
         {
