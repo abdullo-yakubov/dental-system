@@ -79,8 +79,10 @@ public class RecordMaterialUsageCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_UsageExceedsStock_ReturnsValidationErrorAndDoesNotRecordUsage()
+    public async Task Handle_UsageExceedsStock_SucceedsAndAllowsNegativeStock()
     {
+        // По ТЗ уход остатка в минус при списании по визиту — предупреждение для склада,
+        // а не повод отменить уже проведённое лечение (в отличие от ручной AdjustMaterialStockCommand).
         var uow = new FakeUnitOfWork();
         var visit = CreateVisit();
         var material = Material.Create("Перчатки", "пара", 3, 20, 2_000m);
@@ -92,9 +94,24 @@ public class RecordMaterialUsageCommandHandlerTests
 
         var result = await handler.Handle(command, CancellationToken.None);
 
-        Assert.True(result.IsFailure);
-        Assert.Equal("MaterialUsage.InvalidAction", result.Error.Code);
-        Assert.Equal(3, material.QuantityInStock);
-        Assert.Empty(uow.MaterialUsagesData);
+        Assert.True(result.IsSuccess);
+        Assert.Equal(-7, material.QuantityInStock);
+        Assert.Single(uow.MaterialUsagesData);
+    }
+
+    [Fact]
+    public async Task Handle_RecordsUsage_CapturesPricePerUnitSnapshot()
+    {
+        var uow = new FakeUnitOfWork();
+        var visit = CreateVisit();
+        var material = Material.Create("Перчатки", "пара", 100, 20, 2_000m);
+        uow.VisitsData.Add(visit);
+        uow.MaterialsData.Add(material);
+
+        var handler = new RecordMaterialUsageCommandHandler(uow, CreateMapper());
+        var result = await handler.Handle(new RecordMaterialUsageCommand(visit.Id, material.Id, 4), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2_000m, uow.MaterialUsagesData.Single().PricePerUnitSnapshot);
     }
 }

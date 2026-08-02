@@ -2,8 +2,10 @@ using DentalLocal.Application.Common;
 using DentalLocal.Application.Features.Analytics;
 using DentalLocal.Application.Features.Payments;
 using DentalLocal.Domain.Repositories;
+using DentalLocal.Server.Common;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DentalLocal.Server.Endpoints;
 
@@ -67,16 +69,33 @@ public static class ReportEndpoints
             return Results.File(pdfBytes, "application/pdf", $"Чек_{visit.Patient?.LastName ?? ""}.pdf");
         });
 
-        // GET /api/v1/reports/debtors/export
-        group.MapGet("/debtors/export", async (ISender sender, IExcelExportService excel, CancellationToken ct) =>
+        // POST /api/v1/reports/debtors/export -> 202 Accepted { jobId }. Список должников может быть
+        // большим (сотни тысяч строк в теории) — генерация Excel идёт через job-раннер вне HTTP-запроса
+        // (см. промпт 47 аудита), готовый файл скачивается отдельным GET после Succeeded.
+        group.MapPost("/debtors/export", (IJobQueue jobQueue) =>
         {
-            var result = await sender.Send(new SearchDebtsQuery(null, null, 1, 100_000), ct);
-            if (result.IsFailure)
-                return Results.Problem(result.Error.Message);
+            var jobId = jobQueue.Enqueue("report.debtors-export", async (id, services, _, ct) =>
+            {
+                var jobSender = services.GetRequiredService<ISender>();
+                var excelService = services.GetRequiredService<IExcelExportService>();
+                var resultStore = services.GetRequiredService<IJobResultStore>();
 
-            var bytes = excel.ExportDebtors(result.Value.Items);
-            return Results.File(bytes, ExcelMimeType, "Должники.xlsx");
-        });
+                var result = await jobSender.Send(new SearchDebtsQuery(null, null, 1, 100_000), ct);
+                if (result.IsFailure)
+                    throw new InvalidOperationException(result.Error.Message);
+
+                var bytes = excelService.ExportDebtors(result.Value.Items);
+                resultStore.Set(id, bytes, ExcelMimeType, "Должники.xlsx", TimeSpan.FromHours(1));
+            });
+
+            return Results.Accepted(value: jobId);
+        }).WithRequestTimeout(RequestTimeoutPolicies.Long);
+
+        // GET /api/v1/reports/download/{jobId} — забрать результат завершённой джобы экспорта.
+        group.MapGet("/download/{jobId:guid}", (Guid jobId, IJobResultStore resultStore) =>
+            resultStore.TryGet(jobId, out var content, out var contentType, out var fileName)
+                ? Results.File(content, contentType, fileName)
+                : Results.NotFound(new { error = "Результат ещё не готов или устарел." }));
 
         // GET /api/v1/reports/procedures/export
         group.MapGet("/procedures/export", async (int? count, ISender sender, IExcelExportService excel, CancellationToken ct) =>
@@ -87,7 +106,7 @@ public static class ReportEndpoints
 
             var bytes = excel.ExportTopProcedures(result.Value);
             return Results.File(bytes, ExcelMimeType, "Топ_процедур.xlsx");
-        });
+        }).WithRequestTimeout(RequestTimeoutPolicies.Long);
 
         // GET /api/v1/reports/workload/export
         group.MapGet("/workload/export", async (DateOnly? from, DateOnly? to, ISender sender, IExcelExportService excel, CancellationToken ct) =>
@@ -98,6 +117,6 @@ public static class ReportEndpoints
 
             var bytes = excel.ExportWorkloadStats(result.Value);
             return Results.File(bytes, ExcelMimeType, "Загрузка_врача.xlsx");
-        });
+        }).WithRequestTimeout(RequestTimeoutPolicies.Long);
     }
 }

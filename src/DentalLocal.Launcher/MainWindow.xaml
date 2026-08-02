@@ -57,8 +57,26 @@
                         </Style>
                     </Button.Resources>
                 </Button>
-                <Button x:Name="BtnRestart" Content="Перезапустить" Height="32" 
+                <Button x:Name="BtnRestart" Content="Перезапустить" Height="32"
                         Background="White" Foreground="#475569" BorderThickness="1" BorderBrush="#CBD5E1" Cursor="Hand" Click="BtnRestart_Click">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="6"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+                <Button x:Name="BtnLocateServer" Content="Указать расположение сервера..." Height="32" Margin="0,8,0,0"
+                        Background="White" Foreground="#475569" BorderThickness="1" BorderBrush="#CBD5E1" Cursor="Hand"
+                        Click="BtnLocateServer_Click" Visibility="Collapsed">
+                    <Button.Resources>
+                        <Style TargetType="Border">
+                            <Setter Property="CornerRadius" Value="6"/>
+                        </Style>
+                    </Button.Resources>
+                </Button>
+                <Button x:Name="BtnOpenLogs" Content="Открыть папку логов" Height="32" Margin="0,8,0,0"
+                        Background="White" Foreground="#475569" BorderThickness="1" BorderBrush="#CBD5E1" Cursor="Hand"
+                        Click="BtnOpenLogs_Click" Visibility="Collapsed">
                     <Button.Resources>
                         <Style TargetType="Border">
                             <Setter Property="CornerRadius" Value="6"/>

@@ -27,7 +27,7 @@ public sealed class GetPatientTimelineQueryHandler(IUnitOfWork unitOfWork)
             var desc = $"Врач: {visit.DoctorName}";
             if (!string.IsNullOrWhiteSpace(visit.Notes))
                 desc += $", Заметки: {visit.Notes}";
-            desc += $", Стоимость: {visit.TotalCost:N0} сум";
+            desc += $", Стоимость: {visit.TotalCost:N0} сомони";
 
             var visitTimestamp = new DateTimeOffset(
                 visit.VisitDate.ToDateTime(visit.VisitTime, DateTimeKind.Unspecified),
@@ -48,7 +48,7 @@ public sealed class GetPatientTimelineQueryHandler(IUnitOfWork unitOfWork)
         {
             var isReversal = payment.ReversalOfPaymentId is not null;
             var typeLabel = isReversal ? "Возврат средств" : "Оплата услуг";
-            var desc = $"Сумма: {payment.Amount:N0} сум ({payment.Method})";
+            var desc = $"Сумма: {payment.Amount:N0} сомони ({payment.Method})";
             if (!string.IsNullOrWhiteSpace(payment.Note))
                 desc += $", Комментарий: {payment.Note}";
 

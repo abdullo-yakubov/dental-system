@@ -16,7 +16,7 @@
             }
 
             <MudNumericField T="decimal" @bind-Value="_minStockThreshold" Label="Минимальный порог остатка" Required="true" Min="0" Class="mb-3" />
-            <MudNumericField T="decimal" @bind-Value="_pricePerUnit" Label="Цена за единицу (сум)" Required="true" Min="0" Format="N0" Class="mb-3" />
+            <MudNumericField T="decimal" @bind-Value="_pricePerUnit" Label="Цена за единицу (сомони)" Required="true" Min="0" Format="N0" Class="mb-3" />
         </MudForm>
 
         @if (_errorMessage is not null)

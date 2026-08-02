@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using DentalLocal.Application.Common;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -19,6 +20,8 @@ public class PostgresBootstrapService : IPostgresBootstrapService
     private string _dbName = "dental";
     private string _username = "dental";
     private string _password = "";
+    private ProcessJobObject? _jobObject;
+    private bool _processExitHandlerRegistered;
 
     public PostgresBootstrapService(
         IConfiguration configuration,
@@ -138,6 +141,7 @@ public class PostgresBootstrapService : IPostgresBootstrapService
     public async Task BootstrapAsync(CancellationToken cancellationToken = default)
     {
         CreateRequiredDirectories();
+        RegisterProcessExitFallback();
 
         _logger.LogInformation("Starting PostgreSQL bootstrap check on port {Port}...", _port);
 
@@ -145,6 +149,7 @@ public class PostgresBootstrapService : IPostgresBootstrapService
         if (IsPortActive("127.0.0.1", _port))
         {
             _logger.LogInformation("PostgreSQL port {Port} is already active. Assuming database process is running.", _port);
+            AttachJobObjectToPostgresProcess();
             await EnsureDatabaseExistsAsync(cancellationToken);
             return;
         }
@@ -220,27 +225,112 @@ public class PostgresBootstrapService : IPostgresBootstrapService
             }
         }
 
-        // Wait for port to become active
+        // Wait for port to become active — общий дедлайн 60с с экспоненциальной паузой (200мс -> 3с),
+        // вместо короткого фиксированного окна: на медленном диске/антивирусе postgres может подниматься дольше.
         _logger.LogInformation("Waiting for PostgreSQL to start listening on port {Port}...", _port);
+        const int readinessDeadlineMs = 60_000;
         var sw = Stopwatch.StartNew();
         var portOpened = false;
-        while (sw.ElapsedMilliseconds < 15000)
+        var delayMs = 200;
+        while (sw.ElapsedMilliseconds < readinessDeadlineMs)
         {
             if (IsPortActive("127.0.0.1", _port))
             {
                 portOpened = true;
                 break;
             }
-            await Task.Delay(500, cancellationToken);
+            await Task.Delay(delayMs, cancellationToken);
+            delayMs = Math.Min(delayMs * 2, 3000);
         }
 
         if (!portOpened)
         {
-            throw new TimeoutException($"PostgreSQL server failed to start on port {_port} within 15 seconds.");
+            var occupant = GetProcessUsingPort(_port);
+            var detail = occupant is null
+                ? "процесс, занимающий порт, не определён — вероятно, postgres.exe упал при старте, см. логи в Database/data/log."
+                : $"порт занят другим процессом: {occupant}. Освободите порт {_port} или измените Port в ConnectionStrings:Default.";
+
+            _logger.LogCritical(
+                "PostgreSQL server failed to start on port {Port} within {DeadlineSeconds} seconds. {Detail}",
+                _port, readinessDeadlineMs / 1000, detail);
+            throw new TimeoutException($"PostgreSQL server failed to start on port {_port} within {readinessDeadlineMs / 1000} seconds. {detail}");
         }
 
         _logger.LogInformation("PostgreSQL is running and listening on port {Port}.", _port);
+        AttachJobObjectToPostgresProcess();
         await EnsureDatabaseExistsAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Читает PID из postmaster.pid (pg_ctl start открепляет postgres.exe, поэтому это не прямой child-процесс)
+    /// и привязывает его к Windows Job Object с JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE: при крахе или любом
+    /// завершении нашего процесса ОС автоматически закроет хендл задания и убьёт postgres.exe, не оставляя
+    /// zombie-процесс СУБД висеть в памяти.
+    /// </summary>
+    private void AttachJobObjectToPostgresProcess()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            _logger.LogInformation("Job Object для postgres.exe поддерживается только на Windows. Пропускаем.");
+            return;
+        }
+
+        try
+        {
+            var pid = ReadPostmasterPid();
+            if (pid is null)
+            {
+                _logger.LogWarning("Не удалось определить PID postgres.exe из postmaster.pid — Job Object не привязан.");
+                return;
+            }
+
+            _jobObject ??= new ProcessJobObject();
+            if (_jobObject.AssignProcess(pid.Value))
+            {
+                _logger.LogInformation("postgres.exe (PID {Pid}) привязан к Job Object (kill-on-close).", pid.Value);
+            }
+            else
+            {
+                _logger.LogWarning("Не удалось привязать postgres.exe (PID {Pid}) к Job Object: {Error}",
+                    pid.Value, Marshal.GetLastWin32Error());
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Ошибка при привязке postgres.exe к Job Object.");
+        }
+    }
+
+    private int? ReadPostmasterPid()
+    {
+        var pidFile = Path.Combine(_pgDataPath, "postmaster.pid");
+        if (!File.Exists(pidFile))
+            return null;
+
+        var firstLine = File.ReadLines(pidFile).FirstOrDefault();
+        return int.TryParse(firstLine, out var pid) ? pid : null;
+    }
+
+    /// <summary>
+    /// Fallback на случай завершений, которые не проходят через IHostApplicationLifetime.ApplicationStopping
+    /// (например, Environment.Exit вне штатного graceful shutdown ASP.NET Core).
+    /// </summary>
+    private void RegisterProcessExitFallback()
+    {
+        if (_processExitHandlerRegistered) return;
+        _processExitHandlerRegistered = true;
+
+        AppDomain.CurrentDomain.ProcessExit += (_, _) =>
+        {
+            try
+            {
+                ShutdownAsync().GetAwaiter().GetResult();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка при остановке PostgreSQL в обработчике ProcessExit.");
+            }
+        };
     }
 
     public async Task ShutdownAsync(CancellationToken cancellationToken = default)
@@ -270,6 +360,14 @@ public class PostgresBootstrapService : IPostgresBootstrapService
             await stopProcess.WaitForExitAsync(cancellationToken);
             _logger.LogInformation("PostgreSQL server process stopped.");
         }
+
+        // Postgres уже остановлен штатно — освобождаем хендл задания (kill-on-close здесь безвреден,
+        // т.к. процессов в задании больше нет).
+        if (OperatingSystem.IsWindows())
+        {
+            _jobObject?.Dispose();
+            _jobObject = null;
+        }
     }
 
     private static bool IsPortActive(string host, int port)
@@ -287,6 +385,62 @@ public class PostgresBootstrapService : IPostgresBootstrapService
         {
             return false;
         }
+    }
+
+    /// <summary>
+    /// Диагностика для сообщения об ошибке при таймауте готовности: пытается определить, какой
+    /// процесс занимает порт (через `netstat -ano`), чтобы врач/администратор мог его закрыть,
+    /// а не гадать, почему приложение не стартует. Best-effort — при любой ошибке возвращает null.
+    /// </summary>
+    private static string? GetProcessUsingPort(int port)
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            return null;
+        }
+
+        try
+        {
+            using var netstat = Process.Start(new ProcessStartInfo
+            {
+                FileName = "netstat",
+                Arguments = "-ano -p TCP",
+                RedirectStandardOutput = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+
+            if (netstat is null) return null;
+
+            var output = netstat.StandardOutput.ReadToEnd();
+            netstat.WaitForExit(2000);
+
+            foreach (var line in output.Split('\n'))
+            {
+                var columns = line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+                if (columns.Length < 5) continue;
+                if (!columns[0].Equals("TCP", StringComparison.OrdinalIgnoreCase)) continue;
+                if (!columns[1].EndsWith($":{port}", StringComparison.Ordinal)) continue;
+                if (!columns[3].Equals("LISTENING", StringComparison.OrdinalIgnoreCase)) continue;
+                if (!int.TryParse(columns[4], out var pid)) continue;
+
+                try
+                {
+                    using var owner = Process.GetProcessById(pid);
+                    return $"{owner.ProcessName} (PID {pid})";
+                }
+                catch
+                {
+                    return $"PID {pid}";
+                }
+            }
+        }
+        catch
+        {
+            // диагностика необязательна — при сбое просто не покажем имя процесса
+        }
+
+        return null;
     }
 
     private async Task EnsureDatabaseExistsAsync(CancellationToken cancellationToken)

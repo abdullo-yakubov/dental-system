@@ -7,4 +7,7 @@ public enum PaymentKind : short
 
     /// <summary>Погашение ранее возникшего долга.</summary>
     DebtRepayment = 2,
+
+    /// <summary>Аванс/предоплата, внесённая до или во время визита.</summary>
+    Advance = 3,
 }

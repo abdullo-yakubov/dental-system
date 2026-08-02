@@ -19,18 +19,18 @@ public static class BackupEndpoints
             return result.ToApiResult();
         });
 
-        // POST /api/v1/backups
+        // POST /api/v1/backups -> 202 Accepted { jobId }, статус см. GET /api/v1/jobs/{jobId}
         group.MapPost("", async (CreateBackupRequest request, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new CreateManualBackupCommand(request.Pin, request.Note), ct);
-            return result.ToApiResult();
+            return result.ToAcceptedResult();
         });
 
-        // POST /api/v1/backups/restore
+        // POST /api/v1/backups/restore -> 202 Accepted { jobId }, статус см. GET /api/v1/jobs/{jobId}
         group.MapPost("/restore", async (RestoreBackupRequest request, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(new RestoreBackupCommand(request.Pin, request.BackupFileName), ct);
-            return result.ToApiResult();
+            return result.ToAcceptedResult();
         });
 
         // GET /api/v1/backups/validate

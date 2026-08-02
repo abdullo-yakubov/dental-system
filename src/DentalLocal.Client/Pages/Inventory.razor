@@ -1,14 +1,15 @@
-@page "/inventory"
+﻿@page "/inventory"
 @attribute [Authorize]
 @inject ApiClient Api
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@inject IStringLocalizer<SharedResource> Loc
 
 <PageTitle>Склад и Материалы — DentalLocal</PageTitle>
 
-<PageHeader Title="Склад материалов" Icon="@Icons.Material.Filled.Warehouse" Subtitle="Остатки, приход/расход, оповещения о низком запасе">
+<PageHeader Title="@Loc["Page_Inventory_Title"]" Icon="@LucideIcons.Inventory" Subtitle="Остатки, приход/расход, оповещения о низком запасе">
     <Actions>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="(() => OpenCreateDialogAsync())">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@LucideIcons.Plus" OnClick="(() => OpenCreateDialogAsync())">
             Добавить материал
         </MudButton>
     </Actions>
@@ -48,28 +49,28 @@
             </span>
             @if (context.QuantityInStock <= context.MinStockThreshold)
             {
-                <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error" Size="Size.Small" Class="ml-1" Style="vertical-align: middle;" />
+                <MudIcon Icon="@LucideIcons.AlertTriangle" Color="Color.Error" Size="Size.Small" Class="ml-1" Style="vertical-align: middle;" />
             }
         </MudTd>
         <MudTd DataLabel="Порог алертов">@context.MinStockThreshold.ToString("N2")</MudTd>
-        <MudTd DataLabel="Цена за единицу">@context.PricePerUnit.ToString("N0") сум</MudTd>
+        <MudTd DataLabel="Цена за единицу">@context.PricePerUnit.ToString("N0") сомони</MudTd>
         <MudTd DataLabel="Стоимость склада">
-            @((context.QuantityInStock * context.PricePerUnit).ToString("N0")) сум
+            @((context.QuantityInStock * context.PricePerUnit).ToString("N0")) сомони
         </MudTd>
         <MudTd>
             <MudStack Row="true" Spacing="1">
                 <MudButton Variant="Variant.Outlined" Color="Color.Info" Size="Size.Small"
-                           StartIcon="@Icons.Material.Filled.SwapVert"
+                           StartIcon="@LucideIcons.ArrowUpDown"
                            OnClick="@(() => OpenAdjustDialogAsync(context))">
                     Приход/Расход
                 </MudButton>
-                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" Color="Color.Primary"
+                <MudIconButton Icon="@LucideIcons.Edit" Size="Size.Small" Color="Color.Primary"
                                OnClick="@(() => OpenEditDialogAsync(context))" />
             </MudStack>
         </MudTd>
     </RowTemplate>
     <NoRecordsContent>
-        <EmptyState Icon="@Icons.Material.Filled.Inventory2" Title="Материалы не найдены" Description="Измените поиск или добавьте новый материал." />
+        <EmptyState Icon="@LucideIcons.Package" Title="Материалы не найдены" Description="Измените поиск или добавьте новый материал." />
     </NoRecordsContent>
 </MudTable>
 </GlassCard>

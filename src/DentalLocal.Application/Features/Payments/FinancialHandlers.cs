@@ -109,55 +109,24 @@ public sealed class ReversePaymentCommandHandler(IUnitOfWork unitOfWork, IMapper
         if (payment.ReversalOfPaymentId.HasValue)
             return Result.Failure<PaymentDto>(Error.Conflict("Payment.AlreadyReversed", "Этот платеж уже сторнирован или сам является сторно-платежом."));
 
-        // To reverse: we create a negative payment or reversal record, and restore the debt/visit balance
-        // The Domain model defines: Payment.CreateReversal(original, note).
         Payment reversal;
         try
         {
             reversal = Payment.CreateReversal(payment, $"Сторно: {request.Reason}");
-            
-            // Revert visit payment (we need to deduct TotalPaid)
+
+            // Visit.ReversePayment/Debt.ReversePayment — доменные методы, симметричные ApplyPayment,
+            // с той же проверкой инвариантов (раньше здесь была рефлексия по приватным сеттерам,
+            // позволявшая увести TotalPaid/RemainingAmount в некорректное значение без единой проверки).
             var visit = await unitOfWork.Visits.GetByIdWithItemsAsync(payment.VisitId, cancellationToken);
-            if (visit is not null)
-            {
-                // In our domain model, we don't have a direct "DeductPayment" on visit.
-                // But we can update the private field, or since it's in the same db context, we can adjust it.
-                // Wait, visit.TotalPaid is a private set property. We can use EF or reflection, 
-                // but let's check if the domain has a method or if we can use reflection.
-                // Since this is a local app and Clean Architecture, let's see if we can set it.
-                // Alternatively, let's see if we can use reflection to subtract from TotalPaid:
-                var totalPaidProp = typeof(Visit).GetProperty(nameof(Visit.TotalPaid));
-                if (totalPaidProp != null)
-                {
-                    totalPaidProp.SetValue(visit, visit.TotalPaid - payment.Amount);
-                }
-            }
+            visit?.ReversePayment(payment.Amount);
 
-            // Restore debt remaining amount
             var debt = await unitOfWork.Debts.GetByVisitIdAsync(payment.VisitId, cancellationToken);
-            if (debt is not null)
-            {
-                var remainingProp = typeof(Debt).GetProperty(nameof(Debt.RemainingAmount));
-                if (remainingProp != null)
-                {
-                    remainingProp.SetValue(debt, debt.RemainingAmount + payment.Amount);
-                }
-
-                // If debt was closed, reopen it
-                if (debt.Status == Domain.Enums.DebtStatus.Closed)
-                {
-                    var statusProp = typeof(Debt).GetProperty(nameof(Debt.Status));
-                    if (statusProp != null) statusProp.SetValue(debt, Domain.Enums.DebtStatus.Open);
-
-                    var closedAtProp = typeof(Debt).GetProperty(nameof(Debt.ClosedAt));
-                    if (closedAtProp != null) closedAtProp.SetValue(debt, null);
-                }
-            }
+            debt?.ReversePayment(payment.Amount);
 
             await unitOfWork.Payments.AddAsync(reversal, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is ArgumentException or DentalLocal.Domain.Exceptions.DomainException)
         {
             return Result.Failure<PaymentDto>(Error.Validation("Payment.ReversalFailed", ex.Message));
         }

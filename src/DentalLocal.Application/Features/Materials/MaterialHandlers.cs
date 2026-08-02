@@ -229,18 +229,28 @@ public sealed class RecordMaterialUsageCommandHandler(IUnitOfWork unitOfWork, IM
             return Result.Failure<MaterialUsageDto>(Error.NotFound("Material.NotFound", "Материал не найден."));
 
         MaterialUsage usage;
+        bool wentNegative;
         try
         {
-            // First adjust stock — deduct quantity used
-            material.AdjustStock(-request.QuantityUsed);
+            // Списание не блокируется при уходе остатка в минус (см. Material.DeductForUsage) —
+            // по ТЗ это предупреждение для склада, а не повод отменить уже проведённое лечение.
+            wentNegative = material.DeductForUsage(request.QuantityUsed);
 
-            usage = MaterialUsage.Create(request.VisitId, request.MaterialId, request.QuantityUsed);
+            usage = MaterialUsage.Create(request.VisitId, request.MaterialId, request.QuantityUsed, material.PricePerUnit);
             await unitOfWork.MaterialUsages.AddAsync(usage, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
         }
-        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+        catch (ArgumentException ex)
         {
             return Result.Failure<MaterialUsageDto>(Error.Validation("MaterialUsage.InvalidAction", ex.Message));
+        }
+
+        if (wentNegative)
+        {
+            await unitOfWork.AuditLogs.AddAsync(
+                AuditLog.Create("MATERIAL_STOCK_NEGATIVE", "Material", material.Id,
+                    $"Остаток «{material.Name}» ушёл в минус после списания: {material.QuantityInStock} {material.Unit}."),
+                cancellationToken);
         }
 
         await unitOfWork.AuditLogs.AddAsync(

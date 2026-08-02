@@ -4,7 +4,7 @@
     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="3">
         @if (!string.IsNullOrWhiteSpace(Icon))
         {
-            <MudIcon Icon="@Icon" Color="Color.Primary" Size="Size.Large" />
+            <MudIcon Icon="@Icon" Color="Color.Primary" Size="Size.Large" aria-hidden="true" />
         }
         <div>
             <MudText Typo="Typo.h4" Class="font-weight-bold">@Title</MudText>

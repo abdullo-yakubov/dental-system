@@ -10,6 +10,9 @@ public class Material : Entity
     public decimal MinStockThreshold { get; private set; }
     public decimal PricePerUnit { get; private set; }
 
+    /// <summary>Concurrency token, отображается на системную колонку Postgres "xmin" (см. MaterialConfiguration).</summary>
+    public uint Version { get; private set; }
+
     private Material()
     {
     }
@@ -63,5 +66,22 @@ public class Material : Entity
 
         QuantityInStock += amount;
         Touch();
+    }
+
+    /// <summary>
+    /// Списание материала при использовании в визите — в отличие от AdjustStock, НЕ блокирует
+    /// уход остатка в минус (по ТЗ уход в минус — предупреждение для склада, а не повод отменить
+    /// уже проведённое лечение). Возвращает true, если остаток после списания отрицательный —
+    /// вызывающая сторона решает, как это показать пользователю.
+    /// </summary>
+    public bool DeductForUsage(decimal quantity)
+    {
+        if (quantity <= 0)
+            throw new ArgumentOutOfRangeException(nameof(quantity), "Количество списания должно быть больше нуля.");
+
+        QuantityInStock -= quantity;
+        Touch();
+
+        return QuantityInStock < 0;
     }
 }

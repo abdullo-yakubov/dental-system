@@ -73,6 +73,12 @@ public static class PatientsEndpoints
             return result.ToApiResult();
         });
 
+        group.MapDelete("/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new DeletePatientCommand(id), ct);
+            return result.ToApiResult();
+        });
+
         // GET /api/v1/patients/{id}/timeline
         group.MapGet("/{id:guid}/timeline", async (Guid id, ISender sender, CancellationToken ct) =>
         {
@@ -88,12 +94,21 @@ public static class PatientsEndpoints
         });
 
         // POST /api/v1/patients/{id}/files
-        group.MapPost("/{id:guid}/files", async (Guid id, HttpRequest request, ISender sender) =>
+        group.MapPost("/{id:guid}/files", async (Guid id, HttpRequest request, ISender sender, CancellationToken ct) =>
         {
             if (!request.HasFormContentType)
                 return Results.BadRequest("Invalid content type.");
 
-            var form = await request.ReadFormAsync();
+            // Kestrel по умолчанию режет тело запроса на ~30МБ — лимит файлов пациента 200МБ
+            // (см. PatientFile.MaxFileSizeBytes) должен быть выставлен явно, иначе загрузка КТ/рентгена
+            // упадёт с 413 раньше, чем сработает доменная проверка размера.
+            var maxBodySizeFeature = request.HttpContext.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpMaxRequestBodySizeFeature>();
+            if (maxBodySizeFeature is { IsReadOnly: false })
+            {
+                maxBodySizeFeature.MaxRequestBodySize = 210L * 1024 * 1024;
+            }
+
+            var form = await request.ReadFormAsync(ct);
             var file = form.Files.GetFile("file");
             if (file is null)
                 return Results.BadRequest("No file uploaded.");
@@ -110,7 +125,7 @@ public static class PatientsEndpoints
                 : null;
 
             using var memoryStream = new MemoryStream();
-            await file.CopyToAsync(memoryStream);
+            await file.CopyToAsync(memoryStream, ct);
             var fileBytes = memoryStream.ToArray();
 
             var command = new UploadPatientFileCommand(
@@ -123,14 +138,14 @@ public static class PatientsEndpoints
                 description,
                 beforeAfterTag);
 
-            var result = await sender.Send(command);
+            var result = await sender.Send(command, ct);
             return result.ToApiResult();
-        }).DisableAntiforgery();
+        }).DisableAntiforgery().WithRequestTimeout(RequestTimeoutPolicies.Long);
 
         // DELETE /api/v1/patients/files/{id}
-        app.MapDelete($"{ApiRoutes.Patients.Base}/files/{{id:guid}}", async (Guid id, ISender sender) =>
+        app.MapDelete($"{ApiRoutes.Patients.Base}/files/{{id:guid}}", async (Guid id, ISender sender, CancellationToken ct) =>
         {
-            var result = await sender.Send(new DeletePatientFileCommand(id));
+            var result = await sender.Send(new DeletePatientFileCommand(id), ct);
             return result.ToApiResult();
         }).WithTags("Patients");
     }

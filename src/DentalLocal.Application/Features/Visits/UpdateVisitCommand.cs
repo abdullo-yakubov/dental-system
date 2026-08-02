@@ -40,6 +40,25 @@ public sealed class UpdateVisitCommandHandler(IUnitOfWork unitOfWork, IMapper ma
         if (request.Diagnosis is not null)
             visit.SetDiagnosis(request.Diagnosis);
 
+        if (visit.VisitDate != request.VisitDate || visit.VisitTime != request.VisitTime)
+        {
+            if (await VisitSlotConflictChecker.HasConflictAsync(
+                unitOfWork, request.DoctorName, request.VisitDate, request.VisitTime, excludeVisitId: visit.Id, cancellationToken))
+            {
+                return Result.Failure<VisitDto>(Error.Conflict("Visit.SlotTaken",
+                    $"На {request.VisitDate:dd.MM.yyyy} {request.VisitTime:HH:mm} у врача уже есть визит — выберите другое время."));
+            }
+
+            try
+            {
+                visit.Reschedule(request.VisitDate, request.VisitTime);
+            }
+            catch (Domain.Exceptions.DomainException ex)
+            {
+                return Result.Failure<VisitDto>(Error.Validation("Visit.CannotReschedule", ex.Message));
+            }
+        }
+
         await unitOfWork.AuditLogs.AddAsync(
             Domain.Entities.AuditLog.Create("VISIT_UPDATED", "Visit", visit.Id, null), cancellationToken);
 

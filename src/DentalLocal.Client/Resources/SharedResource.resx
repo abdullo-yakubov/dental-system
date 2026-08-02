@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="2" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Nav_Dashboard" xml:space="preserve"><value>Дашборд</value></data>
+  <data name="Nav_Patients" xml:space="preserve"><value>Пациенты</value></data>
+  <data name="Nav_Calendar" xml:space="preserve"><value>Календарь</value></data>
+  <data name="Nav_Debtors" xml:space="preserve"><value>Должники</value></data>
+  <data name="Nav_Inventory" xml:space="preserve"><value>Склад</value></data>
+  <data name="Nav_Procedures" xml:space="preserve"><value>Процедуры</value></data>
+  <data name="Nav_Analytics" xml:space="preserve"><value>Аналитика</value></data>
+  <data name="Nav_More" xml:space="preserve"><value>Ещё</value></data>
+  <data name="Nav_NotesSearch" xml:space="preserve"><value>Поиск по заметкам</value></data>
+  <data name="Nav_Settings" xml:space="preserve"><value>Настройки</value></data>
+  <data name="Page_Dashboard_Title" xml:space="preserve"><value>Панель управления</value></data>
+  <data name="Page_Patients_Title" xml:space="preserve"><value>Пациенты</value></data>
+  <data name="Page_Calendar_Title" xml:space="preserve"><value>Календарь приемов</value></data>
+  <data name="Page_Calendar_Subtitle" xml:space="preserve"><value>Недельное расписание визитов</value></data>
+  <data name="Page_Debtors_Title" xml:space="preserve"><value>Должники</value></data>
+  <data name="Page_Inventory_Title" xml:space="preserve"><value>Склад</value></data>
+  <data name="Page_Procedures_Title" xml:space="preserve"><value>Процедуры</value></data>
+  <data name="Page_Analytics_Title" xml:space="preserve"><value>Аналитика</value></data>
+  <data name="Page_Analytics_Subtitle" xml:space="preserve"><value>Финансовые показатели и загрузка врача</value></data>
+  <data name="Page_Settings_Title" xml:space="preserve"><value>Настройки</value></data>
+  <data name="Page_NotesSearch_Title" xml:space="preserve"><value>Поиск по заметкам</value></data>
+  <data name="Login_EnterCode" xml:space="preserve"><value>Введите код доступа</value></data>
+  <data name="Login_SignIn" xml:space="preserve"><value>Войти</value></data>
+  <data name="Login_RetryIn" xml:space="preserve"><value>Повторите через {0} сек</value></data>
+  <data name="Common_Save" xml:space="preserve"><value>Сохранить</value></data>
+  <data name="Common_Cancel" xml:space="preserve"><value>Отмена</value></data>
+  <data name="Common_Export" xml:space="preserve"><value>Экспорт в Excel</value></data>
+  <data name="Common_Apply" xml:space="preserve"><value>Применить</value></data>
+  <data name="Dashboard_TotalPatients" xml:space="preserve"><value>Всего пациентов</value></data>
+  <data name="Dashboard_ActivePatientsSuffix" xml:space="preserve"><value>{0} активных</value></data>
+  <data name="Dashboard_VisitsToday" xml:space="preserve"><value>Визиты сегодня</value></data>
+  <data name="Dashboard_ScheduledAppointments" xml:space="preserve"><value>Запланировано приемов</value></data>
+  <data name="Dashboard_RevenueToday" xml:space="preserve"><value>Выручка сегодня</value></data>
+  <data name="Dashboard_Currency" xml:space="preserve"><value>сомони</value></data>
+  <data name="Dashboard_TotalDebt" xml:space="preserve"><value>Общий долг</value></data>
+  <data name="Dashboard_DebtorsSuffix" xml:space="preserve"><value>{0} должников</value></data>
+  <data name="Dashboard_RevenueChartTitle" xml:space="preserve"><value>Динамика выручки (последние 12 мес.)</value></data>
+  <data name="Dashboard_NoRevenueData" xml:space="preserve"><value>Нет данных о доходах</value></data>
+  <data name="Dashboard_UpcomingVisits" xml:space="preserve"><value>Предстоящие визиты (7 дней)</value></data>
+  <data name="Dashboard_ColumnTime" xml:space="preserve"><value>Время</value></data>
+  <data name="Dashboard_ColumnPatient" xml:space="preserve"><value>Пациент</value></data>
+  <data name="Dashboard_ColumnDoctor" xml:space="preserve"><value>Врач</value></data>
+  <data name="Dashboard_ColumnAmount" xml:space="preserve"><value>Сумма</value></data>
+  <data name="Dashboard_NoUpcomingVisits" xml:space="preserve"><value>Нет предстоящих визитов</value></data>
+  <data name="Dashboard_TopProcedures" xml:space="preserve"><value>Популярные процедуры</value></data>
+  <data name="Dashboard_NoProcedureData" xml:space="preserve"><value>Нет данных о процедурах</value></data>
+  <data name="Dashboard_WorkloadTitle" xml:space="preserve"><value>Загрузка врача (последние 30 дней)</value></data>
+  <data name="Dashboard_VisitsInPeriod" xml:space="preserve"><value>Визитов за период</value></data>
+  <data name="Dashboard_CancelledPercent" xml:space="preserve"><value>Отменено, %</value></data>
+  <data name="Dashboard_IdlePercent" xml:space="preserve"><value>Простой относительно графика, %</value></data>
+  <data name="Dashboard_NoWorkloadData" xml:space="preserve"><value>Нет данных о загрузке</value></data>
+  <data name="Dashboard_Heatmap" xml:space="preserve"><value>Тепловая карта по дням/часам</value></data>
+  <data name="Dashboard_AvgDurationByProcedure" xml:space="preserve"><value>Средняя длительность по типам процедур</value></data>
+  <data name="Dashboard_ColumnProcedure" xml:space="preserve"><value>Процедура</value></data>
+  <data name="Dashboard_ColumnAvgDurationMinutes" xml:space="preserve"><value>Средняя длительность, мин</value></data>
+  <data name="Dashboard_ExportFailed" xml:space="preserve"><value>Не удалось экспортировать: {0}</value></data>
+  <data name="Dashboard_LoadFailed" xml:space="preserve"><value>Не удалось загрузить дашборд: {0}</value></data>
+  <data name="Greeting_Morning" xml:space="preserve"><value>Доброе утро</value></data>
+  <data name="Greeting_Day" xml:space="preserve"><value>Добрый день</value></data>
+  <data name="Greeting_Evening" xml:space="preserve"><value>Добрый вечер</value></data>
+  <data name="Greeting_Night" xml:space="preserve"><value>Доброй ночи</value></data>
+  <data name="Greeting_WithDoctor" xml:space="preserve"><value>{0}, доктор {1}</value></data>
+  <data name="Day_Mon" xml:space="preserve"><value>ПН</value></data>
+  <data name="Day_Tue" xml:space="preserve"><value>ВТ</value></data>
+  <data name="Day_Wed" xml:space="preserve"><value>СР</value></data>
+  <data name="Day_Thu" xml:space="preserve"><value>ЧТ</value></data>
+  <data name="Day_Fri" xml:space="preserve"><value>ПТ</value></data>
+  <data name="Day_Sat" xml:space="preserve"><value>СБ</value></data>
+  <data name="Day_Sun" xml:space="preserve"><value>ВС</value></data>
+  <data name="Common_ColumnPhone" xml:space="preserve"><value>Телефон</value></data>
+  <data name="Common_ColumnStatus" xml:space="preserve"><value>Статус</value></data>
+  <data name="Common_RowsPerPage" xml:space="preserve"><value>На странице:</value></data>
+  <data name="Common_PagerInfoFormat" xml:space="preserve"><value>{first_item}-{last_item} из {all_items}</value></data>
+  <data name="Patients_Subtitle" xml:space="preserve"><value>База пациентов клиники</value></data>
+  <data name="Patients_NewPatient" xml:space="preserve"><value>Новый пациент</value></data>
+  <data name="Patients_SearchPlaceholder" xml:space="preserve"><value>Поиск по ФИО, телефону, № карты</value></data>
+  <data name="Patients_ShowArchived" xml:space="preserve"><value>Показать архивных</value></data>
+  <data name="Patients_InactiveFilter" xml:space="preserve"><value>Отвалившиеся (6+ мес.)</value></data>
+  <data name="Patients_ColumnCardNumber" xml:space="preserve"><value>№ карты</value></data>
+  <data name="Patients_ColumnFullName" xml:space="preserve"><value>ФИО</value></data>
+  <data name="Patients_ColumnAge" xml:space="preserve"><value>Возраст</value></data>
+  <data name="Patients_ColumnLastVisit" xml:space="preserve"><value>Последний визит</value></data>
+  <data name="Patients_NoVisitsYet" xml:space="preserve"><value>Не было визитов</value></data>
+  <data name="Patients_Open" xml:space="preserve"><value>Открыть</value></data>
+  <data name="Patients_EmptyInactiveTitle" xml:space="preserve"><value>Отвалившихся пациентов нет</value></data>
+  <data name="Patients_EmptyInactiveDescription" xml:space="preserve"><value>Все пациенты были на приёме в последние 6 месяцев.</value></data>
+  <data name="Patients_ArchivedSuffix" xml:space="preserve"><value>(архив)</value></data>
+  <data name="Patients_EmptyTitle" xml:space="preserve"><value>Пациенты не найдены</value></data>
+  <data name="Patients_EmptyDescription" xml:space="preserve"><value>Измените параметры поиска или добавьте нового пациента.</value></data>
+  <data name="Debtors_Subtitle" xml:space="preserve"><value>Задолженности пациентов и их погашение</value></data>
+  <data name="Debtors_AddPatient" xml:space="preserve"><value>Добавить пациента</value></data>
+  <data name="Debtors_SearchPlaceholder" xml:space="preserve"><value>Поиск по ФИО пациента или телефону</value></data>
+  <data name="Debtors_StatusLabel" xml:space="preserve"><value>Статус долга</value></data>
+  <data name="Debtors_StatusAll" xml:space="preserve"><value>Все долги</value></data>
+  <data name="Debtors_StatusOpen" xml:space="preserve"><value>Открытые</value></data>
+  <data name="Debtors_StatusClosed" xml:space="preserve"><value>Погашенные</value></data>
+  <data name="Debtors_ColumnPatient" xml:space="preserve"><value>Пациент</value></data>
+  <data name="Debtors_ColumnBirthDate" xml:space="preserve"><value>Дата рождения</value></data>
+  <data name="Debtors_ColumnDebtAmount" xml:space="preserve"><value>Сумма долга</value></data>
+  <data name="Debtors_ColumnAge" xml:space="preserve"><value>Давность</value></data>
+  <data name="Debtors_ColumnDetails" xml:space="preserve"><value>Подробнее</value></data>
+  <data name="Debtors_DaysSuffix" xml:space="preserve"><value>дн.</value></data>
+  <data name="Debtors_ChipOpen" xml:space="preserve"><value>Открыт</value></data>
+  <data name="Debtors_ChipClosed" xml:space="preserve"><value>Погашен</value></data>
+  <data name="Debtors_PayButton" xml:space="preserve"><value>Оплатить</value></data>
+  <data name="Debtors_EmptyTitle" xml:space="preserve"><value>Долги не найдены</value></data>
+  <data name="Debtors_EmptyDescription" xml:space="preserve"><value>Все пациенты рассчитались, либо измените фильтр.</value></data>
+  <data name="Debtors_ExportFailed" xml:space="preserve"><value>Не удалось экспортировать: {0}</value></data>
+  <data name="Debtors_PayDialogTitle" xml:space="preserve"><value>Погашение долга</value></data>
+  <data name="Calendar_WaitingList" xml:space="preserve"><value>Лист ожидания</value></data>
+  <data name="Calendar_BookAppointment" xml:space="preserve"><value>Записать прием</value></data>
+  <data name="Calendar_BookDialogTitle" xml:space="preserve"><value>Запись на прием (Шаг за шагом)</value></data>
+  <data name="Calendar_WeekView" xml:space="preserve"><value>Недельный вид</value></data>
+  <data name="Calendar_DoctorFilterLabel" xml:space="preserve"><value>Фильтр по врачу</value></data>
+  <data name="Calendar_AllDoctors" xml:space="preserve"><value>Все врачи</value></data>
+  <data name="Calendar_DoctorLabel" xml:space="preserve"><value>Врач: {0}</value></data>
+  <data name="Calendar_LoadFailed" xml:space="preserve"><value>Не удалось загрузить календарь: {0}</value></data>
+  <data name="Calendar_VisitMoved" xml:space="preserve"><value>Визит перенесён.</value></data>
+  <data name="Calendar_MoveFailed" xml:space="preserve"><value>Не удалось перенести визит: {0}</value></data>
+  <data name="Calendar_VisitDialogTitle" xml:space="preserve"><value>Визит</value></data>
+  <data name="Settings_Subtitle" xml:space="preserve"><value>Общие параметры, безопасность, резервные копии</value></data>
+  <data name="Settings_TabGeneral" xml:space="preserve"><value>Общие</value></data>
+  <data name="Settings_DoctorName" xml:space="preserve"><value>ФИО врача</value></data>
+  <data name="Settings_ClinicName" xml:space="preserve"><value>Название клиники</value></data>
+  <data name="Settings_Currency" xml:space="preserve"><value>Валюта</value></data>
+  <data name="Settings_ThemeLabel" xml:space="preserve"><value>Тема оформления</value></data>
+  <data name="Settings_ThemeLight" xml:space="preserve"><value>Светлая</value></data>
+  <data name="Settings_ThemeDark" xml:space="preserve"><value>Тёмная</value></data>
+  <data name="Settings_AccentBlue" xml:space="preserve"><value>Синяя</value></data>
+  <data name="Settings_AccentTeal" xml:space="preserve"><value>Бирюзовая</value></data>
+  <data name="Settings_CustomAccentLabel" xml:space="preserve"><value>Свой акцентный цвет</value></data>
+  <data name="Settings_ColorPickerLabel" xml:space="preserve"><value>Цвет</value></data>
+  <data name="Settings_ResetAccent" xml:space="preserve"><value>Сбросить на стандартный</value></data>
+  <data name="Settings_LanguageLabel" xml:space="preserve"><value>Язык интерфейса</value></data>
+  <data name="Settings_BackupTimeLabel" xml:space="preserve"><value>Время автобэкапа (HH:mm)</value></data>
+  <data name="Settings_BackupRetentionLabel" xml:space="preserve"><value>Хранить бэкапы, дней</value></data>
+  <data name="Settings_AutoLockLabel" xml:space="preserve"><value>Автоблокировка через, мин</value></data>
+  <data name="Settings_Enable3DOdontogram" xml:space="preserve"><value>3D-одонтограмма</value></data>
+  <data name="Settings_TabSecurity" xml:space="preserve"><value>Безопасность</value></data>
+  <data name="Settings_OldCodeLabel" xml:space="preserve"><value>Текущий код доступа</value></data>
+  <data name="Settings_NewCodeLabel" xml:space="preserve"><value>Новый код доступа</value></data>
+  <data name="Settings_NewCodeConfirmLabel" xml:space="preserve"><value>Повторите новый код</value></data>
+  <data name="Settings_ChangeCodeButton" xml:space="preserve"><value>Сменить код доступа</value></data>
+  <data name="Settings_TabBackups" xml:space="preserve"><value>Резервные копии</value></data>
+  <data name="Settings_BackupsTitle" xml:space="preserve"><value>Резервные копии базы данных</value></data>
+  <data name="Settings_CreateBackupNow" xml:space="preserve"><value>Создать сейчас</value></data>
+  <data name="Settings_ColumnFile" xml:space="preserve"><value>Файл</value></data>
+  <data name="Settings_ColumnCreated" xml:space="preserve"><value>Создан</value></data>
+  <data name="Settings_ColumnSize" xml:space="preserve"><value>Размер</value></data>
+  <data name="Settings_ColumnTrigger" xml:space="preserve"><value>Триггер</value></data>
+  <data name="Settings_ColumnNote" xml:space="preserve"><value>Заметка</value></data>
+  <data name="Settings_BackupValid" xml:space="preserve"><value>Проверено</value></data>
+  <data name="Settings_BackupInvalid" xml:space="preserve"><value>Не проверено</value></data>
+  <data name="Settings_ValidateBackupTitle" xml:space="preserve"><value>Проверить целостность</value></data>
+  <data name="Settings_RestoreBackupTitle" xml:space="preserve"><value>Восстановить</value></data>
+  <data name="Settings_NoBackups" xml:space="preserve"><value>Резервные копии ещё не создавались</value></data>
+  <data name="Settings_TabAuditLog" xml:space="preserve"><value>Журнал действий</value></data>
+  <data name="Settings_ColumnDate" xml:space="preserve"><value>Дата</value></data>
+  <data name="Settings_ColumnAction" xml:space="preserve"><value>Действие</value></data>
+  <data name="Settings_ColumnEntity" xml:space="preserve"><value>Сущность</value></data>
+  <data name="Settings_ColumnDetails" xml:space="preserve"><value>Детали</value></data>
+  <data name="Settings_NoAuditLogs" xml:space="preserve"><value>Записей аудита пока нет</value></data>
+  <data name="Settings_TabSchedule" xml:space="preserve"><value>График работы</value></data>
+  <data name="Settings_ScheduleDescription" xml:space="preserve"><value>Рабочие часы врача по дням недели. При записи вне графика система только предупредит, но не заблокирует создание визита.</value></data>
+  <data name="Settings_ScheduleStart" xml:space="preserve"><value>Начало</value></data>
+  <data name="Settings_ScheduleEnd" xml:space="preserve"><value>Конец</value></data>
+  <data name="Settings_DayMonday" xml:space="preserve"><value>Понедельник</value></data>
+  <data name="Settings_DayTuesday" xml:space="preserve"><value>Вторник</value></data>
+  <data name="Settings_DayWednesday" xml:space="preserve"><value>Среда</value></data>
+  <data name="Settings_DayThursday" xml:space="preserve"><value>Четверг</value></data>
+  <data name="Settings_DayFriday" xml:space="preserve"><value>Пятница</value></data>
+  <data name="Settings_DaySaturday" xml:space="preserve"><value>Суббота</value></data>
+  <data name="Settings_DaySunday" xml:space="preserve"><value>Воскресенье</value></data>
+  <data name="Settings_ScheduleTimeInvalid" xml:space="preserve"><value>Время окончания должно быть позже времени начала.</value></data>
+  <data name="Settings_ScheduleSaved" xml:space="preserve"><value>График на {0} сохранён.</value></data>
+  <data name="Settings_ScheduleLoadFailed" xml:space="preserve"><value>Не удалось загрузить график врача: {0}</value></data>
+  <data name="Settings_LoadFailed" xml:space="preserve"><value>Ошибка загрузки настроек: {0}</value></data>
+  <data name="Settings_ColorRequired" xml:space="preserve"><value>Укажите цвет.</value></data>
+  <data name="Settings_AccentApplied" xml:space="preserve"><value>Акцентный цвет применён.</value></data>
+  <data name="Settings_SavedApplyingLanguage" xml:space="preserve"><value>Настройки сохранены. Применение языка интерфейса...</value></data>
+  <data name="Settings_Saved" xml:space="preserve"><value>Настройки сохранены.</value></data>
+  <data name="Settings_SaveFailed" xml:space="preserve"><value>Не удалось сохранить настройки: {0}</value></data>
+  <data name="Settings_CodeMismatch" xml:space="preserve"><value>Новый код и подтверждение не совпадают.</value></data>
+  <data name="Settings_CodeChanged" xml:space="preserve"><value>Код доступа изменён.</value></data>
+  <data name="Settings_ChangeCodeFailed" xml:space="preserve"><value>Не удалось сменить код: {0}</value></data>
+  <data name="Settings_BackupsLoadFailed" xml:space="preserve"><value>Ошибка загрузки бэкапов: {0}</value></data>
+  <data name="Settings_AuditLoadFailed" xml:space="preserve"><value>Ошибка загрузки журнала действий: {0}</value></data>
+  <data name="Settings_BackupCreated" xml:space="preserve"><value>Резервная копия создана.</value></data>
+  <data name="Settings_BackupCreateFailed" xml:space="preserve"><value>Не удалось создать резервную копию: {0}</value></data>
+  <data name="Settings_BackupRestored" xml:space="preserve"><value>База данных восстановлена из резервной копии.</value></data>
+  <data name="Settings_BackupRestoreFailed" xml:space="preserve"><value>Не удалось восстановить резервную копию: {0}</value></data>
+  <data name="Settings_BackupValidOk" xml:space="preserve"><value>Резервная копия целостна.</value></data>
+  <data name="Settings_BackupCorrupted" xml:space="preserve"><value>Резервная копия повреждена!</value></data>
+  <data name="Settings_BackupValidateFailed" xml:space="preserve"><value>Не удалось проверить резервную копию: {0}</value></data>
+  <data name="Settings_BackupInProgress" xml:space="preserve"><value>Операция запущена в фоне, это может занять некоторое время...</value></data>
+  <data name="Settings_BackupJobFailed" xml:space="preserve"><value>Операция завершилась с ошибкой: {0}</value></data>
+  <data name="Settings_UnitMb" xml:space="preserve"><value>МБ</value></data>
+  <data name="Settings_UnitKb" xml:space="preserve"><value>КБ</value></data>
+  <data name="Settings_UnitByte" xml:space="preserve"><value>Б</value></data>
+  <data name="Settings_TriggerDaily" xml:space="preserve"><value>Ежедневно (авто)</value></data>
+  <data name="Settings_TriggerBeforeUpdate" xml:space="preserve"><value>Перед обновлением</value></data>
+  <data name="Settings_TriggerManual" xml:space="preserve"><value>Вручную</value></data>
+  <data name="Settings_TriggerBeforeRestore" xml:space="preserve"><value>Перед восстановлением</value></data>
+</root>

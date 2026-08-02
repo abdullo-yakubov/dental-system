@@ -171,12 +171,6 @@ public class PdfService : IPdfService
                         t.Span(visit.Patient?.FullName ?? "Пациент не указан");
                     });
 
-                    column.Item().Text(t =>
-                    {
-                        t.Span("Лечащий врач: ").Bold();
-                        t.Span(visit.DoctorName);
-                    });
-
                     column.Item().PaddingTop(5).Text("НАЗНАЧЕНИЯ И РЕКОМЕНДАЦИИ:").Bold().FontSize(11);
 
                     column.Item().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(10).MinHeight(80)
@@ -185,7 +179,7 @@ public class PdfService : IPdfService
                             text.Span(visit.Prescriptions ?? "Нет назначений.").LineHeight(1.3f).Italic();
                         });
 
-                    column.Item().PaddingTop(15).AlignRight().Text("Подпись врача (печать): _____________________");
+                    column.Item().PaddingTop(15).AlignRight().Text("Подпись (печать): _____________________");
                 });
             });
         });
@@ -232,8 +226,8 @@ public class PdfService : IPdfService
                         });
                         row.RelativeItem().AlignRight().Text(t =>
                         {
-                            t.Span("Врач: ").Bold();
-                            t.Span(visit.DoctorName);
+                            t.Span("Статус: ").Bold();
+                            t.Span(visit.Status.ToString());
                         });
                     });
 
@@ -256,9 +250,9 @@ public class PdfService : IPdfService
                         {
                             header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("Наименование услуги").Bold();
                             header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("Зуб").Bold().AlignCenter();
-                            header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("Цена (сум)").Bold().AlignRight();
+                            header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("Цена (сомони)").Bold().AlignRight();
                             header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("Кол-во").Bold().AlignCenter();
-                            header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("Сумма (сум)").Bold().AlignRight();
+                            header.Cell().Background(Colors.Grey.Lighten3).Padding(5).Text("Сумма (сомони)").Bold().AlignRight();
                         });
 
                         // Rows
@@ -279,19 +273,19 @@ public class PdfService : IPdfService
                         sumCol.Item().Row(r =>
                         {
                             r.RelativeItem().Text("Общая стоимость:");
-                            r.RelativeItem().AlignRight().Text($"{visit.TotalCost.ToString("N0")} сум").Bold();
+                            r.RelativeItem().AlignRight().Text($"{visit.TotalCost.ToString("N0")} сомони").Bold();
                         });
                         sumCol.Item().Row(r =>
                         {
                             r.RelativeItem().Text("Оплачено:");
-                            r.RelativeItem().AlignRight().Text($"{visit.TotalPaid.ToString("N0")} сум").Bold();
+                            r.RelativeItem().AlignRight().Text($"{visit.TotalPaid.ToString("N0")} сомони").Bold();
                         });
                         sumCol.Item().Row(r =>
                         {
                             r.RelativeItem().Text("Остаток долга:");
                             r.RelativeItem().AlignRight().Text(t =>
                             {
-                                t.Span($"{visit.RemainingAmount.ToString("N0")} сум").Bold().FontColor(visit.RemainingAmount > 0 ? Colors.Red.Medium : Colors.Green.Medium);
+                                t.Span($"{visit.RemainingAmount.ToString("N0")} сомони").Bold().FontColor(visit.RemainingAmount > 0 ? Colors.Red.Medium : Colors.Green.Medium);
                             });
                         });
                     });

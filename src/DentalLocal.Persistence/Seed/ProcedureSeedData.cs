@@ -3,7 +3,7 @@ namespace DentalLocal.Persistence.Seed;
 /// <summary>
 /// Базовый прайс-лист процедур, предзаполняемый при первом запуске (см. п. 19.5-19.6 ТЗ).
 /// Позиции сгруппированы по значению <c>Category</c> (см. <see cref="ProcedureCategorySeedData"/>),
-/// цены указаны в суммах, диапазон задаётся через PriceMin/PriceMax — для процедур с фиксированной
+/// цены указаны в сомони, диапазон задаётся через PriceMin/PriceMax — для процедур с фиксированной
 /// ценой PriceMin == PriceMax.
 /// </summary>
 internal static class ProcedureSeedData

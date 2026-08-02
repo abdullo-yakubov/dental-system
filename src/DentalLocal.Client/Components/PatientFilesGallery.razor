@@ -1,4 +1,4 @@
-@inject ApiClient Api
+﻿@inject ApiClient Api
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject NavigationManager Navigation
@@ -32,7 +32,7 @@
                 <MudItem xs="12" sm="8">
                     <InputFile OnChange="OnFileSelected" class="d-none" id="file-upload-input" />
                     <MudButton HtmlTag="label" Variant="Variant.Filled" Color="Color.Primary"
-                               StartIcon="@Icons.Material.Filled.CloudUpload" for="file-upload-input">
+                               StartIcon="@LucideIcons.CloudUpload" for="file-upload-input">
                         @(_selectedFile == null ? "Выбрать файл" : _selectedFile.Name)
                     </MudButton>
                     @if (_selectedFile != null)
@@ -43,7 +43,7 @@
                     }
                 </MudItem>
                 <MudItem xs="12" sm="4" Class="d-flex align-end justify-end">
-                    <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.UploadFile"
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@LucideIcons.Upload"
                                OnClick="UploadFileAsync" Disabled="_isUploading || _selectedFile == null">
                         @(_isUploading ? "Загрузка..." : "Загрузить")
                     </MudButton>
@@ -120,11 +120,11 @@
                             }
                         </MudCardContent>
                         <MudCardActions Class="d-flex justify-space-between">
-                            <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.Material.Filled.OpenInNew"
+                            <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@LucideIcons.ExternalLink"
                                        Href="@GetFileUrl(file)" Target="_blank">
                                 Открыть
                             </MudButton>
-                            <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small"
+                            <MudIconButton Icon="@LucideIcons.Trash" Color="Color.Error" Size="Size.Small"
                                            OnClick="() => DeleteFileAsync(file.Id)" />
                         </MudCardActions>
                     </MudCard>
@@ -138,6 +138,7 @@
     [Parameter] public Guid PatientId { get; set; }
 
     private List<PatientFileDto> _files = [];
+    private readonly Dictionary<Guid, string> _fileUrls = new();
     private bool _isLoading = true;
     private bool _isUploading;
 
@@ -166,6 +167,7 @@
         {
             var res = await Api.GetPatientFilesAsync(PatientId);
             _files = res.ToList();
+            await LoadFileLinksAsync();
         }
         catch (ApiException ex)
         {
@@ -174,6 +176,31 @@
         finally
         {
             _isLoading = false;
+        }
+    }
+
+    // Файлы больше не отдаются анонимной статикой (см. промпт 11 аудита) — для каждого файла
+    // запрашивается короткоживущая (5 мин) подписанная ссылка, которую можно подставить в <img src>.
+    private async Task LoadFileLinksAsync()
+    {
+        var results = await Task.WhenAll(_files.Select(async f =>
+        {
+            try
+            {
+                var link = await Api.GetPatientFileLinkAsync(f.Id);
+                return (f.Id, Url: link.Url);
+            }
+            catch (ApiException)
+            {
+                return (f.Id, Url: (string?)null);
+            }
+        }));
+
+        _fileUrls.Clear();
+        foreach (var (id, url) in results)
+        {
+            if (url is not null)
+                _fileUrls[id] = url;
         }
     }
 
@@ -258,10 +285,13 @@
 
     private string GetFileUrl(PatientFileDto file)
     {
-        // Path matches static files middleware path
-        var fileId = file.Id;
-        var ext = Path.GetExtension(file.FileName);
-        return $"{Navigation.BaseUri}api/v1/files/{file.PatientId}/{fileId}{ext}";
+        if (!_fileUrls.TryGetValue(file.Id, out var relativeUrl))
+            return string.Empty;
+
+        // relativeUrl уже содержит подпись/exp в query — достаточно склеить с адресом API-сервера
+        // (в dev Client и Server — разные origin'ы, см. промпт 11 аудита).
+        var baseAddress = Api.BaseAddress?.ToString().TrimEnd('/') ?? Navigation.BaseUri.TrimEnd('/');
+        return $"{baseAddress}{relativeUrl}";
     }
 
     private string FormatSize(long bytes)
@@ -290,9 +320,9 @@
 
     private string GetFileIcon(short type) => type switch
     {
-        4 => Icons.Material.Filled.Description,
-        5 => Icons.Material.Filled.PictureAsPdf,
-        6 => Icons.Material.Filled.VideoFile,
-        _ => Icons.Material.Filled.InsertDriveFile
+        4 => LucideIcons.FileText,
+        5 => LucideIcons.FileText,
+        6 => LucideIcons.Video,
+        _ => LucideIcons.File
     };
 }

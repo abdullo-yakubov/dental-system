@@ -30,3 +30,12 @@ public sealed record DoctorWorkloadStatsDto(
     double CancelledOrNoShowPercent,
     double IdlePercent,
     int TotalVisits);
+
+// ── Себестоимость и прибыль (раздел 17.13 ТЗ, п. «Учёт себестоимости и реальной прибыли») ──
+
+public sealed record ProfitStatsDto(
+    decimal Revenue,
+    decimal MaterialCost,
+    decimal Profit,
+    DateOnly From,
+    DateOnly To);

@@ -1,4 +1,4 @@
-<div class="d-flex justify-center mb-4" style="gap:10px;">
+﻿<div class="d-flex justify-center mb-4" style="gap:10px;">
     @for (var i = 0; i < Length; i++)
     {
         var filled = i < Code.Length;
@@ -15,7 +15,7 @@
     }
     <MudItem xs="4">
         <MudButton FullWidth="true" Variant="Variant.Text" Class="login-keypad-btn" OnClick="RemoveLastDigit" Disabled="Disabled">
-            <MudIcon Icon="@Icons.Material.Filled.Backspace" />
+            <MudIcon Icon="@LucideIcons.Backspace" />
         </MudButton>
     </MudItem>
     <MudItem xs="4">
@@ -23,7 +23,7 @@
     </MudItem>
     <MudItem xs="4">
         <MudButton FullWidth="true" Variant="Variant.Text" Class="login-keypad-btn" OnClick="ClearCode" Disabled="Disabled">
-            <MudIcon Icon="@Icons.Material.Filled.Clear" />
+            <MudIcon Icon="@LucideIcons.X" />
         </MudButton>
     </MudItem>
 </MudGrid>

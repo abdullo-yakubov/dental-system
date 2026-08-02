@@ -54,6 +54,26 @@ public class Debt : Entity, IImmutableRecord
             Close();
     }
 
+    /// <summary>
+    /// Откатывает ранее применённый платёж (сторно) — симметрична ApplyPayment, в т.ч. переоткрывает
+    /// закрытый долг. Раньше это делалось рефлексией по приватным сеттерам RemainingAmount/Status/
+    /// ClosedAt в ReversePaymentCommandHandler без единой проверки на превышение OriginalAmount.
+    /// </summary>
+    public void ReversePayment(decimal amount)
+    {
+        if (amount <= 0)
+            throw new ArgumentOutOfRangeException(nameof(amount), "Сумма сторно должна быть положительной.");
+
+        var newRemaining = RemainingAmount + amount;
+        if (newRemaining > OriginalAmount)
+            throw new DomainException($"Сумма сторно ({amount}) превышает погашенную часть долга.");
+
+        RemainingAmount = newRemaining;
+        Status = DebtStatus.Open;
+        ClosedAt = null;
+        Touch();
+    }
+
     private void Close()
     {
         Status = DebtStatus.Closed;

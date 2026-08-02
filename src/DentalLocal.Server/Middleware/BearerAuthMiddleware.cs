@@ -11,13 +11,21 @@ namespace DentalLocal.Server.Middleware;
 /// </summary>
 public sealed class BearerAuthMiddleware(RequestDelegate next)
 {
-    private static readonly string[] AnonymousPaths = [ApiRoutes.Auth.Login, ApiRoutes.System.Health];
+    private static readonly string[] AnonymousPaths =
+        [ApiRoutes.Auth.Login, ApiRoutes.System.Health, ApiRoutes.Auth.ResetWithRecoveryCode];
 
     public async Task InvokeAsync(HttpContext context, ITokenService tokenService)
     {
         var path = context.Request.Path.Value ?? string.Empty;
 
+        // Отдача файла по подписанной ссылке (см. FilesEndpoints.cs) — единственный путь под /api/v1,
+        // проверяющий доступ самостоятельно (HMAC-подпись в query), а не через Bearer-заголовок:
+        // <img src> не может отправить заголовок Authorization. /link по-прежнему требует Bearer.
+        var isSignedFileContentPath = path.StartsWith($"{ApiRoutes.Files.Base}/", StringComparison.OrdinalIgnoreCase)
+            && !path.EndsWith("/link", StringComparison.OrdinalIgnoreCase);
+
         var requiresAuth = path.StartsWith(ApiRoutes.Prefix, StringComparison.OrdinalIgnoreCase)
+            && !isSignedFileContentPath
             && !AnonymousPaths.Any(p => path.Equals(p, StringComparison.OrdinalIgnoreCase));
 
         if (!requiresAuth)

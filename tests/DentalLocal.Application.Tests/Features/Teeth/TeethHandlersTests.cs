@@ -7,6 +7,43 @@ using DomainEnums = DentalLocal.Domain.Enums;
 
 namespace DentalLocal.Application.Tests.Features.Teeth;
 
+public class UpdateToothStatusCommandValidatorTests
+{
+    private readonly UpdateToothStatusCommandValidator _validator = new();
+
+    [Theory]
+    [InlineData(19)]
+    [InlineData(20)]
+    [InlineData(29)]
+    [InlineData(30)]
+    [InlineData(39)]
+    [InlineData(40)]
+    [InlineData(59)]
+    [InlineData(60)]
+    public void Validate_NonExistentFdiNumber_Fails(short toothNumber)
+    {
+        var command = new UpdateToothStatusCommand(Guid.NewGuid(), toothNumber, SharedEnums.ToothStateType.Healthy, null, null);
+
+        var result = _validator.Validate(command);
+
+        Assert.False(result.IsValid);
+    }
+
+    [Theory]
+    [InlineData(11)]
+    [InlineData(48)]
+    [InlineData(55)]
+    [InlineData(85)]
+    public void Validate_ValidFdiNumber_Succeeds(short toothNumber)
+    {
+        var command = new UpdateToothStatusCommand(Guid.NewGuid(), toothNumber, SharedEnums.ToothStateType.Healthy, null, null);
+
+        var result = _validator.Validate(command);
+
+        Assert.True(result.IsValid);
+    }
+}
+
 public class UpdateToothStatusCommandHandlerTests
 {
     private static IMapper CreateMapper() => TestMapper.Create();
@@ -58,6 +95,45 @@ public class UpdateToothStatusCommandHandlerTests
     }
 
     [Fact]
+    public async Task Handle_PermanentToothReplacesDeciduous_ExfoliatesPredecessor()
+    {
+        var uow = new FakeUnitOfWork();
+        var patient = CreatePatient();
+        uow.PatientsData.Add(patient);
+        var deciduous = ToothState.Create(patient.Id, 51, DomainEnums.ToothStateType.Healthy);
+        uow.ToothStatesData.Add(deciduous);
+
+        var handler = new UpdateToothStatusCommandHandler(uow, CreateMapper());
+        var command = new UpdateToothStatusCommand(patient.Id, 11, SharedEnums.ToothStateType.Healthy, null, null);
+
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(DomainEnums.ToothStateType.Exfoliated, deciduous.State);
+        var history = Assert.Single(uow.ToothStateHistoryData);
+        Assert.Equal((short)51, history.ToothNumber);
+        Assert.Equal(DomainEnums.ToothStateType.Exfoliated, history.NewState);
+    }
+
+    [Fact]
+    public async Task Handle_DeciduousAlreadyExfoliated_DoesNotDuplicateHistory()
+    {
+        var uow = new FakeUnitOfWork();
+        var patient = CreatePatient();
+        uow.PatientsData.Add(patient);
+        var deciduous = ToothState.Create(patient.Id, 52, DomainEnums.ToothStateType.Exfoliated);
+        uow.ToothStatesData.Add(deciduous);
+
+        var handler = new UpdateToothStatusCommandHandler(uow, CreateMapper());
+        var command = new UpdateToothStatusCommand(patient.Id, 12, SharedEnums.ToothStateType.Healthy, null, null);
+
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(uow.ToothStateHistoryData);
+    }
+
+    [Fact]
     public async Task Handle_PatientNotFound_ReturnsNotFound()
     {
         var uow = new FakeUnitOfWork();
@@ -98,6 +174,44 @@ public class AddToothSurfaceRecordCommandHandlerTests
         Assert.Equal("O", surface.SurfaceCode);
         Assert.Equal(DomainEnums.ToothStateType.Filling, surface.Status);
         Assert.Equal("K02.1", surface.Icd10Code);
+    }
+
+    [Fact]
+    public async Task Handle_ExtractedTooth_RejectsNewTreatmentUnlessImplant()
+    {
+        var uow = new FakeUnitOfWork();
+        var patient = CreatePatient();
+        uow.PatientsData.Add(patient);
+        var tooth = ToothState.Create(patient.Id, 16, DomainEnums.ToothStateType.Extracted);
+        uow.ToothStatesData.Add(tooth);
+
+        var handler = new AddToothSurfaceRecordCommandHandler(uow, CreateMapper());
+        var command = new AddToothSurfaceRecordCommand(
+            patient.Id, 16, "O", SharedEnums.ToothStateType.Filling, null, null, null, null, null);
+
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("ToothSurface.ToothNotTreatable", result.Error.Code);
+    }
+
+    [Fact]
+    public async Task Handle_ExtractedTooth_AllowsImplant()
+    {
+        var uow = new FakeUnitOfWork();
+        var patient = CreatePatient();
+        uow.PatientsData.Add(patient);
+        var tooth = ToothState.Create(patient.Id, 16, DomainEnums.ToothStateType.Extracted);
+        uow.ToothStatesData.Add(tooth);
+
+        var handler = new AddToothSurfaceRecordCommandHandler(uow, CreateMapper());
+        var command = new AddToothSurfaceRecordCommand(
+            patient.Id, 16, "O", SharedEnums.ToothStateType.Implant, null, null, null, null, null);
+
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(DomainEnums.ToothStateType.Implant, tooth.State);
     }
 
     [Fact]

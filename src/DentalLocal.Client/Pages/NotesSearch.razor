@@ -1,12 +1,13 @@
-@page "/notes-search"
+﻿@page "/notes-search"
 @attribute [Authorize]
 @inject ApiClient Api
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
+@inject IStringLocalizer<SharedResource> Loc
 
 <PageTitle>Поиск по заметкам — DentalLocal</PageTitle>
 
-<PageHeader Title="Поиск по заметкам врача" Icon="@Icons.Material.Filled.Search"
+<PageHeader Title="@Loc["Page_NotesSearch_Title"]" Icon="@LucideIcons.Search"
             Subtitle="Полнотекстовый поиск по заметкам и диагнозам визитов" />
 
 <GlassCard Class="mb-4">
@@ -39,7 +40,7 @@
             </MudTd>
         </RowTemplate>
         <NoRecordsContent>
-            <EmptyState Icon="@Icons.Material.Filled.Search" Title="@(_hasSearched ? "Ничего не найдено" : "Введите текст для поиска")"
+            <EmptyState Icon="@LucideIcons.Search" Title="@(_hasSearched ? "Ничего не найдено" : "Введите текст для поиска")"
                         Description="Поиск ведётся по заметкам врача и диагнозу визита." />
         </NoRecordsContent>
     </MudTable>

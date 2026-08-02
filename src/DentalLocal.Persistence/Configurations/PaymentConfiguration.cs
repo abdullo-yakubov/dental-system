@@ -36,5 +36,7 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
 
         builder.HasIndex(p => p.VisitId);
         builder.HasIndex(p => p.PatientId);
+
+        builder.UseXminAsConcurrencyToken(p => p.Version);
     }
 }

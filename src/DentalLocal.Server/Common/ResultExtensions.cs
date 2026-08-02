@@ -12,6 +12,11 @@ public static class ResultExtensions
     public static IResult ToCreatedResult<T>(this Result<T> result, Func<T, string> locationFactory) =>
         result.IsSuccess ? Results.Created(locationFactory(result.Value), result.Value) : ToProblem(result.Error);
 
+    /// <summary>202 Accepted для команд, которые ставят долгую операцию в job-очередь вместо
+    /// выполнения внутри HTTP-запроса (см. Application/Common/Jobs.cs).</summary>
+    public static IResult ToAcceptedResult<T>(this Result<T> result) =>
+        result.IsSuccess ? Results.Accepted(value: result.Value) : ToProblem(result.Error);
+
     public static IResult ToApiResult(this Result result) =>
         result.IsSuccess ? Results.NoContent() : ToProblem(result.Error);
 

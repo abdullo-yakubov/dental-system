@@ -10,6 +10,7 @@ public class ToothState : Entity
     public Patient Patient { get; private set; } = null!;
     public short ToothNumber { get; private set; }
     public ToothStateType State { get; private set; }
+    public uint Version { get; private set; }
 
     private ToothState()
     {

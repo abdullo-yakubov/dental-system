@@ -1,32 +1,33 @@
-@page "/debtors"
+﻿@page "/debtors"
 @attribute [Authorize]
 @inject ApiClient Api
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 @inject IJSRuntime JsRuntime
+@inject IStringLocalizer<SharedResource> Loc
 
 <PageTitle>Долги и Оплаты — DentalLocal</PageTitle>
 
-<PageHeader Title="Должники" Icon="@Icons.Material.Filled.MoneyOff" Subtitle="Задолженности пациентов и их погашение">
+<PageHeader Title="@Loc["Page_Debtors_Title"]" Icon="@LucideIcons.Debtors" Subtitle="@Loc["Debtors_Subtitle"]">
     <Actions>
-        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.FileDownload"
+        <MudButton Variant="Variant.Outlined" Color="Color.Secondary" StartIcon="@LucideIcons.Download"
                    OnClick="ExportToExcelAsync" Disabled="_isExporting">
-            Экспорт в Excel
+            @Loc["Common_Export"]
         </MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenCreatePatientDialogAsync">
-            Добавить пациента
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@LucideIcons.UserPlus" OnClick="OpenCreatePatientDialogAsync">
+            @Loc["Debtors_AddPatient"]
         </MudButton>
     </Actions>
 </PageHeader>
 
 <GlassCard Class="mb-4">
     <MudStack Row="true" Spacing="4" AlignItems="AlignItems.Center">
-        <SearchBox Value="_search" OnSearch="OnSearchChanged" Placeholder="Поиск по ФИО пациента или телефону" Class="flex-grow-1" />
-        <MudSelect T="DebtStatus?" Value="_status" ValueChanged="OnStatusChanged" Label="Статус долга" Class="flex-grow-0" Style="width: 200px;">
-            <MudSelectItem Value="((DebtStatus?)null)">Все долги</MudSelectItem>
-            <MudSelectItem Value="((DebtStatus?)DebtStatus.Open)">Открытые</MudSelectItem>
-            <MudSelectItem Value="((DebtStatus?)DebtStatus.Closed)">Погашенные</MudSelectItem>
+        <SearchBox Value="_search" OnSearch="OnSearchChanged" Placeholder="@Loc["Debtors_SearchPlaceholder"]" Class="flex-grow-1" />
+        <MudSelect T="DebtStatus?" Value="_status" ValueChanged="OnStatusChanged" Label="@Loc["Debtors_StatusLabel"]" Class="flex-grow-0" Style="width: 200px;">
+            <MudSelectItem Value="((DebtStatus?)null)">@Loc["Debtors_StatusAll"]</MudSelectItem>
+            <MudSelectItem Value="((DebtStatus?)DebtStatus.Open)">@Loc["Debtors_StatusOpen"]</MudSelectItem>
+            <MudSelectItem Value="((DebtStatus?)DebtStatus.Closed)">@Loc["Debtors_StatusClosed"]</MudSelectItem>
         </MudSelect>
     </MudStack>
 </GlassCard>
@@ -34,55 +35,55 @@
 <GlassCard Class="pa-0">
 <MudTable ServerData="LoadDebtsAsync" @ref="_table" Hover="true" Loading="_isLoading" Elevation="0" Class="glass-table">
     <HeaderContent>
-        <MudTh>Пациент</MudTh>
-        <MudTh>Телефон</MudTh>
-        <MudTh>Дата рождения</MudTh>
-        <MudTh>Сумма долга</MudTh>
-        <MudTh>Давность</MudTh>
-        <MudTh>Статус</MudTh>
-        <MudTh>Подробнее</MudTh>
+        <MudTh>@Loc["Debtors_ColumnPatient"]</MudTh>
+        <MudTh>@Loc["Common_ColumnPhone"]</MudTh>
+        <MudTh>@Loc["Debtors_ColumnBirthDate"]</MudTh>
+        <MudTh>@Loc["Debtors_ColumnDebtAmount"]</MudTh>
+        <MudTh>@Loc["Debtors_ColumnAge"]</MudTh>
+        <MudTh>@Loc["Common_ColumnStatus"]</MudTh>
+        <MudTh>@Loc["Debtors_ColumnDetails"]</MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd DataLabel="Пациент">@context.PatientFullName</MudTd>
-        <MudTd DataLabel="Телефон">@context.PatientPhone</MudTd>
-        <MudTd DataLabel="Дата рождения">@context.PatientBirthDate.ToString("dd.MM.yyyy")</MudTd>
-        <MudTd DataLabel="Сумма долга">
+        <MudTd DataLabel="@Loc["Debtors_ColumnPatient"]">@context.PatientFullName</MudTd>
+        <MudTd DataLabel="@Loc["Common_ColumnPhone"]">@context.PatientPhone</MudTd>
+        <MudTd DataLabel="@Loc["Debtors_ColumnBirthDate"]">@context.PatientBirthDate.ToString("dd.MM.yyyy")</MudTd>
+        <MudTd DataLabel="@Loc["Debtors_ColumnDebtAmount"]">
             <span class="@(context.RemainingAmount > 0 ? "text-danger font-weight-bold" : "text-success")">
-                @context.RemainingAmount.ToString("N0") сум
+                @context.RemainingAmount.ToString("N0") @Loc["Dashboard_Currency"]
             </span>
         </MudTd>
-        <MudTd DataLabel="Давность">
+        <MudTd DataLabel="@Loc["Debtors_ColumnAge"]">
             <MudChip T="string" Color="@GetAgeColor(context.AroseAt)" Size="Size.Small">
-                @GetAgeDays(context.AroseAt) дн.
+                @GetAgeDays(context.AroseAt) @Loc["Debtors_DaysSuffix"]
             </MudChip>
         </MudTd>
-        <MudTd DataLabel="Статус">
+        <MudTd DataLabel="@Loc["Common_ColumnStatus"]">
             <MudChip T="string" Color="@(context.Status == DebtStatus.Open ? Color.Error : Color.Success)" Size="Size.Small">
-                @(context.Status == DebtStatus.Open ? "Открыт" : "Погашен")
+                @(context.Status == DebtStatus.Open ? Loc["Debtors_ChipOpen"] : Loc["Debtors_ChipClosed"])
             </MudChip>
         </MudTd>
-        <MudTd DataLabel="Подробнее">
+        <MudTd DataLabel="@Loc["Debtors_ColumnDetails"]">
             <MudStack Row="true" Spacing="1">
                 <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small"
                            OnClick="@(() => OpenPatient(context.PatientId))">
-                    Подробнее
+                    @Loc["Debtors_ColumnDetails"]
                 </MudButton>
                 @if (context.Status == DebtStatus.Open)
                 {
                     <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small"
-                               StartIcon="@Icons.Material.Filled.Payments"
+                               StartIcon="@LucideIcons.Wallet"
                                OnClick="@(() => PayDebtAsync(context))">
-                        Оплатить
+                        @Loc["Debtors_PayButton"]
                     </MudButton>
                 }
             </MudStack>
         </MudTd>
     </RowTemplate>
     <NoRecordsContent>
-        <EmptyState Icon="@Icons.Material.Filled.CheckCircleOutline" Title="Долги не найдены" Description="Все пациенты рассчитались, либо измените фильтр." />
+        <EmptyState Icon="@LucideIcons.CheckCircle" Title="@Loc["Debtors_EmptyTitle"]" Description="@Loc["Debtors_EmptyDescription"]" />
     </NoRecordsContent>
     <PagerContent>
-        <MudTablePager RowsPerPageString="На странице:" InfoFormat="{first_item}-{last_item} из {all_items}" />
+        <MudTablePager RowsPerPageString="@Loc["Common_RowsPerPage"]" InfoFormat="@Loc["Common_PagerInfoFormat"]" />
     </PagerContent>
 </MudTable>
 </GlassCard>
@@ -106,7 +107,7 @@
         }
         catch (ApiException ex)
         {
-            Snackbar.Add($"Не удалось экспортировать: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(Loc["Debtors_ExportFailed"], ex.Message), Severity.Error);
         }
         finally
         {
@@ -158,7 +159,7 @@
         };
 
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
-        var dialog = await DialogService.ShowAsync<RegisterPaymentDialog>("Погашение долга", parameters, options);
+        var dialog = await DialogService.ShowAsync<RegisterPaymentDialog>(Loc["Debtors_PayDialogTitle"], parameters, options);
         var result = await dialog.Result;
 
         if (result is { Canceled: false })
@@ -171,7 +172,7 @@
 
     private async Task OpenCreatePatientDialogAsync()
     {
-        var dialog = await DialogService.ShowAsync<Components.CreatePatientDialog>("Новый пациент");
+        var dialog = await DialogService.ShowAsync<Components.CreatePatientDialog>(Loc["Patients_NewPatient"]);
         var result = await dialog.Result;
 
         if (result is { Canceled: false })

@@ -20,6 +20,9 @@ public class Payment : Entity, IImmutableRecord
     public string? Note { get; private set; }
     public Guid? ReversalOfPaymentId { get; private set; }
 
+    /// <summary>Concurrency token, отображается на системную колонку Postgres "xmin" (см. PaymentConfiguration).</summary>
+    public uint Version { get; private set; }
+
     private Payment()
     {
     }

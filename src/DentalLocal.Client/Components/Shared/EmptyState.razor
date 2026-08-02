@@ -1,7 +1,7 @@
 @* Единое состояние "нет данных" *@
 
 <div class="empty-state">
-    <MudIcon Icon="@Icon" Size="Size.Large" />
+    <MudIcon Icon="@Icon" Size="Size.Large" aria-hidden="true" />
     <MudText Typo="Typo.subtitle1" Class="font-weight-bold">@Title</MudText>
     @if (!string.IsNullOrWhiteSpace(Description))
     {
@@ -14,7 +14,7 @@
 </div>
 
 @code {
-    [Parameter] public string Icon { get; set; } = MudBlazor.Icons.Material.Filled.Inbox;
+    [Parameter] public string Icon { get; set; } = DentalLocal.Client.Theming.LucideIcons.Inbox;
     [Parameter] public string Title { get; set; } = "Нет данных";
     [Parameter] public string? Description { get; set; }
     [Parameter] public RenderFragment? ActionContent { get; set; }

@@ -26,6 +26,9 @@ public class VisitConfiguration : IEntityTypeConfiguration<Visit>
         builder.Property(v => v.TotalPaid).HasColumnType("numeric(12,2)");
         builder.Property(v => v.Status).IsRequired();
 
+        builder.Property(v => v.DiscountPercent).HasColumnType("numeric(5,2)").HasDefaultValue(0m);
+        builder.Property(v => v.DiscountReason).HasColumnType("text");
+
         builder.HasOne(v => v.Patient)
             .WithMany()
             .HasForeignKey(v => v.PatientId)
@@ -46,5 +49,7 @@ public class VisitConfiguration : IEntityTypeConfiguration<Visit>
                 stored: true);
 
         builder.HasIndex("NotesSearchVector").HasMethod("GIN").HasDatabaseName("ix_visits_notes_search_vector");
+
+        builder.UseXminAsConcurrencyToken(v => v.Version);
     }
 }

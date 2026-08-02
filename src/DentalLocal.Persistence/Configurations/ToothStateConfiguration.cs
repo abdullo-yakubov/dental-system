@@ -21,5 +21,11 @@ public class ToothStateConfiguration : IEntityTypeConfiguration<ToothState>
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(t => new { t.PatientId, t.ToothNumber }).IsUnique();
+
+        // Optimistic concurrency через системную колонку Postgres xmin (тот же паттерн, что и
+        // Visit/Payment/Material/ToothSurfaceHistory, см. ConcurrencyTokenExtensions) — конкурентное
+        // изменение одного зуба (врач + фоновая синхронизация/второй экран) не должно молча
+        // перезаписывать чужое изменение, а должно возвращать явную ошибку конфликта.
+        builder.UseXminAsConcurrencyToken(t => t.Version);
     }
 }

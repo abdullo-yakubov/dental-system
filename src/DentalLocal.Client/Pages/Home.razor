@@ -4,6 +4,7 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 @inject IJSRuntime JsRuntime
+@inject IStringLocalizer<SharedResource> Loc
 
 <PageTitle>Дашборд — DentalLocal</PageTitle>
 
@@ -25,7 +26,7 @@
 else
 {
     <div class="page-fade-in">
-    <PageHeader Title="Панель управления" Icon="@Icons.Material.Filled.Dashboard" Subtitle="@_greeting" />
+    <PageHeader Title="@Loc["Page_Dashboard_Title"]" Icon="@LucideIcons.Dashboard" Subtitle="@_greeting" />
 
     <!-- Top Summary Cards -->
     <MudGrid Class="mb-6">
@@ -33,11 +34,11 @@ else
             <div class="glass-card hover-card pa-4">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                     <div>
-                        <MudText Typo="Typo.subtitle2" Class="text-secondary">Всего пациентов</MudText>
+                        <MudText Typo="Typo.subtitle2" Class="text-secondary">@Loc["Dashboard_TotalPatients"]</MudText>
                         <MudText Typo="Typo.h4" Class="font-weight-bold">@_summary?.TotalPatients.ToString("N0")</MudText>
-                        <MudText Typo="Typo.caption" Color="Color.Success">@_summary?.ActivePatients активных</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Success">@string.Format(Loc["Dashboard_ActivePatientsSuffix"], _summary?.ActivePatients)</MudText>
                     </div>
-                    <MudIcon Icon="@Icons.Material.Filled.People" Color="Color.Primary" Style="font-size: 3rem; opacity: 0.2;" />
+                    <MudIcon Icon="@LucideIcons.Patients" Color="Color.Primary" Style="font-size: 3rem; opacity: 0.2;" aria-hidden="true" />
                 </MudStack>
             </div>
         </MudItem>
@@ -46,11 +47,11 @@ else
             <div class="glass-card hover-card pa-4">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                     <div>
-                        <MudText Typo="Typo.subtitle2" Class="text-secondary">Визиты сегодня</MudText>
+                        <MudText Typo="Typo.subtitle2" Class="text-secondary">@Loc["Dashboard_VisitsToday"]</MudText>
                         <MudText Typo="Typo.h4" Class="font-weight-bold">@_summary?.VisitsToday</MudText>
-                        <MudText Typo="Typo.caption">Запланировано приемов</MudText>
+                        <MudText Typo="Typo.caption">@Loc["Dashboard_ScheduledAppointments"]</MudText>
                     </div>
-                    <MudIcon Icon="@Icons.Material.Filled.CalendarMonth" Color="Color.Info" Style="font-size: 3rem; opacity: 0.2;" />
+                    <MudIcon Icon="@LucideIcons.Calendar" Color="Color.Info" Style="font-size: 3rem; opacity: 0.2;" aria-hidden="true" />
                 </MudStack>
             </div>
         </MudItem>
@@ -59,11 +60,11 @@ else
             <div class="glass-card hover-card pa-4">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                     <div>
-                        <MudText Typo="Typo.subtitle2" Class="text-secondary">Выручка сегодня</MudText>
+                        <MudText Typo="Typo.subtitle2" Class="text-secondary">@Loc["Dashboard_RevenueToday"]</MudText>
                         <MudText Typo="Typo.h4" Class="font-weight-bold text-success">@_summary?.RevenueToday.ToString("N0")</MudText>
-                        <MudText Typo="Typo.caption" Class="text-success">сум</MudText>
+                        <MudText Typo="Typo.caption" Class="text-success">@Loc["Dashboard_Currency"]</MudText>
                     </div>
-                    <MudIcon Icon="@Icons.Material.Filled.AttachMoney" Color="Color.Success" Style="font-size: 3rem; opacity: 0.2;" />
+                    <MudIcon Icon="@LucideIcons.DollarSign" Color="Color.Success" Style="font-size: 3rem; opacity: 0.2;" aria-hidden="true" />
                 </MudStack>
             </div>
         </MudItem>
@@ -72,11 +73,11 @@ else
             <div class="glass-card hover-card pa-4">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
                     <div>
-                        <MudText Typo="Typo.subtitle2" Class="text-secondary">Общий долг</MudText>
+                        <MudText Typo="Typo.subtitle2" Class="text-secondary">@Loc["Dashboard_TotalDebt"]</MudText>
                         <MudText Typo="Typo.h4" Class="font-weight-bold text-danger">@_summary?.TotalDebt.ToString("N0")</MudText>
-                        <MudText Typo="Typo.caption" Color="Color.Error">@_summary?.DebtorsCount должников</MudText>
+                        <MudText Typo="Typo.caption" Color="Color.Error">@string.Format(Loc["Dashboard_DebtorsSuffix"], _summary?.DebtorsCount)</MudText>
                     </div>
-                    <MudIcon Icon="@Icons.Material.Filled.MoneyOff" Color="Color.Error" Style="font-size: 3rem; opacity: 0.2;" />
+                    <MudIcon Icon="@LucideIcons.Debtors" Color="Color.Error" Style="font-size: 3rem; opacity: 0.2;" aria-hidden="true" />
                 </MudStack>
             </div>
         </MudItem>
@@ -85,7 +86,7 @@ else
     <MudGrid>
         <!-- Revenue Chart & Upcoming -->
         <MudItem xs="12" md="8">
-            <GlassCard Title="Динамика выручки (последние 12 мес.)" Class="mb-6">
+            <GlassCard Title="@Loc["Dashboard_RevenueChartTitle"]" Class="mb-6">
                 @if (_chartPoints.Count > 0)
                 {
                     <MudChart T="double" ChartType="ChartType.Bar" ChartSeries="@_series" XAxisLabels="@_xAxisLabels"
@@ -93,19 +94,19 @@ else
                 }
                 else
                 {
-                    <EmptyState Icon="@Icons.Material.Filled.ShowChart" Title="Нет данных о доходах" />
+                    <EmptyState Icon="@LucideIcons.TrendingUp" Title="@Loc["Dashboard_NoRevenueData"]" />
                 }
             </GlassCard>
 
-            <GlassCard Title="Предстоящие визиты (7 дней)">
+            <GlassCard Title="@Loc["Dashboard_UpcomingVisits"]">
                 @if (_upcomingVisits.Count > 0)
                 {
                     <MudTable Items="_upcomingVisits" Hover="true" Dense="true" Elevation="0" Class="glass-table">
                         <HeaderContent>
-                            <MudTh>Время</MudTh>
-                            <MudTh>Пациент</MudTh>
-                            <MudTh>Врач</MudTh>
-                            <MudTh>Сумма</MudTh>
+                            <MudTh>@Loc["Dashboard_ColumnTime"]</MudTh>
+                            <MudTh>@Loc["Dashboard_ColumnPatient"]</MudTh>
+                            <MudTh>@Loc["Dashboard_ColumnDoctor"]</MudTh>
+                            <MudTh>@Loc["Dashboard_ColumnAmount"]</MudTh>
                         </HeaderContent>
                         <RowTemplate>
                             <MudTd>
@@ -120,23 +121,23 @@ else
                                 </MudLink>
                             </MudTd>
                             <MudTd>@context.DoctorName</MudTd>
-                            <MudTd>@context.TotalCost.ToString("N0") сум</MudTd>
+                            <MudTd>@context.TotalCost.ToString("N0") @Loc["Dashboard_Currency"]</MudTd>
                         </RowTemplate>
                     </MudTable>
                 }
                 else
                 {
-                    <EmptyState Icon="@Icons.Material.Filled.EventAvailable" Title="Нет предстоящих визитов" />
+                    <EmptyState Icon="@LucideIcons.CalendarCheck" Title="@Loc["Dashboard_NoUpcomingVisits"]" />
                 }
             </GlassCard>
         </MudItem>
 
         <!-- Right Side: Top Procedures -->
         <MudItem xs="12" md="4">
-            <GlassCard Title="Популярные процедуры" Style="height: 100%;">
+            <GlassCard Title="@Loc["Dashboard_TopProcedures"]" Style="height: 100%;">
                 <HeaderActions>
-                    <MudIconButton Icon="@Icons.Material.Filled.FileDownload" Size="Size.Small"
-                                   OnClick="ExportTopProceduresAsync" Disabled="_isExportingProcedures" title="Экспорт в Excel" />
+                    <MudIconButton Icon="@LucideIcons.Download" Size="Size.Small"
+                                   OnClick="ExportTopProceduresAsync" Disabled="_isExportingProcedures" title="@Loc["Common_Export"]" />
                 </HeaderActions>
                 <ChildContent>
                 @if (_topProcedures.Count > 0)
@@ -150,8 +151,8 @@ else
                             {
                                 var proc = _topProcedures[i];
                                 <MudListItem Text="@($"{proc.Name} ({proc.Count} шт.)")"
-                                             SecondaryText="@($"{proc.TotalAmount.ToString("N0")} сум")"
-                                             Icon="@Icons.Material.Filled.CheckCircle"
+                                             SecondaryText="@($"{proc.TotalAmount.ToString("N0")} {Loc["Dashboard_Currency"]}")"
+                                             Icon="@LucideIcons.CheckCircle"
                                              IconColor="Color.Primary" />
                             }
                         </MudList>
@@ -159,45 +160,45 @@ else
                 }
                 else
                 {
-                    <EmptyState Icon="@Icons.Material.Filled.PieChart" Title="Нет данных о процедурах" />
+                    <EmptyState Icon="@LucideIcons.PieChart" Title="@Loc["Dashboard_NoProcedureData"]" />
                 }
                 </ChildContent>
             </GlassCard>
         </MudItem>
     </MudGrid>
 
-    <GlassCard Title="Загрузка врача (последние 30 дней)" Class="mt-6">
+    <GlassCard Title="@Loc["Dashboard_WorkloadTitle"]" Class="mt-6">
         <HeaderActions>
-            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@Icons.Material.Filled.FileDownload"
+            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@LucideIcons.Download"
                        OnClick="ExportWorkloadAsync" Disabled="_isExportingWorkload">
-                Экспорт в Excel
+                @Loc["Common_Export"]
             </MudButton>
         </HeaderActions>
         <ChildContent>
         @if (_workload is null)
         {
-            <EmptyState Icon="@Icons.Material.Filled.Insights" Title="Нет данных о загрузке" />
+            <EmptyState Icon="@LucideIcons.TrendingUp" Title="@Loc["Dashboard_NoWorkloadData"]" />
         }
         else
         {
             <MudGrid>
                 <MudItem xs="12" md="4">
-                    <MudText Typo="Typo.subtitle2" Class="text-secondary">Визитов за период</MudText>
+                    <MudText Typo="Typo.subtitle2" Class="text-secondary">@Loc["Dashboard_VisitsInPeriod"]</MudText>
                     <MudText Typo="Typo.h5" Class="font-weight-bold">@_workload.TotalVisits</MudText>
                 </MudItem>
                 <MudItem xs="12" md="4">
-                    <MudText Typo="Typo.subtitle2" Class="text-secondary">Отменено, %</MudText>
+                    <MudText Typo="Typo.subtitle2" Class="text-secondary">@Loc["Dashboard_CancelledPercent"]</MudText>
                     <MudText Typo="Typo.h5" Class="font-weight-bold text-danger">@_workload.CancelledOrNoShowPercent.ToString("N1")</MudText>
                 </MudItem>
                 <MudItem xs="12" md="4">
-                    <MudText Typo="Typo.subtitle2" Class="text-secondary">Простой относительно графика, %</MudText>
+                    <MudText Typo="Typo.subtitle2" Class="text-secondary">@Loc["Dashboard_IdlePercent"]</MudText>
                     <MudText Typo="Typo.h5" Class="font-weight-bold">@_workload.IdlePercent.ToString("N1")</MudText>
                 </MudItem>
             </MudGrid>
 
             @if (_workload.Heatmap.Count > 0)
             {
-                <MudText Typo="Typo.subtitle2" Class="mt-4 mb-2">Тепловая карта по дням/часам</MudText>
+                <MudText Typo="Typo.subtitle2" Class="mt-4 mb-2">@Loc["Dashboard_Heatmap"]</MudText>
                 <div style="overflow-x:auto;">
                     <table class="workload-heatmap">
                         <thead>
@@ -228,11 +229,11 @@ else
 
             @if (_workload.AverageDurationByProcedure.Count > 0)
             {
-                <MudText Typo="Typo.subtitle2" Class="mt-4 mb-2">Средняя длительность по типам процедур</MudText>
+                <MudText Typo="Typo.subtitle2" Class="mt-4 mb-2">@Loc["Dashboard_AvgDurationByProcedure"]</MudText>
                 <MudTable Items="_workload.AverageDurationByProcedure" Hover="true" Dense="true" Elevation="0" Class="glass-table">
                     <HeaderContent>
-                        <MudTh>Процедура</MudTh>
-                        <MudTh>Средняя длительность, мин</MudTh>
+                        <MudTh>@Loc["Dashboard_ColumnProcedure"]</MudTh>
+                        <MudTh>@Loc["Dashboard_ColumnAvgDurationMinutes"]</MudTh>
                     </HeaderContent>
                     <RowTemplate>
                         <MudTd>@context.ProcedureName</MudTd>
@@ -260,7 +261,7 @@ else
 
     private double[] _donutData = [];
     private string[] _donutLabels = [];
-    private string _greeting = "Добро пожаловать";
+    private string _greeting = "";
     private DoctorWorkloadStatsDto? _workload;
     private bool _isExportingWorkload;
     private bool _isExportingProcedures;
@@ -278,7 +279,7 @@ else
         }
         catch (ApiException ex)
         {
-            Snackbar.Add($"Не удалось экспортировать: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(Loc["Dashboard_ExportFailed"], ex.Message), Severity.Error);
         }
         finally
         {
@@ -297,7 +298,7 @@ else
         }
         catch (ApiException ex)
         {
-            Snackbar.Add($"Не удалось экспортировать: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(Loc["Dashboard_ExportFailed"], ex.Message), Severity.Error);
         }
         finally
         {
@@ -326,28 +327,30 @@ else
         return $"background: rgba(var(--mud-palette-primary-rgb), {intensity.ToString(System.Globalization.CultureInfo.InvariantCulture)});";
     }
 
-    private static string GetShortDayLabel(DayOfWeek day) => day switch
+    private string GetShortDayLabel(DayOfWeek day) => day switch
     {
-        DayOfWeek.Monday => "ПН",
-        DayOfWeek.Tuesday => "ВТ",
-        DayOfWeek.Wednesday => "СР",
-        DayOfWeek.Thursday => "ЧТ",
-        DayOfWeek.Friday => "ПТ",
-        DayOfWeek.Saturday => "СБ",
-        _ => "ВС"
+        DayOfWeek.Monday => Loc["Day_Mon"],
+        DayOfWeek.Tuesday => Loc["Day_Tue"],
+        DayOfWeek.Wednesday => Loc["Day_Wed"],
+        DayOfWeek.Thursday => Loc["Day_Thu"],
+        DayOfWeek.Friday => Loc["Day_Fri"],
+        DayOfWeek.Saturday => Loc["Day_Sat"],
+        _ => Loc["Day_Sun"]
     };
 
-    private static string BuildGreeting(string? doctorName)
+    private string BuildGreeting(string? doctorName)
     {
         var timeOfDay = DateTime.Now.Hour switch
         {
-            >= 5 and < 12 => "Доброе утро",
-            >= 12 and < 18 => "Добрый день",
-            >= 18 and < 23 => "Добрый вечер",
-            _ => "Доброй ночи"
+            >= 5 and < 12 => Loc["Greeting_Morning"],
+            >= 12 and < 18 => Loc["Greeting_Day"],
+            >= 18 and < 23 => Loc["Greeting_Evening"],
+            _ => Loc["Greeting_Night"]
         };
 
-        return string.IsNullOrWhiteSpace(doctorName) ? timeOfDay : $"{timeOfDay}, доктор {doctorName}";
+        return string.IsNullOrWhiteSpace(doctorName)
+            ? timeOfDay
+            : string.Format(Loc["Greeting_WithDoctor"], timeOfDay, doctorName);
     }
 
     protected override async Task OnInitializedAsync()
@@ -387,7 +390,7 @@ else
         }
         catch (ApiException ex)
         {
-            Snackbar.Add($"Не удалось загрузить дашборд: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(Loc["Dashboard_LoadFailed"], ex.Message), Severity.Error);
         }
         finally
         {

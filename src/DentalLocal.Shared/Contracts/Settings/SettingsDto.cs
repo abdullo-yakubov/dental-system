@@ -8,7 +8,8 @@ public sealed record SettingsDto(
     string Language,
     string BackupTime,
     int BackupRetentionDays,
-    int AutoLockMinutes);
+    int AutoLockMinutes,
+    bool Enable3DOdontogram);
 
 public sealed record UpdateSettingsRequest(
     string DoctorName,
@@ -18,4 +19,5 @@ public sealed record UpdateSettingsRequest(
     string Language,
     string BackupTime,
     int BackupRetentionDays,
-    int AutoLockMinutes);
+    int AutoLockMinutes,
+    bool Enable3DOdontogram);

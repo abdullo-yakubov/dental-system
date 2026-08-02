@@ -28,5 +28,7 @@ public class MaterialConfiguration : IEntityTypeConfiguration<Material>
             .HasDefaultValue(0);
             
         builder.HasIndex(m => m.Name);
+
+        builder.UseXminAsConcurrencyToken(m => m.Version);
     }
 }

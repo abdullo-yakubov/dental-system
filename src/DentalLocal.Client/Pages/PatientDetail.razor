@@ -1,4 +1,4 @@
-@page "/patients/{Id:guid}"
+﻿@page "/patients/{Id:guid}"
 @attribute [Authorize]
 @inject ApiClient Api
 @inject IDialogService DialogService
@@ -15,33 +15,36 @@
 }
 else if (_patient == null)
 {
-    <EmptyState Icon="@Icons.Material.Filled.PersonOff" Title="Пациент не найден" Description="Возможно, карточка была удалена или архивирована." />
+    <EmptyState Icon="@LucideIcons.UserX" Title="Пациент не найден" Description="Возможно, карточка была удалена или архивирована." />
 }
 else
 {
     <!-- Breadcrumbs / Top Actions -->
     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
-        <MudButton StartIcon="@Icons.Material.Filled.ArrowBack" OnClick="BackToPatients" Variant="Variant.Text">
+        <MudButton StartIcon="@LucideIcons.ArrowLeft" OnClick="BackToPatients" Variant="Variant.Text">
             К списку пациентов
         </MudButton>
         <MudStack Row="true" Spacing="2">
             @if (_patient.IsArchived)
             {
-                <MudButton Variant="Variant.Outlined" Color="Color.Success" StartIcon="@Icons.Material.Filled.Unarchive" OnClick="UnarchivePatientAsync">
+                <MudButton Variant="Variant.Outlined" Color="Color.Success" StartIcon="@LucideIcons.ArchiveRestore" OnClick="UnarchivePatientAsync">
                     Восстановить
                 </MudButton>
             }
             else
             {
-                <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@Icons.Material.Filled.Archive" OnClick="ArchivePatientAsync">
+                <MudButton Variant="Variant.Outlined" Color="Color.Warning" StartIcon="@LucideIcons.Archive" OnClick="ArchivePatientAsync">
                     Архивировать
                 </MudButton>
             }
-            <MudMenu Label="Печать документов" StartIcon="@Icons.Material.Filled.Print" Variant="Variant.Outlined" Color="Color.Info" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
-                <MudMenuItem Href="@($"/api/v1/reports/patients/{_patient.Id}/agreement")" Target="_blank" Icon="@Icons.Material.Filled.Description">Договор</MudMenuItem>
-                <MudMenuItem Href="@($"/api/v1/reports/patients/{_patient.Id}/consent")" Target="_blank" Icon="@Icons.Material.Filled.FactCheck">Согласие</MudMenuItem>
+            <MudButton Variant="Variant.Outlined" Color="Color.Error" StartIcon="@LucideIcons.Trash2" OnClick="DeletePatientAsync">
+                Удалить окончательно
+            </MudButton>
+            <MudMenu Label="Печать документов" StartIcon="@LucideIcons.Printer" Variant="Variant.Outlined" Color="Color.Info" AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight">
+                <MudMenuItem Href="@($"/api/v1/reports/patients/{_patient.Id}/agreement")" Target="_blank" Icon="@LucideIcons.FileText">Договор</MudMenuItem>
+                <MudMenuItem Href="@($"/api/v1/reports/patients/{_patient.Id}/consent")" Target="_blank" Icon="@LucideIcons.ClipboardCheck">Согласие</MudMenuItem>
             </MudMenu>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Edit" OnClick="OpenEditDialogAsync">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@LucideIcons.Edit" OnClick="OpenEditDialogAsync">
                 Редактировать
             </MudButton>
         </MudStack>
@@ -60,16 +63,16 @@ else
                             }
                         </MudText>
                         <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="4" Class="mt-2 text-secondary">
-                            <MudText Typo="Typo.body1"><MudIcon Icon="@Icons.Material.Filled.Badge" Size="Size.Small" Class="mr-1" /> Карта: <b>@_patient.CardNumberDisplay</b></MudText>
+                            <MudText Typo="Typo.body1"><MudIcon Icon="@LucideIcons.IdCard" Size="Size.Small" Class="mr-1" /> Карта: <b>@_patient.CardNumberDisplay</b></MudText>
                             <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                                <MudText Typo="Typo.body1"><MudIcon Icon="@Icons.Material.Filled.Phone" Size="Size.Small" Class="mr-1" /> Телефон: <b>@_patient.Phone</b></MudText>
-                                <MudIconButton Icon="@Icons.Material.Filled.Call" Color="Color.Primary" Size="Size.Small"
+                                <MudText Typo="Typo.body1"><MudIcon Icon="@LucideIcons.Phone" Size="Size.Small" Class="mr-1" /> Телефон: <b>@_patient.Phone</b></MudText>
+                                <MudIconButton Icon="@LucideIcons.PhoneCall" Color="Color.Primary" Size="Size.Small"
                                                Href="@($"tel:{_patient.Phone}")" title="Позвонить" />
                                 <MudIconButton Icon="@Icons.Custom.Brands.WhatsApp" Color="Color.Success" Size="Size.Small"
                                                Href="@($"https://wa.me/{GetWhatsAppPhone(_patient.Phone)}")" Target="_blank" title="Написать в WhatsApp" />
                             </MudStack>
-                            <MudText Typo="Typo.body1"><MudIcon Icon="@Icons.Material.Filled.Cake" Size="Size.Small" Class="mr-1" /> Возраст: <b>@_patient.Age</b> (@_patient.BirthDate.ToString("dd.MM.yyyy"))</MudText>
-                            <MudText Typo="Typo.body1"><MudIcon Icon="@Icons.Material.Filled.Event" Size="Size.Small" Class="mr-1" /> Последний визит: <b>@(_patient.LastVisitAt?.ToString("dd.MM.yyyy") ?? "—")</b></MudText>
+                            <MudText Typo="Typo.body1"><MudIcon Icon="@LucideIcons.Cake" Size="Size.Small" Class="mr-1" /> Возраст: <b>@_patient.Age</b> (@_patient.BirthDate.ToString("dd.MM.yyyy"))</MudText>
+                            <MudText Typo="Typo.body1"><MudIcon Icon="@LucideIcons.Calendar" Size="Size.Small" Class="mr-1" /> Последний визит: <b>@(_patient.LastVisitAt?.ToString("dd.MM.yyyy") ?? "—")</b></MudText>
                         </MudStack>
                     </MudStack>
                 </MudItem>
@@ -77,11 +80,11 @@ else
                     <MudStack AlignItems="AlignItems.End" Spacing="1">
                         <MudText Typo="Typo.subtitle2" Class="text-secondary">Баланс пациента</MudText>
                         <MudText Typo="Typo.h5" Class="@(_totalDebt > 0 ? "text-danger font-weight-bold" : "text-success font-weight-bold")">
-                            @(_totalDebt > 0 ? $"-{_totalDebt.ToString("N0")} сум" : "В расчете (0 сум)")
+                            @(_totalDebt > 0 ? $"-{_totalDebt.ToString("N0")} сомони" : "В расчете (0 сомони)")
                         </MudText>
                         @if (_totalDebt > 0)
                         {
-                            <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Filled.Payment" OnClick="OpenPaymentDialogAsync">
+                            <MudButton Variant="Variant.Filled" Color="Color.Error" Size="Size.Small" StartIcon="@LucideIcons.CreditCard" OnClick="OpenPaymentDialogAsync">
                                 Погасить долг
                             </MudButton>
                         }
@@ -102,7 +105,7 @@ else
     <div class="glass-card pa-2">
     <MudTabs Elevation="0" Rounded="true" PanelClass="pa-4">
         <!-- Overview Tab -->
-        <MudTabPanel Text="Обзор" Icon="@Icons.Material.Filled.Info">
+        <MudTabPanel Text="Обзор" Icon="@LucideIcons.Info">
             <MudGrid>
                 <MudItem xs="12" md="6">
                     <MudText Typo="Typo.h6" Class="font-weight-bold mb-4">Личная информация</MudText>
@@ -155,7 +158,7 @@ else
                         @if (!string.IsNullOrWhiteSpace(_patient.DoctorNotes))
                         {
                             <div>
-                                <MudText Typo="Typo.subtitle2" Class="text-secondary mb-1">Особые отметки врача</MudText>
+                                <MudText Typo="Typo.subtitle2" Class="text-secondary mb-1">Особые клинические отметки</MudText>
                                 <MudPaper Class="pa-3 border-radius-8" Style="background-color:var(--mud-palette-warning-hover);border-left:3px solid var(--mud-palette-warning);" Elevation="0">
                                     <MudText>@_patient.DoctorNotes</MudText>
                                 </MudPaper>
@@ -167,23 +170,23 @@ else
         </MudTabPanel>
 
         <!-- Odontogram Tab -->
-        <MudTabPanel Text="Одонтограмма" Icon="@Icons.Material.Filled.HealthAndSafety">
+        <MudTabPanel Text="Одонтограмма" Icon="@LucideIcons.ShieldCheck">
             <OdontogramSvg PatientId="_patient.Id" />
         </MudTabPanel>
 
         <!-- Visits Tab -->
-        <MudTabPanel Text="Визиты" Icon="@Icons.Material.Filled.CalendarMonth">
+        <MudTabPanel Text="Визиты" Icon="@LucideIcons.Calendar">
             <MudStack Spacing="4">
                 <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
                     <MudText Typo="Typo.h6" Class="font-weight-bold">История приемов</MudText>
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateVisitDialogAsync">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@LucideIcons.Plus" OnClick="OpenCreateVisitDialogAsync">
                         Записать визит
                     </MudButton>
                 </MudStack>
 
                 @if (_visits.Count == 0)
                 {
-                    <EmptyState Icon="@Icons.Material.Filled.EventBusy" Title="Визиты ещё не записаны" />
+                    <EmptyState Icon="@LucideIcons.CalendarX" Title="Визиты ещё не записаны" />
                 }
                 else
                 {
@@ -200,7 +203,7 @@ else
                                             <MudText Typo="Typo.caption" Class="text-secondary">Врач: @visit.DoctorName</MudText>
                                         </MudStack>
                                         <MudChip T="string" Color="@(visit.TotalCost == 0 ? Color.Default : (visit.TotalCost > 0 ? Color.Success : Color.Info))" Size="Size.Small">
-                                            Стоимость: @visit.TotalCost.ToString("N0") сум
+                                            Стоимость: @visit.TotalCost.ToString("N0") сомони
                                         </MudChip>
                                     </MudStack>
                                 </CardHeaderContent>
@@ -211,10 +214,10 @@ else
                                 </div>
                             </MudCardContent>
                             <MudCardActions>
-                                <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.Material.Filled.Receipt" Href="@($"/api/v1/reports/visits/{visit.Id}/invoice")" Target="_blank" Size="Size.Small">
+                                <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@LucideIcons.Receipt" Href="@($"/api/v1/reports/visits/{visit.Id}/invoice")" Target="_blank" Size="Size.Small">
                                     Квитанция об оплате (Чек)
                                 </MudButton>
-                                <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@Icons.Material.Filled.MedicalServices" Href="@($"/api/v1/reports/visits/{visit.Id}/prescription")" Target="_blank" Size="Size.Small">
+                                <MudButton Variant="Variant.Text" Color="Color.Info" StartIcon="@LucideIcons.Procedures" Href="@($"/api/v1/reports/visits/{visit.Id}/prescription")" Target="_blank" Size="Size.Small">
                                     Рецепт / Назначение
                                 </MudButton>
                             </MudCardActions>
@@ -225,24 +228,24 @@ else
         </MudTabPanel>
 
         <!-- Treatment Plans Tab -->
-        <MudTabPanel Text="План лечения" Icon="@Icons.Material.Filled.Checklist">
+        <MudTabPanel Text="План лечения" Icon="@LucideIcons.ListChecks">
             <TreatmentPlansTab PatientId="_patient.Id" />
         </MudTabPanel>
 
         <!-- Finances Tab -->
-        <MudTabPanel Text="Финансы" Icon="@Icons.Material.Filled.Payments">
+        <MudTabPanel Text="Финансы" Icon="@LucideIcons.Wallet">
             <MudGrid Spacing="4">
                 <MudItem xs="12" md="6">
                     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-3">
                         <MudText Typo="Typo.h6" Class="font-weight-bold">Платежи</MudText>
-                        <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenPaymentDialogAsync">
+                        <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@LucideIcons.Plus" OnClick="OpenPaymentDialogAsync">
                             Принять оплату
                         </MudButton>
                     </MudStack>
 
                     @if (_payments.Count == 0)
                     {
-                        <EmptyState Icon="@Icons.Material.Filled.Payments" Title="Оплат не зафиксировано" />
+                        <EmptyState Icon="@LucideIcons.Wallet" Title="Оплат не зафиксировано" />
                     }
                     else
                     {
@@ -255,7 +258,7 @@ else
                             </HeaderContent>
                             <RowTemplate>
                                 <MudTd>@context.PaidAt.ToString("dd.MM.yyyy HH:mm")</MudTd>
-                                <MudTd Class="font-weight-bold text-success">@context.Amount.ToString("N0") сум</MudTd>
+                                <MudTd Class="font-weight-bold text-success">@context.Amount.ToString("N0") сомони</MudTd>
                                 <MudTd>@GetPaymentMethodLabel(context.Method)</MudTd>
                                 <MudTd>@GetPaymentKindLabel(context.Kind)</MudTd>
                             </RowTemplate>
@@ -267,7 +270,7 @@ else
                     <MudText Typo="Typo.h6" Class="font-weight-bold mb-3">Задолженности</MudText>
                     @if (_debts.Count == 0)
                     {
-                        <EmptyState Icon="@Icons.Material.Filled.CheckCircleOutline" Title="Задолженностей не обнаружено" />
+                        <EmptyState Icon="@LucideIcons.CheckCircle" Title="Задолженностей не обнаружено" />
                     }
                     else
                     {
@@ -279,7 +282,7 @@ else
                             </HeaderContent>
                             <RowTemplate>
                                 <MudTd>@context.AroseAt.ToString("dd.MM.yyyy")</MudTd>
-                                <MudTd Class="font-weight-bold text-danger">@context.RemainingAmount.ToString("N0") сум</MudTd>
+                                <MudTd Class="font-weight-bold text-danger">@context.RemainingAmount.ToString("N0") сомони</MudTd>
                                 <MudTd>
                                     <MudChip T="string" Color="@(context.Status == DebtStatus.Closed ? Color.Success : Color.Error)" Size="Size.Small">
                                         @(context.Status == DebtStatus.Closed ? "Оплачен" : "Активен")
@@ -294,7 +297,7 @@ else
                     <MudText Typo="Typo.h6" Class="font-weight-bold mb-3">История скидок</MudText>
                     @if (_discountHistory.Count == 0)
                     {
-                        <EmptyState Icon="@Icons.Material.Filled.Discount" Title="Скидки не применялись" />
+                        <EmptyState Icon="@LucideIcons.Percent" Title="Скидки не применялись" />
                     }
                     else
                     {
@@ -306,7 +309,7 @@ else
                             </HeaderContent>
                             <RowTemplate>
                                 <MudTd>@context.AppliedAt.LocalDateTime.ToString("dd.MM.yyyy")</MudTd>
-                                <MudTd>@(context.Percent > 0 ? $"{context.Percent:N0}%" : $"{context.Amount:N0} сум")</MudTd>
+                                <MudTd>@(context.Percent > 0 ? $"{context.Percent:N0}%" : $"{context.Amount:N0} сомони")</MudTd>
                                 <MudTd>@context.Reason</MudTd>
                             </RowTemplate>
                         </MudTable>
@@ -317,7 +320,7 @@ else
                     <MudText Typo="Typo.h6" Class="font-weight-bold mb-3">Гарантии на лечение</MudText>
                     @if (_warranties.Count == 0)
                     {
-                        <EmptyState Icon="@Icons.Material.Filled.VerifiedUser" Title="Гарантийных работ нет" />
+                        <EmptyState Icon="@LucideIcons.ShieldCheck" Title="Гарантийных работ нет" />
                     }
                     else
                     {
@@ -343,12 +346,12 @@ else
         </MudTabPanel>
 
         <!-- Documents/Files Tab -->
-        <MudTabPanel Text="Файлы" Icon="@Icons.Material.Filled.AttachFile">
+        <MudTabPanel Text="Файлы" Icon="@LucideIcons.Paperclip">
             <PatientFilesGallery PatientId="_patient.Id" />
         </MudTabPanel>
 
         <!-- Timeline Tab -->
-        <MudTabPanel Text="Лента" Icon="@Icons.Material.Filled.History">
+        <MudTabPanel Text="Лента" Icon="@LucideIcons.History">
             <PatientTimeline PatientId="_patient.Id" />
         </MudTabPanel>
     </MudTabs>
@@ -463,6 +466,34 @@ else
         catch (ApiException ex)
         {
             Snackbar.Add($"Ошибка восстановления: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task DeletePatientAsync()
+    {
+        var parameters = new DialogParameters
+        {
+            { "Title", "Удаление пациента" },
+            { "Message", "Это действие безвозвратно удалит карту пациента и всю его историю: визиты, платежи, зубную карту, файлы, напоминания и планы лечения. Отменить это будет невозможно." },
+            { "ConfirmButtonText", "Удалить окончательно" }
+        };
+
+        var dialog = await DialogService.ShowAsync<Components.Shared.TypedConfirmDialog>("Удаление пациента", parameters,
+            new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true });
+        var result = await dialog.Result;
+
+        if (result is { Canceled: false })
+        {
+            try
+            {
+                await Api.DeletePatientAsync(Id);
+                Snackbar.Add("Пациент удалён.", Severity.Success);
+                Navigation.NavigateTo("/patients");
+            }
+            catch (ApiException ex)
+            {
+                Snackbar.Add($"Ошибка удаления: {ex.Message}", Severity.Error);
+            }
         }
     }
 

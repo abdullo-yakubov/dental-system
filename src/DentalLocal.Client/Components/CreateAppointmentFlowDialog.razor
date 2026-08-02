@@ -1,4 +1,4 @@
-@using DentalLocal.Shared.Contracts.Icd
+﻿@using DentalLocal.Shared.Contracts.Icd
 @inject ApiClient Api
 @inject ISnackbar Snackbar
 
@@ -48,10 +48,10 @@
                                  CoerceText="true"
                                  CoerceValue="false"
                                  Class="mb-4"
-                                 AdornmentIcon="@Icons.Material.Filled.Search" />
+                                 AdornmentIcon="@LucideIcons.Search" />
 
                 <div class="d-flex justify-center mt-2">
-                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="() => _isCreatingNewPatient = true">
+                    <MudButton Variant="Variant.Outlined" Color="Color.Primary" StartIcon="@LucideIcons.UserPlus" OnClick="() => _isCreatingNewPatient = true">
                         Создать нового пациента
                     </MudButton>
                 </div>
@@ -129,7 +129,7 @@
                         <MudSelect T="Guid" @bind-Value="item.ProcedureId" Label="Процедура" Dense="true" SelectedValuesChanged="() => ProcedureChanged(item)">
                             @foreach (var p in FilteredProcedures)
                             {
-                                <MudSelectItem Value="@p.Id">@p.Name (@p.Price.ToString("N0") сум)</MudSelectItem>
+                                <MudSelectItem Value="@p.Id">@p.Name (@p.Price.ToString("N0") сомони)</MudSelectItem>
                             }
                         </MudSelect>
                     </MudItem>
@@ -143,12 +143,12 @@
                         <MudNumericField T="int" @bind-Value="item.Quantity" Label="Кол-во" Dense="true" Min="1" />
                     </MudItem>
                     <MudItem xs="1" Class="d-flex justify-center">
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" OnClick="() => RemoveItem(item)" />
+                        <MudIconButton Icon="@LucideIcons.Trash" Size="Size.Small" OnClick="() => RemoveItem(item)" />
                     </MudItem>
                 </MudGrid>
             }
 
-            <MudButton StartIcon="@Icons.Material.Filled.Add" Color="Color.Primary" OnClick="AddItem" Class="mb-4">
+            <MudButton StartIcon="@LucideIcons.Plus" Color="Color.Primary" OnClick="AddItem" Class="mb-4">
                 Добавить процедуру
             </MudButton>
 
@@ -211,7 +211,7 @@
                     var procName = _procedures.FirstOrDefault(p => p.Id == item.ProcedureId)?.Name ?? "Неизвестная услуга";
                     <div class="d-flex justify-space-between py-1 font-size-14">
                         <span>@procName @(item.ToothNumber.HasValue ? $"(Зуб {item.ToothNumber})" : "") x @item.Quantity</span>
-                        <span class="font-weight-bold">@((item.Price * item.Quantity).ToString("N0")) сум</span>
+                        <span class="font-weight-bold">@((item.Price * item.Quantity).ToString("N0")) сомони</span>
                     </div>
                 }
 
@@ -219,7 +219,7 @@
 
                 <div class="d-flex justify-space-between align-center font-weight-bold">
                     <MudText Typo="Typo.subtitle1">Итоговая стоимость:</MudText>
-                    <MudText Typo="Typo.h6" Color="Color.Success">@CalculateTotal().ToString("N0") сум</MudText>
+                    <MudText Typo="Typo.h6" Color="Color.Success">@CalculateTotal().ToString("N0") сомони</MudText>
                 </div>
 
                 <MudDivider Class="my-3" />

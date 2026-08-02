@@ -16,27 +16,41 @@
 {
     <MudLayout Class="app-shell">
         <MudAppBar Elevation="0" Class="app-bar-glass">
-            <img src="logo.jpg" alt="Logo" style="height: 36px; width: 36px; border-radius: 50%; object-fit: cover; margin-right: 12px; border: 2px solid rgba(255,255,255,0.2);" />
-            <MudText Typo="Typo.h6">DentalLocal</MudText>
+            <MudIconButton Icon="@LucideIcons.Menu" Color="Color.Inherit" Class="d-md-none mr-1"
+                           OnClick="@(() => _drawerOpen = !_drawerOpen)" aria-label="Открыть меню" />
+            <img src="logo.jpg" alt="Logo" class="app-logo" />
+            <MudText Typo="Typo.h6" Class="d-none d-sm-flex">DentalLocal</MudText>
             <MudSpacer />
-            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mr-4">
-                <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" Color="Color.Inherit" Style="opacity:0.7" />
+            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center" Class="mr-4 d-none d-sm-flex">
+                <MudIcon Icon="@LucideIcons.Clock" Size="Size.Small" Color="Color.Inherit" Style="opacity:0.6" aria-hidden="true" />
                 <MudText Typo="Typo.body1" Class="font-weight-bold" Style="font-variant-numeric: tabular-nums;">@_now.ToString("HH:mm:ss")</MudText>
-                <MudText Typo="Typo.caption" Style="opacity:0.7">@_now.ToString("dd.MM.yyyy")</MudText>
+                <MudText Typo="Typo.caption" Style="opacity:0.6">@_now.ToString("dd.MM.yyyy")</MudText>
             </MudStack>
+            <MudMenu Icon="@LucideIcons.Globe" Color="Color.Inherit" AriaLabel="Выбор языка интерфейса">
+                <MudMenuItem OnClick="@(() => SetLanguageAsync("ru"))">Русский</MudMenuItem>
+                <MudMenuItem OnClick="@(() => SetLanguageAsync("tj"))">Тоҷикӣ</MudMenuItem>
+                <MudMenuItem OnClick="@(() => SetLanguageAsync("en"))">English</MudMenuItem>
+            </MudMenu>
             <MudTooltip Text="@(ThemeService.Accent == AppAccent.Blue ? "Акцент: синий" : "Акцент: бирюзовый")">
-                <MudIconButton Icon="@Icons.Material.Filled.Palette" Color="Color.Inherit" OnClick="ToggleAccent" />
+                <MudIconButton Icon="@LucideIcons.Palette" Color="Color.Inherit" OnClick="ToggleAccent"
+                               aria-label="@(ThemeService.Accent == AppAccent.Blue ? "Сменить акцент на бирюзовый" : "Сменить акцент на синий")" />
             </MudTooltip>
             <MudTooltip Text="@(ThemeService.IsDark ? "Светлая тема" : "Тёмная тема")">
-                <MudIconButton Icon="@(ThemeService.IsDark ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" Color="Color.Inherit" OnClick="ToggleMode" />
+                <MudIconButton Icon="@(ThemeService.IsDark ? LucideIcons.Sun : LucideIcons.Moon)" Color="Color.Inherit" OnClick="ToggleMode"
+                               aria-label="@(ThemeService.IsDark ? "Переключить на светлую тему" : "Переключить на тёмную тему")" />
             </MudTooltip>
-            <MudIconButton Icon="@Icons.Material.Filled.Logout" Color="Color.Inherit" OnClick="Logout" title="Выход" />
+            <MudTooltip Text="Выход">
+                <MudIconButton Icon="@LucideIcons.Logout" Color="Color.Inherit" OnClick="Logout" aria-label="Выйти из системы" />
+            </MudTooltip>
         </MudAppBar>
-        <MudDrawer Open="true" Elevation="0" Variant="DrawerVariant.Persistent" Class="app-drawer-glass">
+        <!-- На md+ (≥960px) остаётся постоянной боковой панелью, на телефонах/планшетах уже (<960px)
+             становится выезжающей overlay-панелью, закрытой по умолчанию и переключаемой гамбургером
+             выше — см. запрос на адаптивную вёрстку под телефон. -->
+        <MudDrawer @bind-Open="_drawerOpen" Elevation="0" Variant="DrawerVariant.Responsive" Breakpoint="Breakpoint.Md" Class="app-drawer-glass">
             <NavMenu />
         </MudDrawer>
         <MudMainContent>
-            <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-4">
+            <MudContainer MaxWidth="MaxWidth.ExtraLarge" Class="pa-2 pa-sm-4">
                 <div class="page-fade-in" @key="Navigation.Uri">
                     @Body
                 </div>
@@ -77,7 +91,8 @@ else
 
 @code {
     private DateTime _now = DateTime.Now;
-    private System.Threading.Timer? _clockTimer;
+    private bool _drawerOpen = true;
+    private readonly CancellationTokenSource _clockCts = new();
     private string _unlockCode = string.Empty;
     private string? _unlockError;
     private bool _isUnlocking;
@@ -90,14 +105,28 @@ else
         SessionLock.Changed += OnThemeChanged;
         await ThemeService.InitializeAsync();
 
-        _clockTimer = new System.Threading.Timer(_ =>
-        {
-            _now = DateTime.Now;
-            InvokeAsync(StateHasChanged);
-        }, null, TimeSpan.Zero, TimeSpan.FromSeconds(1));
+        _ = RunClockAsync(_clockCts.Token);
 
         if (AuthState.IsAuthenticated)
             await StartIdleTrackingAsync();
+    }
+
+    private async Task RunClockAsync(CancellationToken cancellationToken)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+
+        try
+        {
+            while (await timer.WaitForNextTickAsync(cancellationToken))
+            {
+                _now = DateTime.Now;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Компонент уничтожен — цикл часов останавливается штатно.
+        }
     }
 
     private async Task StartIdleTrackingAsync()
@@ -145,6 +174,12 @@ else
 
     private void OnThemeChanged() => InvokeAsync(StateHasChanged);
 
+    private async Task SetLanguageAsync(string languageCode)
+    {
+        await CultureService.SetStoredCultureAsync(JsRuntime, languageCode);
+        Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+    }
+
     private Task ToggleMode() => ThemeService.ToggleModeAsync();
 
     private Task ToggleAccent() => ThemeService.SetAccentAsync(
@@ -161,7 +196,8 @@ else
         ThemeService.Changed -= OnThemeChanged;
         AuthState.Changed -= OnThemeChanged;
         SessionLock.Changed -= OnThemeChanged;
-        _clockTimer?.Dispose();
+        _clockCts.Cancel();
+        _clockCts.Dispose();
 
         if (_idleRef is not null)
         {

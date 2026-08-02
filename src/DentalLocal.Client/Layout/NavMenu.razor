@@ -1,12 +1,15 @@
-<MudNavMenu Class="pa-2">
-    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Дашборд</MudNavLink>
-    <MudNavLink Href="patients" Icon="@Icons.Material.Filled.People">Пациенты</MudNavLink>
-    <MudNavLink Href="calendar" Icon="@Icons.Material.Filled.CalendarMonth">Календарь</MudNavLink>
-    <MudNavLink Href="debtors" Icon="@Icons.Material.Filled.MoneyOff">Должники</MudNavLink>
-    <MudNavLink Href="inventory" Icon="@Icons.Material.Filled.Warehouse">Склад</MudNavLink>
-    <MudNavLink Href="procedures" Icon="@Icons.Material.Filled.MedicalServices">Процедуры</MudNavLink>
-    <MudNavGroup Title="Ещё" Icon="@Icons.Material.Filled.MoreHoriz" Expanded="false">
-        <MudNavLink Href="notes-search" Icon="@Icons.Material.Filled.Search">Поиск по заметкам</MudNavLink>
-        <MudNavLink Href="settings" Icon="@Icons.Material.Filled.Settings">Настройки</MudNavLink>
+@inject IStringLocalizer<SharedResource> Loc
+
+<MudNavMenu Class="pa-2 app-nav">
+    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@LucideIcons.Dashboard">@Loc["Nav_Dashboard"]</MudNavLink>
+    <MudNavLink Href="patients" Icon="@LucideIcons.Patients">@Loc["Nav_Patients"]</MudNavLink>
+    <MudNavLink Href="calendar" Icon="@LucideIcons.Calendar">@Loc["Nav_Calendar"]</MudNavLink>
+    <MudNavLink Href="debtors" Icon="@LucideIcons.Debtors">@Loc["Nav_Debtors"]</MudNavLink>
+    <MudNavLink Href="inventory" Icon="@LucideIcons.Inventory">@Loc["Nav_Inventory"]</MudNavLink>
+    <MudNavLink Href="procedures" Icon="@LucideIcons.Procedures">@Loc["Nav_Procedures"]</MudNavLink>
+    <MudNavLink Href="analytics" Icon="@LucideIcons.Analytics">@Loc["Nav_Analytics"]</MudNavLink>
+    <MudNavGroup Title="@Loc["Nav_More"]" Icon="@LucideIcons.More" Expanded="false">
+        <MudNavLink Href="notes-search" Icon="@LucideIcons.Search">@Loc["Nav_NotesSearch"]</MudNavLink>
+        <MudNavLink Href="settings" Icon="@LucideIcons.Settings">@Loc["Nav_Settings"]</MudNavLink>
     </MudNavGroup>
 </MudNavMenu>

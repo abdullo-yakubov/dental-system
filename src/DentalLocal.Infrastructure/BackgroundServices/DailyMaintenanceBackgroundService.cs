@@ -59,6 +59,7 @@ public class DailyMaintenanceBackgroundService : BackgroundService
                 if (now - _lastFileIntegrityCheckTime >= TimeSpan.FromHours(12))
                 {
                     await RunFileIntegrityCheckAsync(stoppingToken);
+                    RunOrphanTempFileCleanup();
                     _lastFileIntegrityCheckTime = now;
                 }
 
@@ -179,6 +180,50 @@ public class DailyMaintenanceBackgroundService : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to run patient files integrity check.");
+        }
+    }
+
+    /// <summary>
+    /// Уборка "сирот" из Temp/ — временных файлов, оставшихся от загрузки, прерванной между записью
+    /// на диск и коммитом в БД (см. промпт 13 аудита: File.Move в целевой путь происходит только после
+    /// успешного SaveChangesAsync, поэтому файл, переживший процесс дольше 24 часов в Temp/, точно
+    /// не завершённая загрузка, а мусор от сбоя).
+    /// </summary>
+    private void RunOrphanTempFileCleanup()
+    {
+        try
+        {
+            var tempDir = Path.Combine(Directory.GetCurrentDirectory(), "Temp");
+            if (!Directory.Exists(tempDir))
+                return;
+
+            var threshold = DateTime.UtcNow.AddHours(-24);
+            var deletedCount = 0;
+
+            foreach (var filePath in Directory.EnumerateFiles(tempDir, "upload_*"))
+            {
+                try
+                {
+                    if (File.GetLastWriteTimeUtc(filePath) < threshold)
+                    {
+                        File.Delete(filePath);
+                        deletedCount++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Не удалось удалить временный файл-сироту {Path}.", filePath);
+                }
+            }
+
+            if (deletedCount > 0)
+            {
+                _logger.LogInformation("Уборка временных файлов: удалено {Count} файлов-сирот старше 24 часов.", deletedCount);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to run orphan temp file cleanup.");
         }
     }
 

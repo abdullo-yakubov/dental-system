@@ -103,3 +103,33 @@ public sealed class GetDoctorWorkloadStatsQueryHandler(IUnitOfWork unitOfWork)
     private static double WeeksBetween(DateOnly from, DateOnly to) =>
         Math.Max(1, (to.DayNumber - from.DayNumber) / 7.0);
 }
+
+// ---------------------------------------------------------------------------
+
+/// <summary>Себестоимость и реальная прибыль за период с учётом списанных материалов (раздел 17.13 ТЗ).</summary>
+public sealed record GetProfitStatsQuery(DateOnly? From, DateOnly? To) : IQuery<ProfitStatsDto>;
+
+public sealed class GetProfitStatsQueryHandler(IUnitOfWork unitOfWork)
+    : IRequestHandler<GetProfitStatsQuery, Result<ProfitStatsDto>>
+{
+    public async Task<Result<ProfitStatsDto>> Handle(GetProfitStatsQuery request, CancellationToken cancellationToken)
+    {
+        var to = request.To ?? DateOnly.FromDateTime(DateTime.UtcNow);
+        var from = request.From ?? to.AddMonths(-1);
+
+        var visits = await unitOfWork.Visits.GetByDateRangeAsync(from, to, cancellationToken);
+        var billableVisits = visits.Where(v => v.Status != VisitStatus.Cancelled).ToList();
+
+        var revenue = billableVisits.Sum(v => v.TotalCost);
+
+        var visitIds = billableVisits.Select(v => v.Id).ToList();
+        var usages = await unitOfWork.MaterialUsages.GetByVisitIdsAsync(visitIds, cancellationToken);
+        // Себестоимость считается по снапшоту цены на момент списания (MaterialUsage.PricePerUnitSnapshot),
+        // а не по текущей Material.PricePerUnit — иначе изменение цены материала задним числом
+        // переписывает историческую прибыль по уже закрытым визитам.
+        var materialCost = usages.Sum(u => u.QuantityUsed * u.PricePerUnitSnapshot);
+
+        var dto = new ProfitStatsDto(revenue, materialCost, revenue - materialCost, from, to);
+        return Result.Success(dto);
+    }
+}

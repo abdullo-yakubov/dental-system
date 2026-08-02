@@ -8,7 +8,10 @@ public class DebtConfiguration : IEntityTypeConfiguration<Debt>
 {
     public void Configure(EntityTypeBuilder<Debt> builder)
     {
-        builder.ToTable("debts");
+        // Инвариант знака и границ (см. промпт 20 аудита) — на уровне домена уже защищено Debt.ApplyPayment/
+        // ReversePayment, но CHECK на БД не даёт даже прямому SQL/будущей миграции завести некорректную строку.
+        builder.ToTable("debts", t => t.HasCheckConstraint(
+            "ck_debts_remaining_amount_bounds", "remaining_amount >= 0 AND remaining_amount <= original_amount"));
 
         builder.HasKey(d => d.Id);
 

@@ -37,7 +37,8 @@ public sealed class GetSettingsQueryHandler(IUnitOfWork unitOfWork, IMemoryCache
                     : DentalDefaults.BackupRetentionDays,
                 int.TryParse(Get(AppSettingKeys.AutoLockMinutes, DentalDefaults.AutoLockMinutes.ToString()), out var lockMinutes)
                     ? lockMinutes
-                    : DentalDefaults.AutoLockMinutes);
+                    : DentalDefaults.AutoLockMinutes,
+                bool.TryParse(Get(AppSettingKeys.Enable3DOdontogram, "false"), out var enable3D) && enable3D);
         });
 
         return Result.Success(dto!);
@@ -53,7 +54,8 @@ public sealed record UpdateSettingsCommand(
     string Language,
     string BackupTime,
     int BackupRetentionDays,
-    int AutoLockMinutes) : ICommand<SettingsDto>;
+    int AutoLockMinutes,
+    bool Enable3DOdontogram) : ICommand<SettingsDto>;
 
 public sealed class UpdateSettingsCommandValidator : AbstractValidator<UpdateSettingsCommand>
 {
@@ -79,6 +81,7 @@ public sealed class UpdateSettingsCommandHandler(IUnitOfWork unitOfWork, IMemory
         await unitOfWork.AppSettings.UpsertAsync(AppSettingKeys.BackupTime, request.BackupTime, cancellationToken);
         await unitOfWork.AppSettings.UpsertAsync(AppSettingKeys.BackupRetentionDays, request.BackupRetentionDays.ToString(), cancellationToken);
         await unitOfWork.AppSettings.UpsertAsync(AppSettingKeys.AutoLockMinutes, request.AutoLockMinutes.ToString(), cancellationToken);
+        await unitOfWork.AppSettings.UpsertAsync(AppSettingKeys.Enable3DOdontogram, request.Enable3DOdontogram.ToString(), cancellationToken);
 
         await unitOfWork.AuditLogs.AddAsync(AuditLog.Create("SETTINGS_CHANGED", "AppSetting", null, null), cancellationToken);
 
@@ -86,7 +89,8 @@ public sealed class UpdateSettingsCommandHandler(IUnitOfWork unitOfWork, IMemory
 
         var dto = new SettingsDto(
             request.DoctorName, request.ClinicName, request.Currency,
-            request.Theme, request.Language, request.BackupTime, request.BackupRetentionDays, request.AutoLockMinutes);
+            request.Theme, request.Language, request.BackupTime, request.BackupRetentionDays, request.AutoLockMinutes,
+            request.Enable3DOdontogram);
 
         return Result.Success(dto);
     }

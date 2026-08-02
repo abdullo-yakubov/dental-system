@@ -28,9 +28,10 @@ public sealed class GetPatientDiscountHistoryQueryHandler(IUnitOfWork unitOfWork
 // ── Commands ─────────────────────────────────────────────────────────────────
 
 /// <summary>
-/// Записывает скидку в неизменяемый журнал DiscountHistory. Не пересчитывает итоговую сумму визита —
-/// это ответственность вызывающей стороны (клиент должен применить скидку к цене визита/процедуры до сохранения);
-/// это упрощение, чтобы не завязываться на пересчёт Visit.TotalAmount в рамках этой задачи.
+/// Применяет скидку к визиту (Visit.ApplyDiscount — base minus скидка визита = TotalCost, см. промпт 24
+/// аудита) и параллельно пишет запись в неизменяемый журнал DiscountHistory. Если VisitId не указан —
+/// скидка не на визит (например, зарезервировано под будущую скидку на уровне пациента), тогда пишется
+/// только запись в журнал без пересчёта.
 /// </summary>
 public sealed record ApplyDiscountCommand(
     Guid PatientId,
@@ -67,10 +68,23 @@ public sealed class ApplyDiscountCommandHandler(IUnitOfWork unitOfWork)
         DiscountHistory discount;
         try
         {
+            if (request.VisitId.HasValue)
+            {
+                var visit = await unitOfWork.Visits.GetByIdWithItemsAsync(request.VisitId.Value, cancellationToken);
+                if (visit is null)
+                    return Result.Failure<DiscountHistoryDto>(Error.NotFound("Visit.NotFound", "Визит не найден."));
+
+                visit.ApplyDiscount(request.Percent, request.Reason);
+            }
+
             discount = DiscountHistory.Create(
                 request.PatientId, request.VisitId, request.DiscountType, request.Amount, request.Percent, request.Reason);
         }
         catch (ArgumentException ex)
+        {
+            return Result.Failure<DiscountHistoryDto>(Error.Validation("Discount.InvalidData", ex.Message));
+        }
+        catch (Domain.Exceptions.DomainException ex)
         {
             return Result.Failure<DiscountHistoryDto>(Error.Validation("Discount.InvalidData", ex.Message));
         }

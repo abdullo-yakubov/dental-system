@@ -17,4 +17,5 @@ public enum ToothStateType : short
     Bridge = 12,
     Missing = 13,
     Deciduous = 14,
+    Exfoliated = 15,
 }

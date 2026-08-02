@@ -1,0 +1,108 @@
+@* 3D-режим одонтограммы (разделы 8/17.3/19.7/21.5 ТЗ). Геометрия зубов/дёсен не строится
+   в браузере — грузится готовый .glb (см. tools/teeth-model-generator и odontogram3d.js). *@
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div class="odontogram-3d-wrapper" style="position: relative;">
+    @if (_error is not null)
+    {
+        <MudAlert Severity="Severity.Warning">@_error</MudAlert>
+    }
+    else
+    {
+        <canvas id="@_canvasId" style="width:100%; height:480px; touch-action:none; border-radius:12px;"></canvas>
+        <MudText Typo="Typo.caption" Class="text-secondary mt-1 d-block">
+            Вращение — зажать и тянуть мышью, зум — колесо. Клик по зубу открывает диагноз, Shift+клик — мультивыбор.
+        </MudText>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid PatientId { get; set; }
+    [Parameter] public OdontogramDto? Odontogram { get; set; }
+    [Parameter] public bool IsDeciduous { get; set; }
+    [Parameter] public Action<int, string?>? OnToothClick { get; set; }
+    [Parameter] public Action<IReadOnlyList<int>>? OnSelectionChanged { get; set; }
+    [Parameter] public IReadOnlyCollection<int>? SelectedTeeth { get; set; }
+
+    private readonly string _canvasId = $"odontogram3d-{Guid.NewGuid():N}";
+    private DotNetObjectReference<Odontogram3D>? _selfRef;
+    private bool _initialized;
+    private bool _lastDeciduous;
+    private string? _error;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _selfRef = DotNetObjectReference.Create(this);
+            _lastDeciduous = IsDeciduous;
+            await JS.InvokeVoidAsync("dentalOdontogram3d.init", _canvasId, _selfRef,
+                new { dentition = IsDeciduous ? "deciduous" : "permanent" });
+            _initialized = true;
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!_initialized) return;
+
+        if (IsDeciduous != _lastDeciduous)
+        {
+            _lastDeciduous = IsDeciduous;
+            await JS.InvokeVoidAsync("dentalOdontogram3d.setDentition", _canvasId, IsDeciduous ? "deciduous" : "permanent");
+        }
+
+        await ApplyStatusesAsync();
+        await ApplySelectionAsync();
+    }
+
+    private async Task ApplySelectionAsync()
+    {
+        await JS.InvokeVoidAsync("dentalOdontogram3d.setSelection", _canvasId, SelectedTeeth ?? []);
+    }
+
+    private async Task ApplyStatusesAsync()
+    {
+        if (Odontogram is null) return;
+
+        var items = Odontogram.Teeth.Select(t => new { fdi = (int)t.ToothNumber, status = t.State.ToString() });
+        await JS.InvokeVoidAsync("dentalOdontogram3d.setStatusBatch", _canvasId, items);
+    }
+
+    [JSInvokable]
+    public void OnToothClicked(int fdi, string? surfaceCode) => OnToothClick?.Invoke(fdi, surfaceCode);
+
+    [JSInvokable]
+    public void OnToothHovered(int? fdi) { /* задел под будущую подсветку извне (§9); пока не используется */ }
+
+    // Имя JS-вызова ("OnSelectionChanged", §9) конфликтует с именем параметра-делегата
+    // OnSelectionChanged, поэтому сопоставлено явно через атрибут.
+    [JSInvokable("OnSelectionChanged")]
+    public void OnSelectionChangedFromJs(int[] fdi) => OnSelectionChanged?.Invoke(fdi);
+
+    [JSInvokable]
+    public async Task OnModelLoaded(int toothCount)
+    {
+        await ApplyStatusesAsync();
+        await ApplySelectionAsync();
+    }
+
+    [JSInvokable]
+    public void OnError(string message)
+    {
+        // §3: деградация без ошибки на весь экран — компактное предупреждение вместо канвы.
+        _error = "3D-режим недоступен: " + message;
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_initialized)
+        {
+            try { await JS.InvokeVoidAsync("dentalOdontogram3d.dispose", _canvasId); }
+            catch (JSDisconnectedException) { /* circuit already gone */ }
+        }
+        _selfRef?.Dispose();
+    }
+}

@@ -17,6 +17,7 @@ public sealed class AuthState
     {
         Token = token;
         ExpiresAt = expiresAt;
+        _unauthorizedHandled = false;
         Changed?.Invoke();
     }
 
@@ -25,5 +26,23 @@ public sealed class AuthState
         Token = null;
         ExpiresAt = null;
         Changed?.Invoke();
+    }
+
+    /// <summary>
+    /// Single-flight обработка 401 (см. промпт 43 аудита): несколько параллельных запросов, у которых
+    /// протух токен, получат 401 одновременно — без этой защёлки каждый из них дёрнул бы Clear() и
+    /// событие Changed по кругу. Возвращает true только для первого вызова после успешного входа —
+    /// вызывающий код (BearerTokenHandler) должен разлогинить пользователя тогда и только тогда.
+    /// </summary>
+    private bool _unauthorizedHandled;
+
+    public bool TryHandleUnauthorizedOnce()
+    {
+        if (_unauthorizedHandled)
+            return false;
+
+        _unauthorizedHandled = true;
+        Clear();
+        return true;
     }
 }

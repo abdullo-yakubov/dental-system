@@ -1,11 +1,11 @@
-@inject ApiClient Api
+﻿@inject ApiClient Api
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
 <MudStack Spacing="4">
     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
         <MudText Typo="Typo.h6" Class="font-weight-bold">Планы лечения</MudText>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreatePlanAsync">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@LucideIcons.Plus" OnClick="OpenCreatePlanAsync">
             Новый план
         </MudButton>
     </MudStack>
@@ -34,7 +34,7 @@
                             </MudStack>
                             <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
                                 <MudChip T="string" Size="Size.Small" Color="@GetStatusColor(plan.Status)">@GetStatusLabel(plan.Status)</MudChip>
-                                <MudText Typo="Typo.subtitle2" Class="font-weight-bold">@plan.TotalEstimatedPrice.ToString("N0") сум</MudText>
+                                <MudText Typo="Typo.subtitle2" Class="font-weight-bold">@plan.TotalEstimatedPrice.ToString("N0") сомони</MudText>
                             </MudStack>
                         </MudStack>
                     </CardHeaderContent>
@@ -68,11 +68,11 @@
                                         <td>@(item.OrderIndex + 1)</td>
                                         <td>@item.ProcedureName</td>
                                         <td>@(item.ToothNumber?.ToString() ?? "—")</td>
-                                        <td>@item.EstimatedPrice.ToString("N0") сум</td>
+                                        <td>@item.EstimatedPrice.ToString("N0") сомони</td>
                                         <td>
                                             @if (item.IsCompleted)
                                             {
-                                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Check">Выполнено</MudChip>
+                                                <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@LucideIcons.Check">Выполнено</MudChip>
                                             }
                                             else
                                             {
@@ -88,16 +88,16 @@
                 @if (plan.Status is TreatmentPlanStatus.Draft or TreatmentPlanStatus.Active)
                 {
                     <MudCardActions>
-                        <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" StartIcon="@Icons.Material.Filled.PlaylistAdd" OnClick="@(() => OpenAddItemAsync(plan))">
+                        <MudButton Variant="Variant.Text" Color="Color.Primary" Size="Size.Small" StartIcon="@LucideIcons.ListPlus" OnClick="@(() => OpenAddItemAsync(plan))">
                             Добавить позицию
                         </MudButton>
                         @if (plan.Status == TreatmentPlanStatus.Draft)
                         {
-                            <MudButton Variant="Variant.Text" Color="Color.Success" Size="Size.Small" StartIcon="@Icons.Material.Filled.PlayArrow" OnClick="@(() => ActivatePlanAsync(plan))">
+                            <MudButton Variant="Variant.Text" Color="Color.Success" Size="Size.Small" StartIcon="@LucideIcons.Play" OnClick="@(() => ActivatePlanAsync(plan))">
                                 Активировать
                             </MudButton>
                         }
-                        <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" StartIcon="@Icons.Material.Filled.Cancel" OnClick="@(() => CancelPlanAsync(plan))">
+                        <MudButton Variant="Variant.Text" Color="Color.Error" Size="Size.Small" StartIcon="@LucideIcons.XCircle" OnClick="@(() => CancelPlanAsync(plan))">
                             Отменить
                         </MudButton>
                     </MudCardActions>

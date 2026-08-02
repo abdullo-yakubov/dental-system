@@ -13,7 +13,8 @@ public enum AppAccent
 
 /// <summary>
 /// Готовые темы MudBlazor для комбинаций режим (light/dark) x акцент (blue/teal),
-/// плюс соответствующие CSS-переменные для кастомных (не-MudBlazor) элементов, включая глассморфизм.
+/// плюс соответствующие CSS-переменные для кастомных (не-MudBlazor) элементов — премиум-минималистичный стиль
+/// (чистые поверхности, мягкие тени, без глассморфизма/блюра).
 /// </summary>
 public static class AppThemes
 {
@@ -35,12 +36,15 @@ public static class AppThemes
     public static MudTheme GetCustom(bool isDark, string primaryHex) =>
         BuildTheme(isDark, AppAccent.Blue, customPrimaryHex: primaryHex);
 
+    private static readonly string[] FontStack =
+        ["Inter", "Segoe UI Variable", "-apple-system", "SF Pro Display", "Segoe UI", "sans-serif"];
+
     private static MudTheme BuildTheme(bool isDark, AppAccent accent, string? customPrimaryHex = null)
     {
         var (primary, primaryDarken, secondary) = accent switch
         {
-            AppAccent.Teal => ("#0F9B8E", "#0B7A70", "#5E60CE"),
-            _ => ("#3E63DD", "#2F4FBF", "#00B8A9")
+            AppAccent.Teal => ("#0EA5A0", "#0B7F7A", "#6366F1"),
+            _ => ("#2F6FED", "#2454BE", "#10B981")
         };
 
         if (customPrimaryHex is not null)
@@ -56,55 +60,73 @@ public static class AppThemes
                 Primary = primary,
                 PrimaryDarken = primaryDarken,
                 Secondary = secondary,
-                AppbarBackground = "rgba(255,255,255,0.72)",
-                AppbarText = "#1A2233",
-                Background = "#F3F6FB",
-                BackgroundGray = "#E9EEF6",
+                AppbarBackground = "#FFFFFF",
+                AppbarText = "#111318",
+                Background = "#FAFAFB",
+                BackgroundGray = "#F1F2F5",
                 Surface = "#FFFFFF",
-                DrawerBackground = "rgba(255,255,255,0.65)",
-                DrawerText = "#1A2233",
-                TextPrimary = "#1A2233",
-                TextSecondary = "#5B6478",
-                Success = "#2FB380",
-                Warning = "#E8A63C",
-                Error = "#E5484D",
-                Info = "#3E9CDD",
-                Divider = "rgba(26,34,51,0.08)",
-                LinesDefault = "rgba(26,34,51,0.08)",
+                DrawerBackground = "#FFFFFF",
+                DrawerText = "#111318",
+                TextPrimary = "#111318",
+                TextSecondary = "#6B7280",
+                Success = "#16A34A",
+                Warning = "#D97706",
+                Error = "#DC2626",
+                Info = "#0284C7",
+                Divider = "rgba(17,19,24,0.08)",
+                LinesDefault = "rgba(17,19,24,0.08)",
+                GrayLight = "#F1F2F5",
+                TableLines = "rgba(17,19,24,0.06)",
             },
             PaletteDark = new PaletteDark
             {
                 Primary = primary,
                 PrimaryDarken = primaryDarken,
                 Secondary = secondary,
-                AppbarBackground = "rgba(20,24,34,0.72)",
-                AppbarText = "#EDF1F8",
-                Background = "#12151D",
-                BackgroundGray = "#171B25",
-                Surface = "#1B2029",
-                DrawerBackground = "rgba(20,24,34,0.65)",
-                DrawerText = "#EDF1F8",
-                TextPrimary = "#EDF1F8",
-                TextSecondary = "#9AA4B8",
-                Success = "#35C990",
-                Warning = "#F0B458",
-                Error = "#F16368",
-                Info = "#4FB1EE",
-                Divider = "rgba(237,241,248,0.08)",
-                LinesDefault = "rgba(237,241,248,0.08)",
+                AppbarBackground = "#16171C",
+                AppbarText = "#F3F4F6",
+                Background = "#0B0C0F",
+                BackgroundGray = "#1D1F26",
+                Surface = "#16171C",
+                DrawerBackground = "#16171C",
+                DrawerText = "#F3F4F6",
+                TextPrimary = "#F3F4F6",
+                TextSecondary = "#9AA0AC",
+                Success = "#4ADE80",
+                Warning = "#FBBF24",
+                Error = "#F87171",
+                Info = "#38BDF8",
+                Divider = "rgba(243,244,246,0.08)",
+                LinesDefault = "rgba(243,244,246,0.08)",
+                TableLines = "rgba(243,244,246,0.06)",
             },
             LayoutProperties = new LayoutProperties
             {
-                DefaultBorderRadius = "14px",
-                DrawerWidthLeft = "268px",
+                DefaultBorderRadius = "10px",
+                DrawerWidthLeft = "260px",
                 AppbarHeight = "64px",
             },
             Typography = new Typography
             {
                 Default = new DefaultTypography
                 {
-                    FontFamily = ["Inter", "Segoe UI", "Helvetica Neue", "Arial", "sans-serif"]
-                }
+                    FontFamily = FontStack,
+                    FontSize = "0.9375rem",
+                    LineHeight = "1.55",
+                },
+                H1 = new H1Typography { FontFamily = FontStack, FontSize = "2.5rem", FontWeight = "700", LineHeight = "1.2", LetterSpacing = "-0.02em" },
+                H2 = new H2Typography { FontFamily = FontStack, FontSize = "2rem", FontWeight = "700", LineHeight = "1.25", LetterSpacing = "-0.02em" },
+                H3 = new H3Typography { FontFamily = FontStack, FontSize = "1.75rem", FontWeight = "650", LineHeight = "1.3", LetterSpacing = "-0.015em" },
+                H4 = new H4Typography { FontFamily = FontStack, FontSize = "1.5rem", FontWeight = "650", LineHeight = "1.3", LetterSpacing = "-0.01em" },
+                H5 = new H5Typography { FontFamily = FontStack, FontSize = "1.25rem", FontWeight = "600", LineHeight = "1.35" },
+                H6 = new H6Typography { FontFamily = FontStack, FontSize = "1.0625rem", FontWeight = "600", LineHeight = "1.4" },
+                Subtitle1 = new Subtitle1Typography { FontFamily = FontStack, FontSize = "1rem", FontWeight = "500", LineHeight = "1.5" },
+                Subtitle2 = new Subtitle2Typography { FontFamily = FontStack, FontSize = "0.875rem", FontWeight = "500", LineHeight = "1.45" },
+                Body1 = new Body1Typography { FontFamily = FontStack, FontSize = "0.9375rem", FontWeight = "400", LineHeight = "1.6" },
+                Body2 = new Body2Typography { FontFamily = FontStack, FontSize = "0.8438rem", FontWeight = "400", LineHeight = "1.55" },
+                Button = new ButtonTypography { FontFamily = FontStack, FontSize = "0.875rem", FontWeight = "600", LineHeight = "1.4" },
+                Caption = new CaptionTypography { FontFamily = FontStack, FontSize = "0.75rem", FontWeight = "400", LineHeight = "1.4" },
+                Overline = new OverlineTypography { FontFamily = FontStack, FontSize = "0.6875rem", FontWeight = "600", LetterSpacing = "0.06em" },
             }
         };
     }

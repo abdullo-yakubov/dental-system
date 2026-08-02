@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="2" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Nav_Dashboard" xml:space="preserve"><value>Лавҳаи асосӣ</value></data>
+  <data name="Nav_Patients" xml:space="preserve"><value>Беморон</value></data>
+  <data name="Nav_Calendar" xml:space="preserve"><value>Тақвим</value></data>
+  <data name="Nav_Debtors" xml:space="preserve"><value>Қарздорон</value></data>
+  <data name="Nav_Inventory" xml:space="preserve"><value>Анбор</value></data>
+  <data name="Nav_Procedures" xml:space="preserve"><value>Амалиётҳо</value></data>
+  <data name="Nav_Analytics" xml:space="preserve"><value>Таҳлил</value></data>
+  <data name="Nav_More" xml:space="preserve"><value>Бештар</value></data>
+  <data name="Nav_NotesSearch" xml:space="preserve"><value>Ҷустуҷӯи ёддоштҳо</value></data>
+  <data name="Nav_Settings" xml:space="preserve"><value>Танзимот</value></data>
+  <data name="Page_Dashboard_Title" xml:space="preserve"><value>Лавҳаи идоракунӣ</value></data>
+  <data name="Page_Patients_Title" xml:space="preserve"><value>Беморон</value></data>
+  <data name="Page_Calendar_Title" xml:space="preserve"><value>Тақвими қабулҳо</value></data>
+  <data name="Page_Calendar_Subtitle" xml:space="preserve"><value>Ҷадвали ҳафтаинаи ташрифҳо</value></data>
+  <data name="Page_Debtors_Title" xml:space="preserve"><value>Қарздорон</value></data>
+  <data name="Page_Inventory_Title" xml:space="preserve"><value>Анбор</value></data>
+  <data name="Page_Procedures_Title" xml:space="preserve"><value>Амалиётҳо</value></data>
+  <data name="Page_Analytics_Title" xml:space="preserve"><value>Таҳлил</value></data>
+  <data name="Page_Analytics_Subtitle" xml:space="preserve"><value>Нишондиҳандаҳои молиявӣ ва боркунии духтур</value></data>
+  <data name="Page_Settings_Title" xml:space="preserve"><value>Танзимот</value></data>
+  <data name="Page_NotesSearch_Title" xml:space="preserve"><value>Ҷустуҷӯи ёддоштҳо</value></data>
+  <data name="Login_EnterCode" xml:space="preserve"><value>Рамзи воридшавиро ворид кунед</value></data>
+  <data name="Login_SignIn" xml:space="preserve"><value>Ворид шудан</value></data>
+  <data name="Login_RetryIn" xml:space="preserve"><value>Пас аз {0} сония аз нав кӯшиш кунед</value></data>
+  <data name="Common_Save" xml:space="preserve"><value>Нигоҳ доштан</value></data>
+  <data name="Common_Cancel" xml:space="preserve"><value>Бекор кардан</value></data>
+  <data name="Common_Export" xml:space="preserve"><value>Содирот ба Excel</value></data>
+  <data name="Common_Apply" xml:space="preserve"><value>Татбиқ кардан</value></data>
+  <data name="Dashboard_TotalPatients" xml:space="preserve"><value>Ҳамагӣ беморон</value></data>
+  <data name="Dashboard_ActivePatientsSuffix" xml:space="preserve"><value>{0} фаъол</value></data>
+  <data name="Dashboard_VisitsToday" xml:space="preserve"><value>Ташрифҳои имрӯза</value></data>
+  <data name="Dashboard_ScheduledAppointments" xml:space="preserve"><value>Қабулҳои банақшагирифташуда</value></data>
+  <data name="Dashboard_RevenueToday" xml:space="preserve"><value>Даромади имрӯза</value></data>
+  <data name="Dashboard_Currency" xml:space="preserve"><value>сомонӣ</value></data>
+  <data name="Dashboard_TotalDebt" xml:space="preserve"><value>Қарзи умумӣ</value></data>
+  <data name="Dashboard_DebtorsSuffix" xml:space="preserve"><value>{0} қарздор</value></data>
+  <data name="Dashboard_RevenueChartTitle" xml:space="preserve"><value>Динамикаи даромад (12 моҳи охир)</value></data>
+  <data name="Dashboard_NoRevenueData" xml:space="preserve"><value>Маълумот дар бораи даромад нест</value></data>
+  <data name="Dashboard_UpcomingVisits" xml:space="preserve"><value>Ташрифҳои наздик (7 рӯз)</value></data>
+  <data name="Dashboard_ColumnTime" xml:space="preserve"><value>Вақт</value></data>
+  <data name="Dashboard_ColumnPatient" xml:space="preserve"><value>Бемор</value></data>
+  <data name="Dashboard_ColumnDoctor" xml:space="preserve"><value>Духтур</value></data>
+  <data name="Dashboard_ColumnAmount" xml:space="preserve"><value>Маблағ</value></data>
+  <data name="Dashboard_NoUpcomingVisits" xml:space="preserve"><value>Ташрифҳои наздик нестанд</value></data>
+  <data name="Dashboard_TopProcedures" xml:space="preserve"><value>Амалиётҳои маъмул</value></data>
+  <data name="Dashboard_NoProcedureData" xml:space="preserve"><value>Маълумот дар бораи амалиётҳо нест</value></data>
+  <data name="Dashboard_WorkloadTitle" xml:space="preserve"><value>Боркунии духтур (30 рӯзи охир)</value></data>
+  <data name="Dashboard_VisitsInPeriod" xml:space="preserve"><value>Ташрифҳо барои давра</value></data>
+  <data name="Dashboard_CancelledPercent" xml:space="preserve"><value>Бекоршуда, %</value></data>
+  <data name="Dashboard_IdlePercent" xml:space="preserve"><value>Вақти холӣ нисбат ба ҷадвал, %</value></data>
+  <data name="Dashboard_NoWorkloadData" xml:space="preserve"><value>Маълумот дар бораи боркунӣ нест</value></data>
+  <data name="Dashboard_Heatmap" xml:space="preserve"><value>Харитаи гармӣ аз рӯи рӯз/соат</value></data>
+  <data name="Dashboard_AvgDurationByProcedure" xml:space="preserve"><value>Давомнокии миёна аз рӯи навъҳои амалиёт</value></data>
+  <data name="Dashboard_ColumnProcedure" xml:space="preserve"><value>Амалиёт</value></data>
+  <data name="Dashboard_ColumnAvgDurationMinutes" xml:space="preserve"><value>Давомнокии миёна, дақ</value></data>
+  <data name="Dashboard_ExportFailed" xml:space="preserve"><value>Содирот муяссар нашуд: {0}</value></data>
+  <data name="Dashboard_LoadFailed" xml:space="preserve"><value>Боргирии лавҳаи идоракунӣ муяссар нашуд: {0}</value></data>
+  <data name="Greeting_Morning" xml:space="preserve"><value>Субҳ ба хайр</value></data>
+  <data name="Greeting_Day" xml:space="preserve"><value>Рӯз ба хайр</value></data>
+  <data name="Greeting_Evening" xml:space="preserve"><value>Шом ба хайр</value></data>
+  <data name="Greeting_Night" xml:space="preserve"><value>Шаб ба хайр</value></data>
+  <data name="Greeting_WithDoctor" xml:space="preserve"><value>{0}, духтур {1}</value></data>
+  <data name="Day_Mon" xml:space="preserve"><value>ДШ</value></data>
+  <data name="Day_Tue" xml:space="preserve"><value>СШ</value></data>
+  <data name="Day_Wed" xml:space="preserve"><value>ЧШ</value></data>
+  <data name="Day_Thu" xml:space="preserve"><value>ПШ</value></data>
+  <data name="Day_Fri" xml:space="preserve"><value>ҶМ</value></data>
+  <data name="Day_Sat" xml:space="preserve"><value>ШН</value></data>
+  <data name="Day_Sun" xml:space="preserve"><value>ЯШ</value></data>
+  <data name="Common_ColumnPhone" xml:space="preserve"><value>Телефон</value></data>
+  <data name="Common_ColumnStatus" xml:space="preserve"><value>Ҳолат</value></data>
+  <data name="Common_RowsPerPage" xml:space="preserve"><value>Дар саҳифа:</value></data>
+  <data name="Common_PagerInfoFormat" xml:space="preserve"><value>{first_item}-{last_item} аз {all_items}</value></data>
+  <data name="Patients_Subtitle" xml:space="preserve"><value>Пойгоҳи беморони клиника</value></data>
+  <data name="Patients_NewPatient" xml:space="preserve"><value>Бемори нав</value></data>
+  <data name="Patients_SearchPlaceholder" xml:space="preserve"><value>Ҷустуҷӯ бо НАФ, телефон, рақами корт</value></data>
+  <data name="Patients_ShowArchived" xml:space="preserve"><value>Нишон додани бойгонишуда</value></data>
+  <data name="Patients_InactiveFilter" xml:space="preserve"><value>Ғайрифаъол (6+ моҳ)</value></data>
+  <data name="Patients_ColumnCardNumber" xml:space="preserve"><value>№ корт</value></data>
+  <data name="Patients_ColumnFullName" xml:space="preserve"><value>НАФ</value></data>
+  <data name="Patients_ColumnAge" xml:space="preserve"><value>Синну сол</value></data>
+  <data name="Patients_ColumnLastVisit" xml:space="preserve"><value>Ташрифи охирин</value></data>
+  <data name="Patients_NoVisitsYet" xml:space="preserve"><value>Ташриф набудааст</value></data>
+  <data name="Patients_Open" xml:space="preserve"><value>Кушодан</value></data>
+  <data name="Patients_EmptyInactiveTitle" xml:space="preserve"><value>Беморони ғайрифаъол нестанд</value></data>
+  <data name="Patients_EmptyInactiveDescription" xml:space="preserve"><value>Ҳамаи беморон дар 6 моҳи охир дар қабул буданд.</value></data>
+  <data name="Patients_ArchivedSuffix" xml:space="preserve"><value>(бойгонӣ)</value></data>
+  <data name="Patients_EmptyTitle" xml:space="preserve"><value>Беморон ёфт нашуданд</value></data>
+  <data name="Patients_EmptyDescription" xml:space="preserve"><value>Параметрҳои ҷустуҷӯро тағйир диҳед ё бемори навро илова кунед.</value></data>
+  <data name="Debtors_Subtitle" xml:space="preserve"><value>Қарзи беморон ва пардохти он</value></data>
+  <data name="Debtors_AddPatient" xml:space="preserve"><value>Илова кардани бемор</value></data>
+  <data name="Debtors_SearchPlaceholder" xml:space="preserve"><value>Ҷустуҷӯ бо НАФ ё телефони бемор</value></data>
+  <data name="Debtors_StatusLabel" xml:space="preserve"><value>Ҳолати қарз</value></data>
+  <data name="Debtors_StatusAll" xml:space="preserve"><value>Ҳамаи қарзҳо</value></data>
+  <data name="Debtors_StatusOpen" xml:space="preserve"><value>Кушода</value></data>
+  <data name="Debtors_StatusClosed" xml:space="preserve"><value>Пӯшида</value></data>
+  <data name="Debtors_ColumnPatient" xml:space="preserve"><value>Бемор</value></data>
+  <data name="Debtors_ColumnBirthDate" xml:space="preserve"><value>Санаи таваллуд</value></data>
+  <data name="Debtors_ColumnDebtAmount" xml:space="preserve"><value>Маблағи қарз</value></data>
+  <data name="Debtors_ColumnAge" xml:space="preserve"><value>Муҳлат</value></data>
+  <data name="Debtors_ColumnDetails" xml:space="preserve"><value>Тафсилот</value></data>
+  <data name="Debtors_DaysSuffix" xml:space="preserve"><value>рӯз</value></data>
+  <data name="Debtors_ChipOpen" xml:space="preserve"><value>Кушода</value></data>
+  <data name="Debtors_ChipClosed" xml:space="preserve"><value>Пӯшида</value></data>
+  <data name="Debtors_PayButton" xml:space="preserve"><value>Пардохт кардан</value></data>
+  <data name="Debtors_EmptyTitle" xml:space="preserve"><value>Қарзҳо ёфт нашуданд</value></data>
+  <data name="Debtors_EmptyDescription" xml:space="preserve"><value>Ҳамаи беморон ҳисоб карданд, ё филтрро тағйир диҳед.</value></data>
+  <data name="Debtors_ExportFailed" xml:space="preserve"><value>Содирот муяссар нашуд: {0}</value></data>
+  <data name="Debtors_PayDialogTitle" xml:space="preserve"><value>Пардохти қарз</value></data>
+  <data name="Calendar_WaitingList" xml:space="preserve"><value>Рӯйхати интизорӣ</value></data>
+  <data name="Calendar_BookAppointment" xml:space="preserve"><value>Сабти қабул</value></data>
+  <data name="Calendar_BookDialogTitle" xml:space="preserve"><value>Сабти қабул (қадам ба қадам)</value></data>
+  <data name="Calendar_WeekView" xml:space="preserve"><value>Намоиши ҳафтаина</value></data>
+  <data name="Calendar_DoctorFilterLabel" xml:space="preserve"><value>Филтр бо духтур</value></data>
+  <data name="Calendar_AllDoctors" xml:space="preserve"><value>Ҳамаи духтурон</value></data>
+  <data name="Calendar_DoctorLabel" xml:space="preserve"><value>Духтур: {0}</value></data>
+  <data name="Calendar_LoadFailed" xml:space="preserve"><value>Боргирии тақвим муяссар нашуд: {0}</value></data>
+  <data name="Calendar_VisitMoved" xml:space="preserve"><value>Ташриф гузаронида шуд.</value></data>
+  <data name="Calendar_MoveFailed" xml:space="preserve"><value>Гузарондани ташриф муяссар нашуд: {0}</value></data>
+  <data name="Calendar_VisitDialogTitle" xml:space="preserve"><value>Ташриф</value></data>
+  <data name="Settings_Subtitle" xml:space="preserve"><value>Танзимоти умумӣ, амният, нусхаҳои эҳтиётӣ</value></data>
+  <data name="Settings_TabGeneral" xml:space="preserve"><value>Умумӣ</value></data>
+  <data name="Settings_DoctorName" xml:space="preserve"><value>НАФ-и духтур</value></data>
+  <data name="Settings_ClinicName" xml:space="preserve"><value>Номи клиника</value></data>
+  <data name="Settings_Currency" xml:space="preserve"><value>Асъор</value></data>
+  <data name="Settings_ThemeLabel" xml:space="preserve"><value>Мавзӯи намоиш</value></data>
+  <data name="Settings_ThemeLight" xml:space="preserve"><value>Равшан</value></data>
+  <data name="Settings_ThemeDark" xml:space="preserve"><value>Торик</value></data>
+  <data name="Settings_AccentBlue" xml:space="preserve"><value>Кабуд</value></data>
+  <data name="Settings_AccentTeal" xml:space="preserve"><value>Фирӯза</value></data>
+  <data name="Settings_CustomAccentLabel" xml:space="preserve"><value>Ранги хосси акцент</value></data>
+  <data name="Settings_ColorPickerLabel" xml:space="preserve"><value>Ранг</value></data>
+  <data name="Settings_ResetAccent" xml:space="preserve"><value>Барқарор кардан ба стандартӣ</value></data>
+  <data name="Settings_LanguageLabel" xml:space="preserve"><value>Забони интерфейс</value></data>
+  <data name="Settings_BackupTimeLabel" xml:space="preserve"><value>Вақти нусхабардории худкор (HH:mm)</value></data>
+  <data name="Settings_BackupRetentionLabel" xml:space="preserve"><value>Нигоҳ доштани нусхаҳо, рӯз</value></data>
+  <data name="Settings_AutoLockLabel" xml:space="preserve"><value>Қулфи худкор баъд аз, дақ</value></data>
+  <data name="Settings_Enable3DOdontogram" xml:space="preserve"><value>Одонтограммаи 3D</value></data>
+  <data name="Settings_TabSecurity" xml:space="preserve"><value>Амният</value></data>
+  <data name="Settings_OldCodeLabel" xml:space="preserve"><value>Рамзи ҷории воридшавӣ</value></data>
+  <data name="Settings_NewCodeLabel" xml:space="preserve"><value>Рамзи нави воридшавӣ</value></data>
+  <data name="Settings_NewCodeConfirmLabel" xml:space="preserve"><value>Рамзи навро такрор кунед</value></data>
+  <data name="Settings_ChangeCodeButton" xml:space="preserve"><value>Иваз кардани рамзи воридшавӣ</value></data>
+  <data name="Settings_TabBackups" xml:space="preserve"><value>Нусхаҳои эҳтиётӣ</value></data>
+  <data name="Settings_BackupsTitle" xml:space="preserve"><value>Нусхаҳои эҳтиётии пойгоҳи додаҳо</value></data>
+  <data name="Settings_CreateBackupNow" xml:space="preserve"><value>Ҳозир эҷод кардан</value></data>
+  <data name="Settings_ColumnFile" xml:space="preserve"><value>Файл</value></data>
+  <data name="Settings_ColumnCreated" xml:space="preserve"><value>Эҷодшуда</value></data>
+  <data name="Settings_ColumnSize" xml:space="preserve"><value>Андоза</value></data>
+  <data name="Settings_ColumnTrigger" xml:space="preserve"><value>Триггер</value></data>
+  <data name="Settings_ColumnNote" xml:space="preserve"><value>Қайд</value></data>
+  <data name="Settings_BackupValid" xml:space="preserve"><value>Санҷидашуда</value></data>
+  <data name="Settings_BackupInvalid" xml:space="preserve"><value>Санҷиданашуда</value></data>
+  <data name="Settings_ValidateBackupTitle" xml:space="preserve"><value>Санҷидани яклухтӣ</value></data>
+  <data name="Settings_RestoreBackupTitle" xml:space="preserve"><value>Барқарор кардан</value></data>
+  <data name="Settings_NoBackups" xml:space="preserve"><value>Нусхаҳои эҳтиётӣ ҳанӯз эҷод нашудаанд</value></data>
+  <data name="Settings_TabAuditLog" xml:space="preserve"><value>Рӯзномаи амалҳо</value></data>
+  <data name="Settings_ColumnDate" xml:space="preserve"><value>Сана</value></data>
+  <data name="Settings_ColumnAction" xml:space="preserve"><value>Амал</value></data>
+  <data name="Settings_ColumnEntity" xml:space="preserve"><value>Объект</value></data>
+  <data name="Settings_ColumnDetails" xml:space="preserve"><value>Тафсилот</value></data>
+  <data name="Settings_NoAuditLogs" xml:space="preserve"><value>Сабтҳои аудит ҳанӯз нестанд</value></data>
+  <data name="Settings_TabSchedule" xml:space="preserve"><value>Ҷадвали корӣ</value></data>
+  <data name="Settings_ScheduleDescription" xml:space="preserve"><value>Соатҳои кории духтур аз рӯи рӯзҳои ҳафта. Ҳангоми сабт берун аз ҷадвал система танҳо огоҳ мекунад, аммо эҷоди ташрифро манъ намекунад.</value></data>
+  <data name="Settings_ScheduleStart" xml:space="preserve"><value>Оғоз</value></data>
+  <data name="Settings_ScheduleEnd" xml:space="preserve"><value>Анҷом</value></data>
+  <data name="Settings_DayMonday" xml:space="preserve"><value>Душанбе</value></data>
+  <data name="Settings_DayTuesday" xml:space="preserve"><value>Сешанбе</value></data>
+  <data name="Settings_DayWednesday" xml:space="preserve"><value>Чоршанбе</value></data>
+  <data name="Settings_DayThursday" xml:space="preserve"><value>Панҷшанбе</value></data>
+  <data name="Settings_DayFriday" xml:space="preserve"><value>Ҷумъа</value></data>
+  <data name="Settings_DaySaturday" xml:space="preserve"><value>Шанбе</value></data>
+  <data name="Settings_DaySunday" xml:space="preserve"><value>Якшанбе</value></data>
+  <data name="Settings_ScheduleTimeInvalid" xml:space="preserve"><value>Вақти анҷом бояд аз вақти оғоз дертар бошад.</value></data>
+  <data name="Settings_ScheduleSaved" xml:space="preserve"><value>Ҷадвал барои {0} нигоҳ дошта шуд.</value></data>
+  <data name="Settings_ScheduleLoadFailed" xml:space="preserve"><value>Боргирии ҷадвали духтур муяссар нашуд: {0}</value></data>
+  <data name="Settings_LoadFailed" xml:space="preserve"><value>Хатои боргирии танзимот: {0}</value></data>
+  <data name="Settings_ColorRequired" xml:space="preserve"><value>Рангро нишон диҳед.</value></data>
+  <data name="Settings_AccentApplied" xml:space="preserve"><value>Ранги акцент татбиқ шуд.</value></data>
+  <data name="Settings_SavedApplyingLanguage" xml:space="preserve"><value>Танзимот нигоҳ дошта шуд. Татбиқи забони интерфейс...</value></data>
+  <data name="Settings_Saved" xml:space="preserve"><value>Танзимот нигоҳ дошта шуд.</value></data>
+  <data name="Settings_SaveFailed" xml:space="preserve"><value>Нигоҳ доштани танзимот муяссар нашуд: {0}</value></data>
+  <data name="Settings_CodeMismatch" xml:space="preserve"><value>Рамзи нав ва тасдиқ мувофиқат намекунанд.</value></data>
+  <data name="Settings_CodeChanged" xml:space="preserve"><value>Рамзи воридшавӣ иваз шуд.</value></data>
+  <data name="Settings_ChangeCodeFailed" xml:space="preserve"><value>Иваз кардани рамз муяссар нашуд: {0}</value></data>
+  <data name="Settings_BackupsLoadFailed" xml:space="preserve"><value>Хатои боргирии нусхаҳои эҳтиётӣ: {0}</value></data>
+  <data name="Settings_AuditLoadFailed" xml:space="preserve"><value>Хатои боргирии рӯзномаи амалҳо: {0}</value></data>
+  <data name="Settings_BackupCreated" xml:space="preserve"><value>Нусхаи эҳтиётӣ эҷод шуд.</value></data>
+  <data name="Settings_BackupCreateFailed" xml:space="preserve"><value>Эҷоди нусхаи эҳтиётӣ муяссар нашуд: {0}</value></data>
+  <data name="Settings_BackupRestored" xml:space="preserve"><value>Пойгоҳи додаҳо аз нусхаи эҳтиётӣ барқарор шуд.</value></data>
+  <data name="Settings_BackupRestoreFailed" xml:space="preserve"><value>Барқарор кардани нусхаи эҳтиётӣ муяссар нашуд: {0}</value></data>
+  <data name="Settings_BackupValidOk" xml:space="preserve"><value>Нусхаи эҳтиётӣ солим аст.</value></data>
+  <data name="Settings_BackupCorrupted" xml:space="preserve"><value>Нусхаи эҳтиётӣ вайрон шудааст!</value></data>
+  <data name="Settings_BackupValidateFailed" xml:space="preserve"><value>Санҷидани нусхаи эҳтиётӣ муяссар нашуд: {0}</value></data>
+  <data name="Settings_BackupInProgress" xml:space="preserve"><value>Амалиёт дар фон иҷро мешавад, ин метавонад каме вақт гирад...</value></data>
+  <data name="Settings_BackupJobFailed" xml:space="preserve"><value>Амалиёт бо хато анҷом ёфт: {0}</value></data>
+  <data name="Settings_UnitMb" xml:space="preserve"><value>МБ</value></data>
+  <data name="Settings_UnitKb" xml:space="preserve"><value>КБ</value></data>
+  <data name="Settings_UnitByte" xml:space="preserve"><value>Б</value></data>
+  <data name="Settings_TriggerDaily" xml:space="preserve"><value>Ҳаррӯза (худкор)</value></data>
+  <data name="Settings_TriggerBeforeUpdate" xml:space="preserve"><value>Пеш аз навсозӣ</value></data>
+  <data name="Settings_TriggerManual" xml:space="preserve"><value>Дастӣ</value></data>
+  <data name="Settings_TriggerBeforeRestore" xml:space="preserve"><value>Пеш аз барқароркунӣ</value></data>
+</root>

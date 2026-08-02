@@ -16,6 +16,11 @@ public class MaterialUsageConfiguration : IEntityTypeConfiguration<MaterialUsage
             .HasColumnType("numeric(10,2)")
             .IsRequired();
 
+        builder.Property(mu => mu.PricePerUnitSnapshot)
+            .HasColumnType("numeric(12,2)")
+            .HasDefaultValue(0m)
+            .IsRequired();
+
         builder.HasOne(mu => mu.Visit)
             .WithMany()
             .HasForeignKey(mu => mu.VisitId)

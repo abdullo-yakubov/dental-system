@@ -34,11 +34,14 @@ public class VisitTests
     }
 
     [Fact]
-    public void Create_BlankDoctorName_Throws()
+    public void Create_BlankDoctorName_DoesNotThrow()
     {
-        Assert.Throws<ArgumentException>(() =>
-            Visit.Create(Guid.NewGuid(), DateOnly.FromDateTime(DateTime.UtcNow), new TimeOnly(10, 0),
-                "  ", null, null, null));
+        // В клинике один специалист (см. ClinicSchedule) — Visit.DoctorName больше не
+        // валидируется как обязательное поле на уровне домена.
+        var visit = Visit.Create(Guid.NewGuid(), DateOnly.FromDateTime(DateTime.UtcNow), new TimeOnly(10, 0),
+            "  ", null, null, null);
+
+        Assert.Equal("  ", visit.DoctorName);
     }
 
     [Fact]
@@ -50,6 +53,16 @@ public class VisitTests
         visit.AddItem(Guid.NewGuid(), toothNumber: null, price: 25_000m, quantity: 2, comment: null);
 
         Assert.Equal(200_000m, visit.TotalCost);
+    }
+
+    [Fact]
+    public void AddItem_AfterPayment_Throws()
+    {
+        var visit = CreateVisit();
+        visit.AddItem(Guid.NewGuid(), null, 100_000m, 1, null);
+        visit.ApplyPayment(50_000m);
+
+        Assert.Throws<DomainException>(() => visit.AddItem(Guid.NewGuid(), null, 50_000m, 1, null));
     }
 
     [Fact]
@@ -101,5 +114,79 @@ public class VisitTests
         var visit = CreateVisit();
 
         Assert.Throws<DomainException>(() => visit.Confirm());
+    }
+
+    [Fact]
+    public void ReversePayment_PartialReversal_UpdatesTotalPaid()
+    {
+        var visit = CreateVisit();
+        visit.AddItem(Guid.NewGuid(), null, 100_000m, 1, null);
+        visit.ApplyPayment(60_000m);
+
+        visit.ReversePayment(20_000m);
+
+        Assert.Equal(40_000m, visit.TotalPaid);
+    }
+
+    [Fact]
+    public void ReversePayment_ExceedsTotalPaid_Throws()
+    {
+        var visit = CreateVisit();
+        visit.AddItem(Guid.NewGuid(), null, 100_000m, 1, null);
+        visit.ApplyPayment(30_000m);
+
+        Assert.Throws<DomainException>(() => visit.ReversePayment(50_000m));
+    }
+
+    [Fact]
+    public void ApplyDiscount_ValidPercent_RecalculatesTotalCost()
+    {
+        var visit = CreateVisit();
+        visit.AddItem(Guid.NewGuid(), null, 100_000m, 1, null);
+
+        visit.ApplyDiscount(10m, "Постоянный пациент");
+
+        Assert.Equal(90_000m, visit.TotalCost);
+    }
+
+    [Fact]
+    public void ApplyDiscount_PositivePercentWithoutReason_Throws()
+    {
+        var visit = CreateVisit();
+        visit.AddItem(Guid.NewGuid(), null, 100_000m, 1, null);
+
+        Assert.Throws<DomainException>(() => visit.ApplyDiscount(10m, null));
+    }
+
+    [Theory]
+    [InlineData(-1)]
+    [InlineData(101)]
+    public void ApplyDiscount_OutOfRangePercent_Throws(decimal percent)
+    {
+        var visit = CreateVisit();
+        visit.AddItem(Guid.NewGuid(), null, 100_000m, 1, null);
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => visit.ApplyDiscount(percent, "причина"));
+    }
+
+    [Fact]
+    public void ApplyDiscount_AfterPayment_Throws()
+    {
+        var visit = CreateVisit();
+        visit.AddItem(Guid.NewGuid(), null, 100_000m, 1, null);
+        visit.ApplyPayment(50_000m);
+
+        Assert.Throws<DomainException>(() => visit.ApplyDiscount(10m, "причина"));
+    }
+
+    [Fact]
+    public void ApplyPayment_OnCancelledVisit_Throws()
+    {
+        var visit = Visit.Create(Guid.NewGuid(), DateOnly.FromDateTime(DateTime.UtcNow.AddDays(5)),
+            new TimeOnly(10, 0), "Курбонали", null, null, null);
+        visit.AddItem(Guid.NewGuid(), null, 100_000m, 1, null);
+        visit.Cancel();
+
+        Assert.Throws<DomainException>(() => visit.ApplyPayment(50_000m));
     }
 }

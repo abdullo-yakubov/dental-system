@@ -1,14 +1,14 @@
-@inject NavigationManager Navigation
+﻿@inject NavigationManager Navigation
 @inject ILogger<AppErrorPage> Logger
 
 <div class="d-flex flex-column align-center justify-center pa-8" style="min-height: 60vh;">
-    <MudIcon Icon="@Icons.Material.Filled.ErrorOutline" Color="Color.Error" Style="font-size: 4rem;" Class="mb-4" />
+    <MudIcon Icon="@LucideIcons.AlertCircle" Color="Color.Error" Style="font-size: 4rem;" Class="mb-4" />
     <MudText Typo="Typo.h5" Class="mb-2">Что-то пошло не так</MudText>
     <MudText Typo="Typo.body1" Class="text-secondary mb-6" Align="Align.Center">
         Произошла непредвиденная ошибка в интерфейсе. Ваши несохранённые данные могли быть защищены автосохранением черновика.
     </MudText>
     <MudStack Row="true" Spacing="2">
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Refresh" OnClick="Reload">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@LucideIcons.RefreshCw" OnClick="Reload">
             Обновить
         </MudButton>
         <MudButton Variant="Variant.Outlined" OnClick="GoHome">На главную</MudButton>

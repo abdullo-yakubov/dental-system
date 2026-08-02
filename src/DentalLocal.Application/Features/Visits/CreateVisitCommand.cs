@@ -51,6 +51,9 @@ public sealed class CreateVisitCommandHandler(IUnitOfWork unitOfWork, IMapper ma
         if (patient is null)
             return Result.Failure<VisitDto>(Error.NotFound("Patient.NotFound", "Пациент не найден."));
 
+        if (await VisitSlotConflictChecker.HasConflictAsync(unitOfWork, request.DoctorName, request.VisitDate, request.VisitTime, excludeVisitId: null, cancellationToken))
+            return Result.Failure<VisitDto>(Error.Conflict("Visit.SlotTaken", $"На {request.VisitDate:dd.MM.yyyy} {request.VisitTime:HH:mm} у врача уже есть визит — выберите другое время."));
+
         Visit visit;
         var warranties = new List<Warranty>();
         var followUpReminders = new List<Reminder>();

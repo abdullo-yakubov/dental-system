@@ -8,6 +8,8 @@ public static class ApiRoutes
     {
         public const string Login = $"{Prefix}/auth/login";
         public const string ChangeCode = $"{Prefix}/auth/change-code";
+        public const string GenerateRecoveryCode = $"{Prefix}/auth/recovery-code";
+        public const string ResetWithRecoveryCode = $"{Prefix}/auth/reset-with-recovery-code";
     }
 
     public static class Dashboard
@@ -109,11 +111,12 @@ public static class ApiRoutes
     public static class System
     {
         public const string Health = $"{Prefix}/system/health";
-    }
 
-    public static class Currencies
-    {
-        public const string Base = $"{Prefix}/currencies";
+        // Вне /api/v1 намеренно: BearerAuthMiddleware проверяет токен только для путей под Prefix,
+        // а health-пробы (Launcher, оркестраторы) не должны знать access-токен, чтобы просто
+        // определить, жив ли процесс и готова ли БД — см. промпт 9 аудита зависаний.
+        public const string Live = "/health/live";
+        public const string Ready = "/health/ready";
     }
 
     public static class DoctorSchedule
@@ -139,5 +142,10 @@ public static class ApiRoutes
     public static class Warranties
     {
         public const string Base = $"{Prefix}/warranties";
+    }
+
+    public static class Jobs
+    {
+        public const string Base = $"{Prefix}/jobs";
     }
 }

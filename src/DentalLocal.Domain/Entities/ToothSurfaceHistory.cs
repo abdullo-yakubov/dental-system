@@ -17,6 +17,9 @@ public class ToothSurfaceHistory : Entity, IImmutableRecord
     public DateTimeOffset ChangedAt { get; private set; }
     public string? DoctorComment { get; private set; }
 
+    /// <summary>Concurrency token, отображается на системную колонку Postgres "xmin" (см. ToothSurfaceHistoryConfiguration).</summary>
+    public uint Version { get; private set; }
+
     private ToothSurfaceHistory()
     {
     }

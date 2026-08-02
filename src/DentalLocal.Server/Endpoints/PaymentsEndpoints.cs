@@ -1,3 +1,4 @@
+using DentalLocal.Application.Common;
 using DentalLocal.Application.Features.Payments;
 using DentalLocal.Server.Common;
 using DentalLocal.Shared.Common;
@@ -17,9 +18,21 @@ public static class PaymentsEndpoints
 
         // ── Payments Endpoints ──────────────────────────────────────────────────
 
-        // POST /api/v1/payments
-        paymentsGroup.MapPost("", async (RegisterPaymentRequest request, ISender sender, CancellationToken ct) =>
+        // POST /api/v1/payments — идемпотентно по заголовку Idempotency-Key (см. промпт 17 аудита):
+        // двойной клик по «Внести оплату» с одним и тем же ключом создаёт ровно один Payment,
+        // повторный запрос получает тот же результат из кэша, а не создаёт новый.
+        paymentsGroup.MapPost("", async (
+            RegisterPaymentRequest request, HttpRequest httpRequest,
+            ISender sender, IIdempotencyStore idempotency, CancellationToken ct) =>
         {
+            var idempotencyKey = httpRequest.Headers["Idempotency-Key"].FirstOrDefault();
+            var cacheKey = string.IsNullOrWhiteSpace(idempotencyKey) ? null : $"payments:register:{idempotencyKey}";
+
+            if (cacheKey is not null && idempotency.TryGet(cacheKey, out var cachedJson))
+            {
+                return Results.Content(cachedJson, "application/json");
+            }
+
             var command = new RegisterPaymentCommand(
                 request.VisitId,
                 request.PatientId,
@@ -29,6 +42,12 @@ public static class PaymentsEndpoints
                 request.Note);
 
             var result = await sender.Send(command, ct);
+
+            if (cacheKey is not null && result.IsSuccess)
+            {
+                idempotency.Set(cacheKey, System.Text.Json.JsonSerializer.Serialize(result.Value), TimeSpan.FromHours(24));
+            }
+
             return result.ToApiResult();
         });
 

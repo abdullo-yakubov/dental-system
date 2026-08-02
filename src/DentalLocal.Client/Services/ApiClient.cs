@@ -14,12 +14,12 @@ using DentalLocal.Shared.Contracts.Settings;
 using DentalLocal.Shared.Contracts.Reminders;
 using DentalLocal.Shared.Contracts.TreatmentPlans;
 using DentalLocal.Shared.Contracts.Icd;
-using DentalLocal.Shared.Contracts.Currencies;
 using DentalLocal.Shared.Contracts.Discounts;
 using DentalLocal.Shared.Contracts.WaitingList;
 using DentalLocal.Shared.Contracts.Prescriptions;
 using DentalLocal.Shared.Contracts.Warranties;
 using DentalLocal.Shared.Contracts.DoctorSchedule;
+using DentalLocal.Shared.Contracts.Jobs;
 using DentalLocal.Shared.Enums;
 
 namespace DentalLocal.Client.Services;
@@ -27,8 +27,16 @@ namespace DentalLocal.Client.Services;
 /// <summary>Минимальный срез полей ProblemDetails (RFC 7807), которых достаточно для показа ошибки в UI.</summary>
 internal sealed record ProblemDetailsDto(string? Title, int? Status);
 
-public sealed class ApiClient(HttpClient http)
+public sealed class ApiClient(HttpClient http, IHttpClientFactory httpClientFactory)
 {
+    /// <summary>Имя именованного HttpClient с увеличенным таймаутом (120с) для загрузки файлов —
+    /// регистрируется в Program.cs. Обычный `http` ограничен 15 секундами (см. промпт 42 аудита).</summary>
+    public const string FileUploadClientName = "FileUpload";
+
+    /// <summary>Адрес API-сервера — нужен, чтобы построить абсолютный URL из относительной подписанной
+    /// ссылки на файл (см. GetPatientFileLinkAsync), т.к. в dev Client и Server — разные origin'ы.</summary>
+    public Uri? BaseAddress => http.BaseAddress;
+
     // ── Auth ─────────────────────────────────────────────────────────────────
 
     public Task<LoginResponse> LoginAsync(string code, CancellationToken ct = default) =>
@@ -75,6 +83,9 @@ public sealed class ApiClient(HttpClient http)
     public Task UnarchivePatientAsync(Guid id, CancellationToken ct = default) =>
         SendVoidAsync(() => http.PostAsync($"{ApiRoutes.Patients.Base}/{id}/unarchive", null, ct));
 
+    public Task DeletePatientAsync(Guid id, CancellationToken ct = default) =>
+        SendVoidAsync(() => http.DeleteAsync($"{ApiRoutes.Patients.Base}/{id}", ct));
+
     public Task<IReadOnlyList<PatientFileDto>> GetPatientFilesAsync(Guid patientId, CancellationToken ct = default) =>
         SendAsync<IReadOnlyList<PatientFileDto>>(() => http.GetAsync($"{ApiRoutes.Patients.Base}/{patientId}/files", ct));
 
@@ -96,13 +107,19 @@ public sealed class ApiClient(HttpClient http)
             content.Add(new StringContent(beforeAfterTag), "beforeAfterTag");
         }
 
-        using var response = await http.PostAsync($"{ApiRoutes.Patients.Base}/{patientId}/files", content, ct);
+        using var uploadClient = httpClientFactory.CreateClient(FileUploadClientName);
+        using var response = await uploadClient.PostAsync($"{ApiRoutes.Patients.Base}/{patientId}/files", content, ct);
         await EnsureSuccessAsync(response);
         return (await response.Content.ReadFromJsonAsync<PatientFileDto>())!;
     }
 
     public Task DeletePatientFileAsync(Guid fileId, CancellationToken ct = default) =>
         SendVoidAsync(() => http.DeleteAsync($"{ApiRoutes.Patients.Base}/files/{fileId}", ct));
+
+    // Короткоживущая (5 мин) подписанная ссылка — файлы больше не отдаются анонимно
+    // (см. промпт 11 аудита), поэтому UI обязан запросить ссылку перед показом/скачиванием.
+    public Task<FileLinkDto> GetPatientFileLinkAsync(Guid fileId, CancellationToken ct = default) =>
+        SendAsync<FileLinkDto>(() => http.GetAsync($"{ApiRoutes.Files.Base}/{fileId}/link", ct));
 
     private static string GetMimeType(string fileName)
     {
@@ -161,11 +178,33 @@ public sealed class ApiClient(HttpClient http)
 
     // ── Excel export ─────────────────────────────────────────────────────────
 
+    // Список должников может быть большим — генерация Excel идёт через job-раннер вне HTTP-запроса
+    // (см. промпт 47 аудита), а не синхронно в этом запросе: POST ставит джобу в очередь, дальше
+    // опрашиваем статус и забираем готовый файл отдельным GET.
     public async Task<byte[]> ExportDebtorsExcelAsync(CancellationToken ct = default)
     {
-        using var response = await http.GetAsync($"{ApiRoutes.Reports.Base}/debtors/export", ct);
-        await EnsureSuccessAsync(response);
-        return await response.Content.ReadAsByteArrayAsync(ct);
+        using var enqueueResponse = await http.PostAsync($"{ApiRoutes.Reports.Base}/debtors/export", null, ct);
+        await EnsureSuccessAsync(enqueueResponse);
+        var jobId = (await enqueueResponse.Content.ReadFromJsonAsync<Guid>(cancellationToken: ct));
+
+        var deadline = DateTime.UtcNow.AddMinutes(5);
+        while (DateTime.UtcNow < deadline)
+        {
+            var job = await GetJobAsync(jobId, ct);
+            if (job.Status == "Succeeded")
+            {
+                using var downloadResponse = await http.GetAsync($"{ApiRoutes.Reports.Base}/download/{jobId}", ct);
+                await EnsureSuccessAsync(downloadResponse);
+                return await downloadResponse.Content.ReadAsByteArrayAsync(ct);
+            }
+
+            if (job.Status == "Failed")
+                throw new ApiException(job.Error ?? "Не удалось сформировать экспорт.", 500);
+
+            await Task.Delay(2000, ct);
+        }
+
+        throw new ApiException("Превышено время ожидания формирования экспорта.", 504);
     }
 
     public async Task<byte[]> ExportTopProceduresExcelAsync(int count = 20, CancellationToken ct = default)
@@ -256,8 +295,19 @@ public sealed class ApiClient(HttpClient http)
 
     // ── Payments & Debts ─────────────────────────────────────────────────────
 
-    public Task<PaymentDto> RegisterPaymentAsync(RegisterPaymentRequest request, CancellationToken ct = default) =>
-        SendAsync<PaymentDto>(() => http.PostAsJsonAsync(ApiRoutes.Payments.Base, request, ct));
+    // idempotencyKey: сгенерируйте один Guid при открытии диалога оплаты и передавайте его во всех
+    // повторных попытках (в т.ч. при повторной отправке из-за сетевой ошибки) — двойной клик на
+    // "Внести оплату" тогда создаст ровно один Payment (см. промпт 17 аудита).
+    public Task<PaymentDto> RegisterPaymentAsync(RegisterPaymentRequest request, Guid idempotencyKey, CancellationToken ct = default) =>
+        SendAsync<PaymentDto>(() =>
+        {
+            var httpRequest = new HttpRequestMessage(HttpMethod.Post, ApiRoutes.Payments.Base)
+            {
+                Content = JsonContent.Create(request)
+            };
+            httpRequest.Headers.Add("Idempotency-Key", idempotencyKey.ToString());
+            return http.SendAsync(httpRequest, ct);
+        });
 
     public Task<PaymentDto> ReversePaymentAsync(Guid paymentId, string? reason, CancellationToken ct = default) =>
         SendAsync<PaymentDto>(() => http.PostAsJsonAsync($"{ApiRoutes.Payments.Base}/{paymentId}/reverse", reason, ct));
@@ -319,14 +369,21 @@ public sealed class ApiClient(HttpClient http)
     public Task<IReadOnlyList<BackupDto>> GetBackupsAsync(CancellationToken ct = default) =>
         SendAsync<IReadOnlyList<BackupDto>>(() => http.GetAsync(ApiRoutes.Backups.Base, ct));
 
-    public Task<string> CreateBackupAsync(CreateBackupRequest request, CancellationToken ct = default) =>
-        SendAsync<string>(() => http.PostAsJsonAsync(ApiRoutes.Backups.Base, request, ct));
+    // Возвращают jobId джобы, поставленной в очередь (см. GET /api/v1/jobs/{jobId} для статуса) —
+    // pg_dump/pg_restore не выполняются внутри HTTP-запроса.
+    public Task<Guid> CreateBackupAsync(CreateBackupRequest request, CancellationToken ct = default) =>
+        SendAsync<Guid>(() => http.PostAsJsonAsync(ApiRoutes.Backups.Base, request, ct));
 
-    public Task RestoreBackupAsync(RestoreBackupRequest request, CancellationToken ct = default) =>
-        SendVoidAsync(() => http.PostAsJsonAsync($"{ApiRoutes.Backups.Base}/restore", request, ct));
+    public Task<Guid> RestoreBackupAsync(RestoreBackupRequest request, CancellationToken ct = default) =>
+        SendAsync<Guid>(() => http.PostAsJsonAsync($"{ApiRoutes.Backups.Base}/restore", request, ct));
 
     public Task<bool> ValidateBackupAsync(string fileName, CancellationToken ct = default) =>
         SendAsync<bool>(() => http.GetAsync($"{ApiRoutes.Backups.Base}/validate?fileName={Uri.EscapeDataString(fileName)}", ct));
+
+    // ── Jobs ────────────────────────────────────────────────────────────────
+
+    public Task<JobDto> GetJobAsync(Guid jobId, CancellationToken ct = default) =>
+        SendAsync<JobDto>(() => http.GetAsync($"{ApiRoutes.Jobs.Base}/{jobId}", ct));
 
     // ── Settings & Audit ─────────────────────────────────────────────────────
 
@@ -338,17 +395,6 @@ public sealed class ApiClient(HttpClient http)
 
     public Task<PagedResult<AuditLogDto>> GetAuditLogsAsync(int page, int pageSize, CancellationToken ct = default) =>
         SendAsync<PagedResult<AuditLogDto>>(() => http.GetAsync($"{ApiRoutes.AuditLogs.Base}?page={page}&pageSize={pageSize}", ct));
-
-    // ── Currencies ───────────────────────────────────────────────────────────
-
-    public Task<IReadOnlyList<CurrencyDto>> GetCurrenciesAsync(CancellationToken ct = default) =>
-        SendAsync<IReadOnlyList<CurrencyDto>>(() => http.GetAsync(ApiRoutes.Currencies.Base, ct));
-
-    public Task<CurrencyDto> CreateCurrencyAsync(CreateCurrencyRequest request, CancellationToken ct = default) =>
-        SendAsync<CurrencyDto>(() => http.PostAsJsonAsync(ApiRoutes.Currencies.Base, request, ct));
-
-    public Task<CurrencyDto> UpdateCurrencyAsync(Guid id, UpdateCurrencyRequest request, CancellationToken ct = default) =>
-        SendAsync<CurrencyDto>(() => http.PutAsJsonAsync($"{ApiRoutes.Currencies.Base}/{id}", request, ct));
 
     // ── Discounts ────────────────────────────────────────────────────────────
 
@@ -406,6 +452,15 @@ public sealed class ApiClient(HttpClient http)
             query = $"?from={from.Value:yyyy-MM-dd}&to={to.Value:yyyy-MM-dd}";
 
         return SendAsync<DoctorWorkloadStatsDto>(() => http.GetAsync($"{ApiRoutes.Analytics.Base}/workload{query}", ct));
+    }
+
+    public Task<ProfitStatsDto> GetProfitStatsAsync(DateOnly? from = null, DateOnly? to = null, CancellationToken ct = default)
+    {
+        var query = "";
+        if (from.HasValue && to.HasValue)
+            query = $"?from={from.Value:yyyy-MM-dd}&to={to.Value:yyyy-MM-dd}";
+
+        return SendAsync<ProfitStatsDto>(() => http.GetAsync($"{ApiRoutes.Analytics.Base}/profit{query}", ct));
     }
 
     private static async Task<T> SendAsync<T>(Func<Task<HttpResponseMessage>> send)

@@ -1,59 +1,63 @@
-@page "/settings"
+﻿@page "/settings"
 @attribute [Authorize]
 @implements IDisposable
 @inject ApiClient Api
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 @inject ThemeService ThemeService
+@inject IJSRuntime JsRuntime
+@inject NavigationManager Navigation
+@inject IStringLocalizer<SharedResource> Loc
 
 <PageTitle>Настройки — DentalLocal</PageTitle>
 
-<PageHeader Title="Настройки" Icon="@Icons.Material.Filled.Settings" Subtitle="Общие параметры, безопасность, резервные копии" />
+<PageHeader Title="@Loc["Page_Settings_Title"]" Icon="@LucideIcons.Settings" Subtitle="@Loc["Settings_Subtitle"]" />
 
 <div class="glass-card pa-2">
 <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pa-4">
-    <MudTabPanel Text="Общие" Icon="@Icons.Material.Filled.Tune">
+    <MudTabPanel Text="@Loc["Settings_TabGeneral"]" Icon="@LucideIcons.SlidersHorizontal">
         @if (_settingsLoaded)
         {
             <MudStack Spacing="4" Style="max-width: 480px;">
-                <MudTextField @bind-Value="_doctorName" Label="ФИО врача" Variant="Variant.Outlined" />
-                <MudTextField @bind-Value="_clinicName" Label="Название клиники" Variant="Variant.Outlined" />
-                <MudTextField @bind-Value="_currency" Label="Валюта" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="_doctorName" Label="@Loc["Settings_DoctorName"]" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="_clinicName" Label="@Loc["Settings_ClinicName"]" Variant="Variant.Outlined" />
+                <MudTextField @bind-Value="_currency" Label="@Loc["Settings_Currency"]" Variant="Variant.Outlined" />
                 <div>
-                    <MudText Typo="Typo.body2" Class="mb-2 mud-text-secondary">Тема оформления</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-2 mud-text-secondary">@Loc["Settings_ThemeLabel"]</MudText>
                     <MudStack Row="true" Spacing="2">
                         <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary">
-                            <MudButton StartIcon="@Icons.Material.Filled.LightMode" Variant="@(ThemeService.IsDark ? Variant.Outlined : Variant.Filled)" OnClick="@(() => SetThemeModeAsync(false))">Светлая</MudButton>
-                            <MudButton StartIcon="@Icons.Material.Filled.DarkMode" Variant="@(ThemeService.IsDark ? Variant.Filled : Variant.Outlined)" OnClick="@(() => SetThemeModeAsync(true))">Тёмная</MudButton>
+                            <MudButton StartIcon="@LucideIcons.Sun" Variant="@(ThemeService.IsDark ? Variant.Outlined : Variant.Filled)" OnClick="@(() => SetThemeModeAsync(false))">@Loc["Settings_ThemeLight"]</MudButton>
+                            <MudButton StartIcon="@LucideIcons.Moon" Variant="@(ThemeService.IsDark ? Variant.Filled : Variant.Outlined)" OnClick="@(() => SetThemeModeAsync(true))">@Loc["Settings_ThemeDark"]</MudButton>
                         </MudButtonGroup>
                         <MudButtonGroup Variant="Variant.Outlined" Color="Color.Primary">
-                            <MudButton Variant="@(ThemeService.CustomAccentColor is null && ThemeService.Accent == AppAccent.Blue ? Variant.Filled : Variant.Outlined)" OnClick="@(() => SetThemeAccentAsync(AppAccent.Blue))">Синяя</MudButton>
-                            <MudButton Variant="@(ThemeService.CustomAccentColor is null && ThemeService.Accent == AppAccent.Teal ? Variant.Filled : Variant.Outlined)" OnClick="@(() => SetThemeAccentAsync(AppAccent.Teal))">Бирюзовая</MudButton>
+                            <MudButton Variant="@(ThemeService.CustomAccentColor is null && ThemeService.Accent == AppAccent.Blue ? Variant.Filled : Variant.Outlined)" OnClick="@(() => SetThemeAccentAsync(AppAccent.Blue))">@Loc["Settings_AccentBlue"]</MudButton>
+                            <MudButton Variant="@(ThemeService.CustomAccentColor is null && ThemeService.Accent == AppAccent.Teal ? Variant.Filled : Variant.Outlined)" OnClick="@(() => SetThemeAccentAsync(AppAccent.Teal))">@Loc["Settings_AccentTeal"]</MudButton>
                         </MudButtonGroup>
                     </MudStack>
                 </div>
                 <div>
-                    <MudText Typo="Typo.body2" Class="mb-2 mud-text-secondary">Свой акцентный цвет</MudText>
+                    <MudText Typo="Typo.body2" Class="mb-2 mud-text-secondary">@Loc["Settings_CustomAccentLabel"]</MudText>
                     <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-                        <MudColorPicker @bind-Text="_customAccentColor" Label="Цвет" Variant="Variant.Outlined"
+                        <MudColorPicker @bind-Text="_customAccentColor" Label="@Loc["Settings_ColorPickerLabel"]" Variant="Variant.Outlined"
                                         DisableToolbar="true" ColorPickerView="ColorPickerView.Palette" Style="width: 220px;" />
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ApplyCustomAccentAsync">Применить</MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ApplyCustomAccentAsync">@Loc["Common_Apply"]</MudButton>
                         @if (ThemeService.CustomAccentColor is not null)
                         {
-                            <MudButton Variant="Variant.Text" OnClick="ResetCustomAccentAsync">Сбросить на стандартный</MudButton>
+                            <MudButton Variant="Variant.Text" OnClick="ResetCustomAccentAsync">@Loc["Settings_ResetAccent"]</MudButton>
                         }
                     </MudStack>
                 </div>
-                <MudSelect T="string" @bind-Value="_language" Label="Язык интерфейса" Variant="Variant.Outlined">
+                <MudSelect T="string" @bind-Value="_language" Label="@Loc["Settings_LanguageLabel"]" Variant="Variant.Outlined">
                     <MudSelectItem Value="@("ru")">Русский</MudSelectItem>
-                    <MudSelectItem Value="@("uz")">Oʻzbek</MudSelectItem>
+                    <MudSelectItem Value="@("tj")">Тоҷикӣ</MudSelectItem>
                     <MudSelectItem Value="@("en")">English</MudSelectItem>
                 </MudSelect>
-                <MudTextField @bind-Value="_backupTime" Label="Время автобэкапа (HH:mm)" Variant="Variant.Outlined" />
-                <MudNumericField @bind-Value="_backupRetentionDays" Label="Хранить бэкапы, дней" Variant="Variant.Outlined" Min="1" />
-                <MudNumericField @bind-Value="_autoLockMinutes" Label="Автоблокировка через, мин" Variant="Variant.Outlined" Min="1" />
+                <MudTextField @bind-Value="_backupTime" Label="@Loc["Settings_BackupTimeLabel"]" Variant="Variant.Outlined" />
+                <MudNumericField @bind-Value="_backupRetentionDays" Label="@Loc["Settings_BackupRetentionLabel"]" Variant="Variant.Outlined" Min="1" />
+                <MudNumericField @bind-Value="_autoLockMinutes" Label="@Loc["Settings_AutoLockLabel"]" Variant="Variant.Outlined" Min="1" />
+                <MudSwitch T="bool" @bind-Value="_enable3DOdontogram" Color="Color.Primary" Label="@Loc["Settings_Enable3DOdontogram"]" />
                 <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveSettingsAsync" Disabled="_isSavingSettings">
-                    Сохранить
+                    @Loc["Common_Save"]
                 </MudButton>
             </MudStack>
         }
@@ -63,83 +67,84 @@
         }
     </MudTabPanel>
 
-    <MudTabPanel Text="Безопасность" Icon="@Icons.Material.Filled.Lock">
+    <MudTabPanel Text="@Loc["Settings_TabSecurity"]" Icon="@LucideIcons.Lock">
         <MudStack Spacing="4" Style="max-width: 480px;">
-            <MudTextField @bind-Value="_oldCode" Label="Текущий код доступа" Variant="Variant.Outlined" InputType="InputType.Password" />
-            <MudTextField @bind-Value="_newCode" Label="Новый код доступа" Variant="Variant.Outlined" InputType="InputType.Password" />
-            <MudTextField @bind-Value="_newCodeConfirm" Label="Повторите новый код" Variant="Variant.Outlined" InputType="InputType.Password" />
+            <MudTextField @bind-Value="_oldCode" Label="@Loc["Settings_OldCodeLabel"]" Variant="Variant.Outlined" InputType="InputType.Password" />
+            <MudTextField @bind-Value="_newCode" Label="@Loc["Settings_NewCodeLabel"]" Variant="Variant.Outlined" InputType="InputType.Password" />
+            <MudTextField @bind-Value="_newCodeConfirm" Label="@Loc["Settings_NewCodeConfirmLabel"]" Variant="Variant.Outlined" InputType="InputType.Password" />
             <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ChangeCodeAsync" Disabled="_isChangingCode">
-                Сменить код доступа
+                @Loc["Settings_ChangeCodeButton"]
             </MudButton>
         </MudStack>
     </MudTabPanel>
 
-    <MudTabPanel Text="Резервные копии" Icon="@Icons.Material.Filled.Backup">
+    <MudTabPanel Text="@Loc["Settings_TabBackups"]" Icon="@LucideIcons.CloudUpload">
         <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
-            <MudText Typo="Typo.subtitle1">Резервные копии базы данных</MudText>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-                       OnClick="OpenCreateBackupDialogAsync">
-                Создать сейчас
+            <MudText Typo="Typo.subtitle1">@Loc["Settings_BackupsTitle"]</MudText>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@LucideIcons.Plus"
+                       OnClick="OpenCreateBackupDialogAsync" Disabled="_isBackupJobRunning">
+                @Loc["Settings_CreateBackupNow"]
             </MudButton>
         </MudStack>
 
         <MudTable Items="_backups" Hover="true" Loading="_isLoadingBackups" Elevation="0" Class="glass-table">
             <HeaderContent>
-                <MudTh>Файл</MudTh>
-                <MudTh>Создан</MudTh>
-                <MudTh>Размер</MudTh>
-                <MudTh>Триггер</MudTh>
-                <MudTh>Статус</MudTh>
-                <MudTh>Заметка</MudTh>
+                <MudTh>@Loc["Settings_ColumnFile"]</MudTh>
+                <MudTh>@Loc["Settings_ColumnCreated"]</MudTh>
+                <MudTh>@Loc["Settings_ColumnSize"]</MudTh>
+                <MudTh>@Loc["Settings_ColumnTrigger"]</MudTh>
+                <MudTh>@Loc["Common_ColumnStatus"]</MudTh>
+                <MudTh>@Loc["Settings_ColumnNote"]</MudTh>
                 <MudTh></MudTh>
             </HeaderContent>
             <RowTemplate>
-                <MudTd DataLabel="Файл">@context.FileName</MudTd>
-                <MudTd DataLabel="Создан">@context.CreatedAt.LocalDateTime.ToString("dd.MM.yyyy HH:mm")</MudTd>
-                <MudTd DataLabel="Размер">@FormatSize(context.SizeBytes)</MudTd>
-                <MudTd DataLabel="Триггер">@FormatTrigger(context.Trigger)</MudTd>
-                <MudTd DataLabel="Статус">
+                <MudTd DataLabel="@Loc["Settings_ColumnFile"]">@context.FileName</MudTd>
+                <MudTd DataLabel="@Loc["Settings_ColumnCreated"]">@context.CreatedAt.LocalDateTime.ToString("dd.MM.yyyy HH:mm")</MudTd>
+                <MudTd DataLabel="@Loc["Settings_ColumnSize"]">@FormatSize(context.SizeBytes)</MudTd>
+                <MudTd DataLabel="@Loc["Settings_ColumnTrigger"]">@FormatTrigger(context.Trigger)</MudTd>
+                <MudTd DataLabel="@Loc["Common_ColumnStatus"]">
                     @if (context.IsValid)
                     {
-                        <MudChip T="string" Color="Color.Success" Size="Size.Small">Проверено</MudChip>
+                        <MudChip T="string" Color="Color.Success" Size="Size.Small">@Loc["Settings_BackupValid"]</MudChip>
                     }
                     else
                     {
-                        <MudChip T="string" Color="Color.Default" Size="Size.Small">Не проверено</MudChip>
+                        <MudChip T="string" Color="Color.Default" Size="Size.Small">@Loc["Settings_BackupInvalid"]</MudChip>
                     }
                 </MudTd>
-                <MudTd DataLabel="Заметка">@context.Note</MudTd>
+                <MudTd DataLabel="@Loc["Settings_ColumnNote"]">@context.Note</MudTd>
                 <MudTd>
                     <MudStack Row="true" Spacing="1">
-                        <MudIconButton Icon="@Icons.Material.Filled.VerifiedUser" Size="Size.Small" Color="Color.Info"
-                                       OnClick="@(() => ValidateBackupAsync(context.FileName))" title="Проверить целостность" />
-                        <MudIconButton Icon="@Icons.Material.Filled.SettingsBackupRestore" Size="Size.Small" Color="Color.Warning"
-                                       OnClick="@(() => OpenRestoreDialogAsync(context.FileName))" title="Восстановить" />
+                        <MudIconButton Icon="@LucideIcons.ShieldCheck" Size="Size.Small" Color="Color.Info"
+                                       OnClick="@(() => ValidateBackupAsync(context.FileName))" title="@Loc["Settings_ValidateBackupTitle"]" />
+                        <MudIconButton Icon="@LucideIcons.RotateCcw" Size="Size.Small" Color="Color.Warning"
+                                       OnClick="@(() => OpenRestoreDialogAsync(context.FileName))" Disabled="_isBackupJobRunning"
+                                       title="@Loc["Settings_RestoreBackupTitle"]" />
                     </MudStack>
                 </MudTd>
             </RowTemplate>
             <NoRecordsContent>
-                <EmptyState Icon="@Icons.Material.Filled.Backup" Title="Резервные копии ещё не создавались" />
+                <EmptyState Icon="@LucideIcons.CloudUpload" Title="@Loc["Settings_NoBackups"]" />
             </NoRecordsContent>
         </MudTable>
     </MudTabPanel>
 
-    <MudTabPanel Text="Журнал действий" Icon="@Icons.Material.Filled.History">
+    <MudTabPanel Text="@Loc["Settings_TabAuditLog"]" Icon="@LucideIcons.History">
         <MudTable Items="_auditLogs" Hover="true" Loading="_isLoadingAudit" Elevation="0" Class="glass-table">
             <HeaderContent>
-                <MudTh>Дата</MudTh>
-                <MudTh>Действие</MudTh>
-                <MudTh>Сущность</MudTh>
-                <MudTh>Детали</MudTh>
+                <MudTh>@Loc["Settings_ColumnDate"]</MudTh>
+                <MudTh>@Loc["Settings_ColumnAction"]</MudTh>
+                <MudTh>@Loc["Settings_ColumnEntity"]</MudTh>
+                <MudTh>@Loc["Settings_ColumnDetails"]</MudTh>
             </HeaderContent>
             <RowTemplate>
-                <MudTd DataLabel="Дата">@context.OccurredAt.LocalDateTime.ToString("dd.MM.yyyy HH:mm:ss")</MudTd>
-                <MudTd DataLabel="Действие">@context.Action</MudTd>
-                <MudTd DataLabel="Сущность">@context.Entity</MudTd>
-                <MudTd DataLabel="Детали">@context.DetailsJson</MudTd>
+                <MudTd DataLabel="@Loc["Settings_ColumnDate"]">@context.OccurredAt.LocalDateTime.ToString("dd.MM.yyyy HH:mm:ss")</MudTd>
+                <MudTd DataLabel="@Loc["Settings_ColumnAction"]">@context.Action</MudTd>
+                <MudTd DataLabel="@Loc["Settings_ColumnEntity"]">@context.Entity</MudTd>
+                <MudTd DataLabel="@Loc["Settings_ColumnDetails"]">@context.DetailsJson</MudTd>
             </RowTemplate>
             <NoRecordsContent>
-                <EmptyState Icon="@Icons.Material.Filled.History" Title="Записей аудита пока нет" />
+                <EmptyState Icon="@LucideIcons.History" Title="@Loc["Settings_NoAuditLogs"]" />
             </NoRecordsContent>
             <PagerContent>
                 <MudTablePager PageSizeOptions="new[] { 20, 50, 100 }" />
@@ -147,46 +152,9 @@
         </MudTable>
     </MudTabPanel>
 
-    <MudTabPanel Text="Валюты" Icon="@Icons.Material.Filled.CurrencyExchange">
-        <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mb-4" AlignItems="AlignItems.Center">
-            <MudText Typo="Typo.body2" Class="text-secondary">Курсы валют к базовой валюте клиники</MudText>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="OpenCreateCurrencyDialogAsync">
-                Добавить валюту
-            </MudButton>
-        </MudStack>
-        <MudTable Items="_currencies" Hover="true" Loading="_isLoadingCurrencies" Elevation="0" Class="glass-table">
-            <HeaderContent>
-                <MudTh>Код</MudTh>
-                <MudTh>Название</MudTh>
-                <MudTh>Символ</MudTh>
-                <MudTh>Курс к базовой</MudTh>
-                <MudTh>Базовая</MudTh>
-                <MudTh></MudTh>
-            </HeaderContent>
-            <RowTemplate>
-                <MudTd DataLabel="Код">@context.Code</MudTd>
-                <MudTd DataLabel="Название">@context.Name</MudTd>
-                <MudTd DataLabel="Символ">@context.Symbol</MudTd>
-                <MudTd DataLabel="Курс">@context.ExchangeRateToBase.ToString("N4")</MudTd>
-                <MudTd DataLabel="Базовая">
-                    @if (context.IsBase)
-                    {
-                        <MudChip T="string" Color="Color.Success" Size="Size.Small">Базовая</MudChip>
-                    }
-                </MudTd>
-                <MudTd>
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => OpenEditCurrencyDialogAsync(context))" />
-                </MudTd>
-            </RowTemplate>
-            <NoRecordsContent>
-                <EmptyState Icon="@Icons.Material.Filled.CurrencyExchange" Title="Валюты не добавлены" />
-            </NoRecordsContent>
-        </MudTable>
-    </MudTabPanel>
-
-    <MudTabPanel Text="График работы" Icon="@Icons.Material.Filled.Schedule">
+    <MudTabPanel Text="@Loc["Settings_TabSchedule"]" Icon="@LucideIcons.Clock">
         <MudText Typo="Typo.body2" Class="text-secondary mb-4">
-            Рабочие часы врача по дням недели. При записи вне графика система только предупредит, но не заблокирует создание визита.
+            @Loc["Settings_ScheduleDescription"]
         </MudText>
         @if (_isLoadingSchedule)
         {
@@ -203,15 +171,15 @@
                             <MudCheckBox T="bool" Value="entry.IsActive" ValueChanged="@(v => OnScheduleActiveChanged(day, v))" Label="@GetDayLabel(day)" />
                         </MudItem>
                         <MudItem xs="4">
-                            <MudTimePicker Label="Начало" Time="entry.StartTime.ToTimeSpan()" TimeChanged="@(t => OnScheduleTimeChanged(day, t, isStart: true))"
+                            <MudTimePicker Label="@Loc["Settings_ScheduleStart"]" Time="entry.StartTime.ToTimeSpan()" TimeChanged="@(t => OnScheduleTimeChanged(day, t, isStart: true))"
                                            Disabled="!entry.IsActive" />
                         </MudItem>
                         <MudItem xs="4">
-                            <MudTimePicker Label="Конец" Time="entry.EndTime.ToTimeSpan()" TimeChanged="@(t => OnScheduleTimeChanged(day, t, isStart: false))"
+                            <MudTimePicker Label="@Loc["Settings_ScheduleEnd"]" Time="entry.EndTime.ToTimeSpan()" TimeChanged="@(t => OnScheduleTimeChanged(day, t, isStart: false))"
                                            Disabled="!entry.IsActive" />
                         </MudItem>
                         <MudItem xs="1">
-                            <MudIconButton Icon="@Icons.Material.Filled.Save" Size="Size.Small" Color="Color.Primary"
+                            <MudIconButton Icon="@LucideIcons.Save" Size="Size.Small" Color="Color.Primary"
                                            OnClick="@(() => SaveScheduleDayAsync(day))" />
                         </MudItem>
                     </MudGrid>
@@ -234,6 +202,7 @@
     private string _backupTime = string.Empty;
     private int _backupRetentionDays = 30;
     private int _autoLockMinutes = 10;
+    private bool _enable3DOdontogram;
 
     private string _oldCode = string.Empty;
     private string _newCode = string.Empty;
@@ -246,8 +215,6 @@
     private List<AuditLogDto> _auditLogs = [];
     private bool _isLoadingAudit = true;
 
-    private List<CurrencyDto> _currencies = [];
-    private bool _isLoadingCurrencies = true;
 
     private sealed class ScheduleDayEntry
     {
@@ -269,18 +236,18 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await Task.WhenAll(LoadSettingsAsync(), LoadBackupsAsync(), LoadAuditLogsAsync(), LoadCurrenciesAsync(), LoadScheduleAsync());
+        await Task.WhenAll(LoadSettingsAsync(), LoadBackupsAsync(), LoadAuditLogsAsync(), LoadScheduleAsync());
     }
 
-    private static string GetDayLabel(DayOfWeek day) => day switch
+    private string GetDayLabel(DayOfWeek day) => day switch
     {
-        DayOfWeek.Monday => "Понедельник",
-        DayOfWeek.Tuesday => "Вторник",
-        DayOfWeek.Wednesday => "Среда",
-        DayOfWeek.Thursday => "Четверг",
-        DayOfWeek.Friday => "Пятница",
-        DayOfWeek.Saturday => "Суббота",
-        _ => "Воскресенье"
+        DayOfWeek.Monday => Loc["Settings_DayMonday"],
+        DayOfWeek.Tuesday => Loc["Settings_DayTuesday"],
+        DayOfWeek.Wednesday => Loc["Settings_DayWednesday"],
+        DayOfWeek.Thursday => Loc["Settings_DayThursday"],
+        DayOfWeek.Friday => Loc["Settings_DayFriday"],
+        DayOfWeek.Saturday => Loc["Settings_DaySaturday"],
+        _ => Loc["Settings_DaySunday"]
     };
 
     private async Task LoadScheduleAsync()
@@ -301,7 +268,7 @@
         }
         catch (ApiException ex)
         {
-            Snackbar.Add($"Не удалось загрузить график врача: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(Loc["Settings_ScheduleLoadFailed"], ex.Message), Severity.Error);
         }
         finally
         {
@@ -328,7 +295,7 @@
         var entry = _scheduleByDay[day];
         if (entry.EndTime <= entry.StartTime)
         {
-            Snackbar.Add("Время окончания должно быть позже времени начала.", Severity.Error);
+            Snackbar.Add(Loc["Settings_ScheduleTimeInvalid"], Severity.Error);
             return;
         }
 
@@ -336,46 +303,12 @@
         {
             var request = new UpsertDoctorScheduleRequest(_doctorName, day, entry.StartTime, entry.EndTime, entry.IsActive);
             await Api.UpsertDoctorScheduleAsync(request);
-            Snackbar.Add($"График на {GetDayLabel(day).ToLower()} сохранён.", Severity.Success);
+            Snackbar.Add(string.Format(Loc["Settings_ScheduleSaved"], GetDayLabel(day).ToLower()), Severity.Success);
         }
         catch (ApiException ex)
         {
             Snackbar.Add(ex.Message, Severity.Error);
         }
-    }
-
-    private async Task LoadCurrenciesAsync()
-    {
-        _isLoadingCurrencies = true;
-        try
-        {
-            _currencies = (await Api.GetCurrenciesAsync()).ToList();
-        }
-        catch (ApiException ex)
-        {
-            Snackbar.Add($"Не удалось загрузить валюты: {ex.Message}", Severity.Error);
-        }
-        finally
-        {
-            _isLoadingCurrencies = false;
-        }
-    }
-
-    private async Task OpenCreateCurrencyDialogAsync()
-    {
-        var dialog = await DialogService.ShowAsync<Components.CurrencyDialog>("Новая валюта");
-        var result = await dialog.Result;
-        if (result is { Canceled: false })
-            await LoadCurrenciesAsync();
-    }
-
-    private async Task OpenEditCurrencyDialogAsync(CurrencyDto currency)
-    {
-        var parameters = new DialogParameters { { "Existing", currency } };
-        var dialog = await DialogService.ShowAsync<Components.CurrencyDialog>("Редактировать валюту", parameters);
-        var result = await dialog.Result;
-        if (result is { Canceled: false })
-            await LoadCurrenciesAsync();
     }
 
     private async Task LoadSettingsAsync()
@@ -391,11 +324,12 @@
             _backupTime = settings.BackupTime;
             _backupRetentionDays = settings.BackupRetentionDays;
             _autoLockMinutes = settings.AutoLockMinutes;
+            _enable3DOdontogram = settings.Enable3DOdontogram;
             _settingsLoaded = true;
         }
         catch (ApiException ex)
         {
-            Snackbar.Add($"Ошибка загрузки настроек: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(Loc["Settings_LoadFailed"], ex.Message), Severity.Error);
         }
     }
 
@@ -429,12 +363,12 @@
     {
         if (string.IsNullOrWhiteSpace(_customAccentColor))
         {
-            Snackbar.Add("Укажите цвет.", Severity.Warning);
+            Snackbar.Add(Loc["Settings_ColorRequired"], Severity.Warning);
             return;
         }
 
         await ThemeService.SetCustomAccentAsync(_customAccentColor);
-        Snackbar.Add("Акцентный цвет применён.", Severity.Success);
+        Snackbar.Add(Loc["Settings_AccentApplied"], Severity.Success);
     }
 
     private async Task ResetCustomAccentAsync()
@@ -448,10 +382,12 @@
         _isSavingSettings = true;
         try
         {
+            var languageChanged = _language != await CultureService.GetStoredCultureAsync(JsRuntime);
+
             _theme = $"{(ThemeService.IsDark ? "dark" : "light")}-{(ThemeService.Accent == AppAccent.Teal ? "teal" : "blue")}";
             var request = new UpdateSettingsRequest(
                 _doctorName, _clinicName, _currency, _theme, _language, _backupTime, _backupRetentionDays,
-                _autoLockMinutes);
+                _autoLockMinutes, _enable3DOdontogram);
 
             var settings = await Api.UpdateSettingsAsync(request);
             _doctorName = settings.DoctorName;
@@ -462,11 +398,21 @@
             _backupTime = settings.BackupTime;
             _backupRetentionDays = settings.BackupRetentionDays;
             _autoLockMinutes = settings.AutoLockMinutes;
-            Snackbar.Add("Настройки сохранены.", Severity.Success);
+            _enable3DOdontogram = settings.Enable3DOdontogram;
+
+            if (languageChanged)
+            {
+                await CultureService.SetStoredCultureAsync(JsRuntime, _language);
+                Snackbar.Add(Loc["Settings_SavedApplyingLanguage"], Severity.Success);
+                Navigation.NavigateTo(Navigation.Uri, forceLoad: true);
+                return;
+            }
+
+            Snackbar.Add(Loc["Settings_Saved"], Severity.Success);
         }
         catch (ApiException ex)
         {
-            Snackbar.Add($"Не удалось сохранить настройки: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(Loc["Settings_SaveFailed"], ex.Message), Severity.Error);
         }
         finally
         {
@@ -478,7 +424,7 @@
     {
         if (_newCode != _newCodeConfirm)
         {
-            Snackbar.Add("Новый код и подтверждение не совпадают.", Severity.Warning);
+            Snackbar.Add(Loc["Settings_CodeMismatch"], Severity.Warning);
             return;
         }
 
@@ -486,12 +432,12 @@
         try
         {
             await Api.ChangeAccessCodeAsync(_oldCode, _newCode);
-            Snackbar.Add("Код доступа изменён.", Severity.Success);
+            Snackbar.Add(Loc["Settings_CodeChanged"], Severity.Success);
             _oldCode = _newCode = _newCodeConfirm = string.Empty;
         }
         catch (ApiException ex)
         {
-            Snackbar.Add($"Не удалось сменить код: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(Loc["Settings_ChangeCodeFailed"], ex.Message), Severity.Error);
         }
         finally
         {
@@ -508,7 +454,7 @@
         }
         catch (ApiException ex)
         {
-            Snackbar.Add($"Ошибка загрузки бэкапов: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(Loc["Settings_BackupsLoadFailed"], ex.Message), Severity.Error);
         }
         finally
         {
@@ -526,13 +472,15 @@
         }
         catch (ApiException ex)
         {
-            Snackbar.Add($"Ошибка загрузки журнала действий: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(Loc["Settings_AuditLoadFailed"], ex.Message), Severity.Error);
         }
         finally
         {
             _isLoadingAudit = false;
         }
     }
+
+    private bool _isBackupJobRunning;
 
     private async Task OpenCreateBackupDialogAsync()
     {
@@ -542,13 +490,24 @@
 
         try
         {
-            await Api.CreateBackupAsync(new CreateBackupRequest(pin, "Ручное создание"));
-            Snackbar.Add("Резервная копия создана.", Severity.Success);
+            var jobId = await Api.CreateBackupAsync(new CreateBackupRequest(pin, "Ручное создание"));
+            Snackbar.Add(Loc["Settings_BackupInProgress"], Severity.Info);
+
+            var job = await WaitForJobAsync(jobId);
+            if (job.Status == "Succeeded")
+            {
+                Snackbar.Add(Loc["Settings_BackupCreated"], Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add(string.Format(Loc["Settings_BackupJobFailed"], job.Error), Severity.Error);
+            }
+
             await LoadBackupsAsync();
         }
         catch (ApiException ex)
         {
-            Snackbar.Add($"Не удалось создать резервную копию: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(Loc["Settings_BackupCreateFailed"], ex.Message), Severity.Error);
         }
     }
 
@@ -560,12 +519,50 @@
 
         try
         {
-            await Api.RestoreBackupAsync(new RestoreBackupRequest(pin, fileName));
-            Snackbar.Add("База данных восстановлена из резервной копии.", Severity.Success);
+            var jobId = await Api.RestoreBackupAsync(new RestoreBackupRequest(pin, fileName));
+            Snackbar.Add(Loc["Settings_BackupInProgress"], Severity.Info);
+
+            var job = await WaitForJobAsync(jobId);
+            if (job.Status == "Succeeded")
+            {
+                Snackbar.Add(Loc["Settings_BackupRestored"], Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add(string.Format(Loc["Settings_BackupJobFailed"], job.Error), Severity.Error);
+            }
         }
         catch (ApiException ex)
         {
-            Snackbar.Add($"Не удалось восстановить резервную копию: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(Loc["Settings_BackupRestoreFailed"], ex.Message), Severity.Error);
+        }
+    }
+
+    // Опрос статуса фоновой джобы (backup/restore) раз в 2 секунды — операция не блокирует HTTP-запрос,
+    // поэтому UI ждёт результата отдельным поллингом вместо долгого await на POST (см. промпт 6 аудита).
+    private async Task<JobDto> WaitForJobAsync(Guid jobId)
+    {
+        _isBackupJobRunning = true;
+        StateHasChanged();
+
+        try
+        {
+            var deadline = DateTime.UtcNow.AddMinutes(10);
+            while (DateTime.UtcNow < deadline)
+            {
+                var job = await Api.GetJobAsync(jobId);
+                if (job.Status is "Succeeded" or "Failed")
+                    return job;
+
+                await Task.Delay(2000);
+            }
+
+            return new JobDto(jobId, "unknown", "Failed", 0, "Превышено время ожидания.", DateTime.UtcNow, DateTime.UtcNow);
+        }
+        finally
+        {
+            _isBackupJobRunning = false;
+            StateHasChanged();
         }
     }
 
@@ -574,39 +571,39 @@
         try
         {
             var isValid = await Api.ValidateBackupAsync(fileName);
-            Snackbar.Add(isValid ? "Резервная копия целостна." : "Резервная копия повреждена!", isValid ? Severity.Success : Severity.Error);
+            Snackbar.Add(isValid ? Loc["Settings_BackupValidOk"] : Loc["Settings_BackupCorrupted"], isValid ? Severity.Success : Severity.Error);
             await LoadBackupsAsync();
         }
         catch (ApiException ex)
         {
-            Snackbar.Add($"Не удалось проверить резервную копию: {ex.Message}", Severity.Error);
+            Snackbar.Add(string.Format(Loc["Settings_BackupValidateFailed"], ex.Message), Severity.Error);
         }
     }
 
     private async Task<string?> PromptPinAsync()
     {
         var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
-        var dialog = await DialogService.ShowAsync<PinPromptDialog>("Введите код доступа", options);
+        var dialog = await DialogService.ShowAsync<PinPromptDialog>(Loc["Login_EnterCode"], options);
         var result = await dialog.Result;
 
         return result is { Canceled: false, Data: string pin } ? pin : null;
     }
 
-    private static string FormatSize(long bytes)
+    private string FormatSize(long bytes)
     {
         if (bytes >= 1024 * 1024)
-            return $"{bytes / (1024.0 * 1024.0):N1} МБ";
+            return $"{bytes / (1024.0 * 1024.0):N1} {Loc["Settings_UnitMb"]}";
         if (bytes >= 1024)
-            return $"{bytes / 1024.0:N1} КБ";
-        return $"{bytes} Б";
+            return $"{bytes / 1024.0:N1} {Loc["Settings_UnitKb"]}";
+        return $"{bytes} {Loc["Settings_UnitByte"]}";
     }
 
-    private static string FormatTrigger(short trigger) => trigger switch
+    private string FormatTrigger(short trigger) => trigger switch
     {
-        1 => "Ежедневно (авто)",
-        2 => "Перед обновлением",
-        3 => "Вручную",
-        4 => "Перед восстановлением",
+        1 => Loc["Settings_TriggerDaily"],
+        2 => Loc["Settings_TriggerBeforeUpdate"],
+        3 => Loc["Settings_TriggerManual"],
+        4 => Loc["Settings_TriggerBeforeRestore"],
         _ => "—",
     };
 }

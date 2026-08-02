@@ -1,0 +1,384 @@
+﻿@page "/analytics"
+@attribute [Authorize]
+@inject ApiClient Api
+@inject ISnackbar Snackbar
+@inject IJSRuntime JsRuntime
+@inject IStringLocalizer<SharedResource> Loc
+
+<PageTitle>Аналитика — DentalLocal</PageTitle>
+
+@if (_loading)
+{
+    <div class="page-fade-in">
+        <div class="skeleton skeleton-title"></div>
+        <div class="skeleton mb-4" style="height:120px;border-radius:var(--app-radius-md);"></div>
+        <div class="skeleton" style="height:350px;border-radius:var(--app-radius-md);"></div>
+    </div>
+}
+else
+{
+    <div class="page-fade-in">
+    <PageHeader Title="@Loc["Page_Analytics_Title"]" Icon="@LucideIcons.Analytics" Subtitle="@Loc["Page_Analytics_Subtitle"]" />
+
+    <GlassCard Title="Период для загрузки врача" Class="mb-6">
+        <MudGrid AlignItems="Center">
+            <MudItem xs="12" sm="4" md="3">
+                <MudDatePicker Label="С" @bind-Date="_from" />
+            </MudItem>
+            <MudItem xs="12" sm="4" md="3">
+                <MudDatePicker Label="По" @bind-Date="_to" />
+            </MudItem>
+            <MudItem xs="12" sm="4" md="3">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ApplyPeriodAsync" Disabled="_isReloadingWorkload">
+                    Применить
+                </MudButton>
+            </MudItem>
+        </MudGrid>
+    </GlassCard>
+
+    <MudGrid>
+        <MudItem xs="12" md="8">
+            <GlassCard Title="Динамика выручки (последние 12 мес.)" Class="mb-6">
+                @if (_chartPoints.Count > 0)
+                {
+                    <MudChart T="double" ChartType="ChartType.Bar" ChartSeries="@_series" XAxisLabels="@_xAxisLabels"
+                              Width="100%" Height="350px" ChartOptions="@_chartOptions" />
+                }
+                else
+                {
+                    <EmptyState Icon="@LucideIcons.TrendingUp" Title="Нет данных о доходах" />
+                }
+            </GlassCard>
+        </MudItem>
+
+        <MudItem xs="12" md="4">
+            <GlassCard Title="Топ процедур" Style="height: 100%;">
+                <HeaderActions>
+                    <MudSelect T="int" Value="_topCount" ValueChanged="OnTopCountChangedAsync" Dense="true" Margin="Margin.Dense" Style="width:90px;">
+                        <MudSelectItem Value="5">5</MudSelectItem>
+                        <MudSelectItem Value="10">10</MudSelectItem>
+                        <MudSelectItem Value="20">20</MudSelectItem>
+                        <MudSelectItem Value="50">50</MudSelectItem>
+                    </MudSelect>
+                    <MudIconButton Icon="@LucideIcons.Download" Size="Size.Small"
+                                   OnClick="ExportTopProceduresAsync" Disabled="_isExportingProcedures" title="Экспорт в Excel" />
+                </HeaderActions>
+                <ChildContent>
+                @if (_topProcedures.Count > 0)
+                {
+                    <div class="d-flex flex-column align-center">
+                        <MudChart T="double" ChartType="ChartType.Donut" InputData="@_donutData" InputLabels="@_donutLabels"
+                                  Width="230px" Height="230px" />
+
+                        <MudList T="string" Class="width-full mt-4">
+                            @for (int i = 0; i < _topProcedures.Count; i++)
+                            {
+                                var proc = _topProcedures[i];
+                                <MudListItem Text="@($"{proc.Name} ({proc.Count} шт.)")"
+                                             SecondaryText="@($"{proc.TotalAmount.ToString("N0")} сомони")"
+                                             Icon="@LucideIcons.CheckCircle"
+                                             IconColor="Color.Primary" />
+                            }
+                        </MudList>
+                    </div>
+                }
+                else
+                {
+                    <EmptyState Icon="@LucideIcons.PieChart" Title="Нет данных о процедурах" />
+                }
+                </ChildContent>
+            </GlassCard>
+        </MudItem>
+    </MudGrid>
+
+    <GlassCard Title="Себестоимость и прибыль за период" Class="mt-6">
+        @if (_isReloadingWorkload)
+        {
+            <div class="skeleton" style="height:80px;border-radius:var(--app-radius-md);"></div>
+        }
+        else if (_profit is null)
+        {
+            <EmptyState Icon="@LucideIcons.DollarSign" Title="Нет данных за период" />
+        }
+        else
+        {
+            <MudGrid>
+                <MudItem xs="12" md="4">
+                    <MudText Typo="Typo.subtitle2" Class="text-secondary">Выручка</MudText>
+                    <MudText Typo="Typo.h5" Class="font-weight-bold">@_profit.Revenue.ToString("N0") сомони</MudText>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudText Typo="Typo.subtitle2" Class="text-secondary">Себестоимость материалов</MudText>
+                    <MudText Typo="Typo.h5" Class="font-weight-bold text-danger">@_profit.MaterialCost.ToString("N0") сомони</MudText>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudText Typo="Typo.subtitle2" Class="text-secondary">Прибыль</MudText>
+                    <MudText Typo="Typo.h5" Class="font-weight-bold text-success">@_profit.Profit.ToString("N0") сомони</MudText>
+                </MudItem>
+            </MudGrid>
+        }
+    </GlassCard>
+
+    <GlassCard Title="Загрузка врача" Class="mt-6">
+        <HeaderActions>
+            <MudButton Variant="Variant.Outlined" Size="Size.Small" StartIcon="@LucideIcons.Download"
+                       OnClick="ExportWorkloadAsync" Disabled="_isExportingWorkload">
+                Экспорт в Excel
+            </MudButton>
+        </HeaderActions>
+        <ChildContent>
+        @if (_isReloadingWorkload)
+        {
+            <div class="skeleton" style="height:200px;border-radius:var(--app-radius-md);"></div>
+        }
+        else if (_workload is null)
+        {
+            <EmptyState Icon="@LucideIcons.TrendingUp" Title="Нет данных о загрузке" />
+        }
+        else
+        {
+            <MudGrid>
+                <MudItem xs="12" md="4">
+                    <MudText Typo="Typo.subtitle2" Class="text-secondary">Визитов за период</MudText>
+                    <MudText Typo="Typo.h5" Class="font-weight-bold">@_workload.TotalVisits</MudText>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudText Typo="Typo.subtitle2" Class="text-secondary">Отменено, %</MudText>
+                    <MudText Typo="Typo.h5" Class="font-weight-bold text-danger">@_workload.CancelledOrNoShowPercent.ToString("N1")</MudText>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudText Typo="Typo.subtitle2" Class="text-secondary">Простой относительно графика, %</MudText>
+                    <MudText Typo="Typo.h5" Class="font-weight-bold">@_workload.IdlePercent.ToString("N1")</MudText>
+                </MudItem>
+            </MudGrid>
+
+            @if (_workload.Heatmap.Count > 0)
+            {
+                <MudText Typo="Typo.subtitle2" Class="mt-4 mb-2">Тепловая карта по дням/часам</MudText>
+                <div style="overflow-x:auto;">
+                    <table class="workload-heatmap">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                @foreach (var hour in _heatmapHours)
+                                {
+                                    <th>@hour</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var day in _heatmapDays)
+                            {
+                                <tr>
+                                    <td>@GetShortDayLabel(day)</td>
+                                    @foreach (var hour in _heatmapHours)
+                                    {
+                                        var count = GetHeatmapCount(day, hour);
+                                        <td style="@GetHeatmapCellStyle(count)">@(count > 0 ? count.ToString() : "")</td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            @if (_workload.AverageDurationByProcedure.Count > 0)
+            {
+                <MudText Typo="Typo.subtitle2" Class="mt-4 mb-2">Средняя длительность по типам процедур</MudText>
+                <MudTable Items="_workload.AverageDurationByProcedure" Hover="true" Dense="true" Elevation="0" Class="glass-table">
+                    <HeaderContent>
+                        <MudTh>Процедура</MudTh>
+                        <MudTh>Средняя длительность, мин</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>@context.ProcedureName</MudTd>
+                        <MudTd>@context.AverageDurationMinutes.ToString("N0")</MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        }
+        </ChildContent>
+    </GlassCard>
+    </div>
+}
+
+@code {
+    private const string ExcelMimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+    private bool _loading = true;
+    private bool _isReloadingWorkload;
+    private bool _isExportingWorkload;
+    private bool _isExportingProcedures;
+
+    private DateTime? _from = DateTime.Today.AddDays(-30);
+    private DateTime? _to = DateTime.Today;
+    private int _topCount = 5;
+
+    private List<IncomeChartPointDto> _chartPoints = [];
+    private List<ProcedureTopDto> _topProcedures = [];
+    private DoctorWorkloadStatsDto? _workload;
+    private ProfitStatsDto? _profit;
+
+    private List<ChartSeries<double>> _series = [];
+    private string[] _xAxisLabels = [];
+    private readonly ChartOptions _chartOptions = new();
+
+    private double[] _donutData = [];
+    private string[] _donutLabels = [];
+
+    private static readonly DayOfWeek[] _heatmapDays =
+    [
+        DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday,
+        DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday
+    ];
+
+    private static readonly int[] _heatmapHours = Enumerable.Range(8, 12).ToArray();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var chartTask = Api.GetIncomeChartAsync();
+            var procTask = Api.GetTopProceduresAsync(_topCount);
+            var workloadTask = Api.GetDoctorWorkloadStatsAsync(ToDateOnly(_from), ToDateOnly(_to));
+            var profitTask = Api.GetProfitStatsAsync(ToDateOnly(_from), ToDateOnly(_to));
+
+            await Task.WhenAll(chartTask, procTask, workloadTask, profitTask);
+
+            _chartPoints = (await chartTask).ToList();
+            _topProcedures = (await procTask).ToList();
+            _workload = await workloadTask;
+            _profit = await profitTask;
+
+            ApplyIncomeChart();
+            ApplyDonutChart();
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось загрузить аналитику: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private static DateOnly? ToDateOnly(DateTime? value) => value.HasValue ? DateOnly.FromDateTime(value.Value) : null;
+
+    private void ApplyIncomeChart()
+    {
+        if (_chartPoints.Count == 0)
+            return;
+
+        var values = _chartPoints.Select(p => (double)p.Amount).ToArray();
+        _series = [new ChartSeries<double> { Name = "Выручка", Data = values }];
+        _xAxisLabels = _chartPoints.Select(p => p.Label).ToArray();
+    }
+
+    private void ApplyDonutChart()
+    {
+        if (_topProcedures.Count == 0)
+            return;
+
+        _donutData = _topProcedures.Select(p => (double)p.Count).ToArray();
+        _donutLabels = _topProcedures.Select(p => p.Name).ToArray();
+    }
+
+    private async Task ApplyPeriodAsync()
+    {
+        _isReloadingWorkload = true;
+        try
+        {
+            var workloadTask = Api.GetDoctorWorkloadStatsAsync(ToDateOnly(_from), ToDateOnly(_to));
+            var profitTask = Api.GetProfitStatsAsync(ToDateOnly(_from), ToDateOnly(_to));
+            await Task.WhenAll(workloadTask, profitTask);
+            _workload = await workloadTask;
+            _profit = await profitTask;
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось загрузить загрузку врача: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isReloadingWorkload = false;
+        }
+    }
+
+    private async Task OnTopCountChangedAsync(int value)
+    {
+        _topCount = value;
+        try
+        {
+            _topProcedures = (await Api.GetTopProceduresAsync(_topCount)).ToList();
+            ApplyDonutChart();
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось загрузить процедуры: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task ExportWorkloadAsync()
+    {
+        _isExportingWorkload = true;
+        try
+        {
+            var bytes = await Api.ExportWorkloadExcelAsync(ToDateOnly(_from), ToDateOnly(_to));
+            var base64 = Convert.ToBase64String(bytes);
+            await JsRuntime.InvokeVoidAsync("dentalLocal.downloadFileFromBytes", base64, "Загрузка_врача.xlsx", ExcelMimeType);
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось экспортировать: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isExportingWorkload = false;
+        }
+    }
+
+    private async Task ExportTopProceduresAsync()
+    {
+        _isExportingProcedures = true;
+        try
+        {
+            var bytes = await Api.ExportTopProceduresExcelAsync(_topCount);
+            var base64 = Convert.ToBase64String(bytes);
+            await JsRuntime.InvokeVoidAsync("dentalLocal.downloadFileFromBytes", base64, "Топ_процедур.xlsx", ExcelMimeType);
+        }
+        catch (ApiException ex)
+        {
+            Snackbar.Add($"Не удалось экспортировать: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _isExportingProcedures = false;
+        }
+    }
+
+    private int GetHeatmapCount(DayOfWeek day, int hour) =>
+        _workload?.Heatmap.FirstOrDefault(c => c.DayOfWeek == day && c.Hour == hour)?.VisitCount ?? 0;
+
+    private string GetHeatmapCellStyle(int count)
+    {
+        if (count == 0)
+            return "background: transparent;";
+
+        var maxCount = _workload?.Heatmap.Count > 0 ? _workload!.Heatmap.Max(c => c.VisitCount) : 1;
+        var intensity = Math.Clamp((double)count / Math.Max(1, maxCount), 0.15, 1.0);
+        return $"background: rgba(var(--mud-palette-primary-rgb), {intensity.ToString(System.Globalization.CultureInfo.InvariantCulture)});";
+    }
+
+    private static string GetShortDayLabel(DayOfWeek day) => day switch
+    {
+        DayOfWeek.Monday => "ПН",
+        DayOfWeek.Tuesday => "ВТ",
+        DayOfWeek.Wednesday => "СР",
+        DayOfWeek.Thursday => "ЧТ",
+        DayOfWeek.Friday => "ПТ",
+        DayOfWeek.Saturday => "СБ",
+        _ => "ВС"
+    };
+}

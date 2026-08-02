@@ -22,7 +22,6 @@ public sealed class FakeUnitOfWork : IUnitOfWork
     public readonly List<MaterialUsage> MaterialUsagesData = [];
     public readonly List<Reminder> RemindersData = [];
     public readonly List<TreatmentPlan> TreatmentPlansData = [];
-    public readonly List<Currency> CurrenciesData = [];
     public readonly List<DiscountHistory> DiscountHistoryData = [];
     public readonly List<WaitingList> WaitingListData = [];
     public readonly List<Prescription> PrescriptionsData = [];
@@ -49,17 +48,22 @@ public sealed class FakeUnitOfWork : IUnitOfWork
     public IMaterialUsageRepository MaterialUsages => new FakeMaterialUsageRepository(MaterialUsagesData);
     public IReminderRepository Reminders => new FakeReminderRepository(RemindersData);
     public ITreatmentPlanRepository TreatmentPlans => new FakeTreatmentPlanRepository(TreatmentPlansData);
-    public ICurrencyRepository Currencies => new FakeCurrencyRepository(CurrenciesData);
     public IDiscountHistoryRepository DiscountHistory => new FakeDiscountHistoryRepository(DiscountHistoryData);
     public IWaitingListRepository WaitingList => new FakeWaitingListRepository(WaitingListData);
     public IPrescriptionRepository Prescriptions => new FakePrescriptionRepository(PrescriptionsData);
     public IWarrantyRepository Warranties => new FakeWarrantyRepository(WarrantiesData);
     public IDoctorScheduleRepository DoctorSchedules => throw new NotImplementedException();
+    public IClinicScheduleRepository ClinicSchedules => throw new NotImplementedException();
+
+    public int BeginTransactionCallCount { get; private set; }
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) => Task.FromResult(0);
 
-    public Task<ITransactionScope> BeginTransactionAsync(CancellationToken cancellationToken = default) =>
-        Task.FromResult<ITransactionScope>(new NoOpTransactionScope());
+    public Task<ITransactionScope> BeginTransactionAsync(CancellationToken cancellationToken = default)
+    {
+        BeginTransactionCallCount++;
+        return Task.FromResult<ITransactionScope>(new NoOpTransactionScope());
+    }
 
     private sealed class NoOpTransactionScope : ITransactionScope
     {
@@ -87,7 +91,7 @@ public sealed class FakeUnitOfWork : IUnitOfWork
             Task.FromResult<(IReadOnlyList<Visit>, int)>(([], 0));
 
         public Task<IReadOnlyList<Visit>> GetByDateRangeAsync(DateOnly from, DateOnly to, CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<Visit>>([]);
+            Task.FromResult<IReadOnlyList<Visit>>(store.Where(v => v.VisitDate >= from && v.VisitDate <= to).ToList());
 
         public Task AddAsync(Visit entity, CancellationToken cancellationToken = default)
         {
@@ -117,6 +121,12 @@ public sealed class FakeUnitOfWork : IUnitOfWork
 
         public Task<IReadOnlyList<Patient>> GetInactiveAsync(int monthsThreshold, CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<Patient>>([]);
+
+        public Task DeleteWithRelatedDataAsync(Guid patientId, CancellationToken cancellationToken = default)
+        {
+            store.RemoveAll(p => p.Id == patientId);
+            return Task.CompletedTask;
+        }
 
         public Task AddAsync(Patient entity, CancellationToken cancellationToken = default)
         {
@@ -280,6 +290,9 @@ public sealed class FakeUnitOfWork : IUnitOfWork
         public Task<IReadOnlyList<MaterialUsage>> GetByVisitIdAsync(Guid visitId, CancellationToken cancellationToken = default) =>
             Task.FromResult<IReadOnlyList<MaterialUsage>>(store.Where(u => u.VisitId == visitId).ToList());
 
+        public Task<IReadOnlyList<MaterialUsage>> GetByVisitIdsAsync(IReadOnlyCollection<Guid> visitIds, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<MaterialUsage>>(store.Where(u => visitIds.Contains(u.VisitId)).ToList());
+
         public Task AddAsync(MaterialUsage entity, CancellationToken cancellationToken = default)
         {
             store.Add(entity);
@@ -311,24 +324,6 @@ public sealed class FakeUnitOfWork : IUnitOfWork
             Task.FromResult<IReadOnlyList<TreatmentPlan>>(store.Where(p => p.PatientId == patientId).ToList());
 
         public Task AddAsync(TreatmentPlan entity, CancellationToken cancellationToken = default)
-        {
-            store.Add(entity);
-            return Task.CompletedTask;
-        }
-    }
-
-    private sealed class FakeCurrencyRepository(List<Currency> store) : ICurrencyRepository
-    {
-        public Task<Currency?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
-            Task.FromResult(store.FirstOrDefault(c => c.Id == id));
-
-        public Task<IReadOnlyList<Currency>> GetAllAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<Currency>>(store.ToList());
-
-        public Task<Currency?> GetByCodeAsync(string code, CancellationToken cancellationToken = default) =>
-            Task.FromResult(store.FirstOrDefault(c => c.Code == code));
-
-        public Task AddAsync(Currency entity, CancellationToken cancellationToken = default)
         {
             store.Add(entity);
             return Task.CompletedTask;

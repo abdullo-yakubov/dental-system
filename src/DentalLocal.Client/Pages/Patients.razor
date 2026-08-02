@@ -4,25 +4,26 @@
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
+@inject IStringLocalizer<SharedResource> Loc
 
 <PageTitle>Пациенты — DentalLocal</PageTitle>
 
 <div class="page-fade-in">
-    <PageHeader Title="Пациенты" Icon="@Icons.Material.Filled.People" Subtitle="База пациентов клиники">
+    <PageHeader Title="@Loc["Page_Patients_Title"]" Icon="@LucideIcons.Patients" Subtitle="@Loc["Patients_Subtitle"]">
         <Actions>
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.PersonAdd" OnClick="OpenCreateDialogAsync">
-                Новый пациент
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@LucideIcons.UserPlus" OnClick="OpenCreateDialogAsync">
+                @Loc["Patients_NewPatient"]
             </MudButton>
         </Actions>
     </PageHeader>
 
     <GlassCard Class="mb-4">
         <MudStack Row="true" Spacing="4" AlignItems="AlignItems.Center">
-            <SearchBox Value="_search" OnSearch="OnSearchChanged" Placeholder="Поиск по ФИО, телефону, № карты" Class="flex-grow-1" />
-            <MudCheckBox T="bool" Value="_includeArchived" ValueChanged="OnIncludeArchivedChanged" Label="Показать архивных" />
+            <SearchBox Value="_search" OnSearch="OnSearchChanged" Placeholder="@Loc["Patients_SearchPlaceholder"]" Class="flex-grow-1" />
+            <MudCheckBox T="bool" Value="_includeArchived" ValueChanged="OnIncludeArchivedChanged" Label="@Loc["Patients_ShowArchived"]" />
             <MudButton Variant="@(_showInactiveOnly ? Variant.Filled : Variant.Outlined)" Color="Color.Warning"
-                       StartIcon="@Icons.Material.Filled.EventBusy" OnClick="ToggleInactiveFilterAsync">
-                Отвалившиеся (6+ мес.)
+                       StartIcon="@LucideIcons.CalendarX" OnClick="ToggleInactiveFilterAsync">
+                @Loc["Patients_InactiveFilter"]
             </MudButton>
         </MudStack>
     </GlassCard>
@@ -32,26 +33,26 @@
         {
             <MudTable Items="_inactivePatients" Hover="true" Loading="_isLoading" Elevation="0" Class="glass-table">
                 <HeaderContent>
-                    <MudTh>№ карты</MudTh>
-                    <MudTh>ФИО</MudTh>
-                    <MudTh>Возраст</MudTh>
-                    <MudTh>Телефон</MudTh>
-                    <MudTh>Последний визит</MudTh>
+                    <MudTh>@Loc["Patients_ColumnCardNumber"]</MudTh>
+                    <MudTh>@Loc["Patients_ColumnFullName"]</MudTh>
+                    <MudTh>@Loc["Patients_ColumnAge"]</MudTh>
+                    <MudTh>@Loc["Common_ColumnPhone"]</MudTh>
+                    <MudTh>@Loc["Patients_ColumnLastVisit"]</MudTh>
                     <MudTh></MudTh>
                 </HeaderContent>
                 <RowTemplate>
-                    <MudTd DataLabel="№ карты">@context.CardNumberDisplay</MudTd>
-                    <MudTd DataLabel="ФИО">@context.FullName</MudTd>
-                    <MudTd DataLabel="Возраст">@context.Age</MudTd>
-                    <MudTd DataLabel="Телефон">@context.Phone</MudTd>
-                    <MudTd DataLabel="Последний визит">@(context.LastVisitAt?.ToString("dd.MM.yyyy") ?? "Не было визитов")</MudTd>
+                    <MudTd DataLabel="@Loc["Patients_ColumnCardNumber"]">@context.CardNumberDisplay</MudTd>
+                    <MudTd DataLabel="@Loc["Patients_ColumnFullName"]">@context.FullName</MudTd>
+                    <MudTd DataLabel="@Loc["Patients_ColumnAge"]">@context.Age</MudTd>
+                    <MudTd DataLabel="@Loc["Common_ColumnPhone"]">@context.Phone</MudTd>
+                    <MudTd DataLabel="@Loc["Patients_ColumnLastVisit"]">@(context.LastVisitAt?.ToString("dd.MM.yyyy") ?? Loc["Patients_NoVisitsYet"])</MudTd>
                     <MudTd>
-                        <MudButton Size="Size.Small" OnClick="@(() => OpenPatient(context.Id))">Открыть</MudButton>
+                        <MudButton Size="Size.Small" OnClick="@(() => OpenPatient(context.Id))">@Loc["Patients_Open"]</MudButton>
                     </MudTd>
                 </RowTemplate>
                 <NoRecordsContent>
-                    <EmptyState Icon="@Icons.Material.Filled.CheckCircleOutline" Title="Отвалившихся пациентов нет"
-                                Description="Все пациенты были на приёме в последние 6 месяцев." />
+                    <EmptyState Icon="@LucideIcons.CheckCircle" Title="@Loc["Patients_EmptyInactiveTitle"]"
+                                Description="@Loc["Patients_EmptyInactiveDescription"]" />
                 </NoRecordsContent>
             </MudTable>
         }
@@ -59,28 +60,28 @@
         {
         <MudTable ServerData="LoadPatientsAsync" @ref="_table" Hover="true" Loading="_isLoading" Elevation="0" Class="glass-table">
             <HeaderContent>
-                <MudTh>№ карты</MudTh>
-                <MudTh>ФИО</MudTh>
-                <MudTh>Возраст</MudTh>
-                <MudTh>Телефон</MudTh>
-                <MudTh>Последний визит</MudTh>
+                <MudTh>@Loc["Patients_ColumnCardNumber"]</MudTh>
+                <MudTh>@Loc["Patients_ColumnFullName"]</MudTh>
+                <MudTh>@Loc["Patients_ColumnAge"]</MudTh>
+                <MudTh>@Loc["Common_ColumnPhone"]</MudTh>
+                <MudTh>@Loc["Patients_ColumnLastVisit"]</MudTh>
                 <MudTh></MudTh>
             </HeaderContent>
             <RowTemplate>
-                <MudTd DataLabel="№ карты">@context.CardNumberDisplay</MudTd>
-                <MudTd DataLabel="ФИО">@context.FullName @(context.IsArchived ? "(архив)" : "")</MudTd>
-                <MudTd DataLabel="Возраст">@context.Age</MudTd>
-                <MudTd DataLabel="Телефон">@context.Phone</MudTd>
-                <MudTd DataLabel="Последний визит">@(context.LastVisitAt?.ToString("dd.MM.yyyy") ?? "—")</MudTd>
+                <MudTd DataLabel="@Loc["Patients_ColumnCardNumber"]">@context.CardNumberDisplay</MudTd>
+                <MudTd DataLabel="@Loc["Patients_ColumnFullName"]">@context.FullName @(context.IsArchived ? Loc["Patients_ArchivedSuffix"] : "")</MudTd>
+                <MudTd DataLabel="@Loc["Patients_ColumnAge"]">@context.Age</MudTd>
+                <MudTd DataLabel="@Loc["Common_ColumnPhone"]">@context.Phone</MudTd>
+                <MudTd DataLabel="@Loc["Patients_ColumnLastVisit"]">@(context.LastVisitAt?.ToString("dd.MM.yyyy") ?? "—")</MudTd>
                 <MudTd>
-                    <MudButton Size="Size.Small" OnClick="@(() => OpenPatient(context.Id))">Открыть</MudButton>
+                    <MudButton Size="Size.Small" OnClick="@(() => OpenPatient(context.Id))">@Loc["Patients_Open"]</MudButton>
                 </MudTd>
             </RowTemplate>
             <NoRecordsContent>
-                <EmptyState Icon="@Icons.Material.Filled.PersonSearch" Title="Пациенты не найдены" Description="Измените параметры поиска или добавьте нового пациента." />
+                <EmptyState Icon="@LucideIcons.UserSearch" Title="@Loc["Patients_EmptyTitle"]" Description="@Loc["Patients_EmptyDescription"]" />
             </NoRecordsContent>
             <PagerContent>
-                <MudTablePager RowsPerPageString="На странице:" InfoFormat="{first_item}-{last_item} из {all_items}" />
+                <MudTablePager RowsPerPageString="@Loc["Common_RowsPerPage"]" InfoFormat="@Loc["Common_PagerInfoFormat"]" />
             </PagerContent>
         </MudTable>
         }
@@ -155,7 +156,7 @@
 
     private async Task OpenCreateDialogAsync()
     {
-        var dialog = await DialogService.ShowAsync<Components.CreatePatientDialog>("Новый пациент");
+        var dialog = await DialogService.ShowAsync<Components.CreatePatientDialog>(Loc["Patients_NewPatient"]);
         var result = await dialog.Result;
 
         if (result is { Canceled: false })

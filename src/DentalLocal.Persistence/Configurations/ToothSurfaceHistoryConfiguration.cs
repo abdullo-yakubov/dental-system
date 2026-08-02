@@ -33,5 +33,7 @@ public class ToothSurfaceHistoryConfiguration : IEntityTypeConfiguration<ToothSu
 
         builder.HasIndex(t => new { t.ToothId, t.SurfaceCode });
         builder.HasIndex(t => t.ChangedAt);
+
+        builder.UseXminAsConcurrencyToken(t => t.Version);
     }
 }

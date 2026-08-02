@@ -1,4 +1,6 @@
+using DentalLocal.Domain.Exceptions;
 using DentalLocal.Domain.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace DentalLocal.Persistence.Repositories;
 
@@ -28,12 +30,12 @@ public class UnitOfWork : IUnitOfWork
         IMaterialUsageRepository materialUsages,
         IReminderRepository reminders,
         ITreatmentPlanRepository treatmentPlans,
-        ICurrencyRepository currencies,
         IDiscountHistoryRepository discountHistory,
         IWaitingListRepository waitingList,
         IPrescriptionRepository prescriptions,
         IWarrantyRepository warranties,
-        IDoctorScheduleRepository doctorSchedules)
+        IDoctorScheduleRepository doctorSchedules,
+        IClinicScheduleRepository clinicSchedules)
     {
         _context = context;
         Patients = patients;
@@ -56,12 +58,12 @@ public class UnitOfWork : IUnitOfWork
         MaterialUsages = materialUsages;
         Reminders = reminders;
         TreatmentPlans = treatmentPlans;
-        Currencies = currencies;
         DiscountHistory = discountHistory;
         WaitingList = waitingList;
         Prescriptions = prescriptions;
         Warranties = warranties;
         DoctorSchedules = doctorSchedules;
+        ClinicSchedules = clinicSchedules;
     }
 
     public IPatientRepository Patients { get; }
@@ -84,15 +86,24 @@ public class UnitOfWork : IUnitOfWork
     public IMaterialUsageRepository MaterialUsages { get; }
     public IReminderRepository Reminders { get; }
     public ITreatmentPlanRepository TreatmentPlans { get; }
-    public ICurrencyRepository Currencies { get; }
     public IDiscountHistoryRepository DiscountHistory { get; }
     public IWaitingListRepository WaitingList { get; }
     public IPrescriptionRepository Prescriptions { get; }
     public IWarrantyRepository Warranties { get; }
     public IDoctorScheduleRepository DoctorSchedules { get; }
+    public IClinicScheduleRepository ClinicSchedules { get; }
 
-    public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default) =>
-        _context.SaveChangesAsync(cancellationToken);
+    public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException ex)
+        {
+            throw new ConcurrencyConflictException("Данные были изменены другим процессом. Обновите страницу и повторите попытку.", ex);
+        }
+    }
 
     public async Task<ITransactionScope> BeginTransactionAsync(CancellationToken cancellationToken = default)
     {

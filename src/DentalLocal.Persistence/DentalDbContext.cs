@@ -30,12 +30,12 @@ public class DentalDbContext(DbContextOptions<DentalDbContext> options) : DbCont
     public DbSet<TreatmentPlan> TreatmentPlans => Set<TreatmentPlan>();
     public DbSet<TreatmentPlanItem> TreatmentPlanItems => Set<TreatmentPlanItem>();
 
-    public DbSet<Currency> Currencies => Set<Currency>();
     public DbSet<DiscountHistory> DiscountHistories => Set<DiscountHistory>();
     public DbSet<WaitingList> WaitingLists => Set<WaitingList>();
     public DbSet<Prescription> Prescriptions => Set<Prescription>();
     public DbSet<Warranty> Warranties => Set<Warranty>();
     public DbSet<DoctorSchedule> DoctorSchedules => Set<DoctorSchedule>();
+    public DbSet<ClinicSchedule> ClinicSchedules => Set<ClinicSchedule>();
     public DbSet<PatientDebtView> PatientDebts => Set<PatientDebtView>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

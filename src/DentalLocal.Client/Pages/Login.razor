@@ -1,15 +1,16 @@
-@page "/login"
+﻿@page "/login"
 @attribute [AllowAnonymous]
 @implements IDisposable
 @inject ApiClient Api
 @inject AuthState AuthState
 @inject NavigationManager Navigation
 @inject ThemeService ThemeService
+@inject IStringLocalizer<SharedResource> Loc
 
 <PageTitle>Вход — DentalLocal</PageTitle>
 
 <div class="login-backdrop" tabindex="0" @onkeydown="HandleKeyDown" @ref="_wrapper">
-    <MudIconButton Icon="@(ThemeService.IsDark ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"
+    <MudIconButton Icon="@(ThemeService.IsDark ? LucideIcons.Sun : LucideIcons.Moon)"
                     Style="position:fixed; top:16px; right:16px;" OnClick="ToggleTheme" />
 
     <MudPaper Class="@CardCssClass" Elevation="0">
@@ -18,7 +19,7 @@
         </div>
         <MudText Typo="Typo.h5" Align="Align.Center" Class="mb-1">DentalLocal</MudText>
         <MudText Typo="Typo.body2" Align="Align.Center" Class="mb-6" Color="Color.Secondary">
-            Введите код доступа
+            @Loc["Login_EnterCode"]
         </MudText>
 
         @if (_errorMessage is not null)
@@ -32,7 +33,7 @@
 
         <MudButton FullWidth="true" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large"
                     OnClick="SubmitAsync" Disabled="@(_isLockedOut || string.IsNullOrEmpty(_code) || _isBusy)">
-            @(_isLockedOut ? $"Повторите через {_lockoutSecondsRemaining} сек" : "Войти")
+            @(_isLockedOut ? Loc["Login_RetryIn", _lockoutSecondsRemaining].Value : Loc["Login_SignIn"].Value)
         </MudButton>
     </MudPaper>
 </div>

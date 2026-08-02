@@ -139,7 +139,7 @@ namespace DentalLocal.Persistence.Migrations
                         .HasColumnName("created_at");
 
                     b.Property<string>("DetailsJson")
-                        .HasColumnType("jsonb")
+                        .HasColumnType("text")
                         .HasColumnName("details");
 
                     b.Property<string>("Entity")
@@ -223,57 +223,47 @@ namespace DentalLocal.Persistence.Migrations
                     b.ToTable("backup_records", "dental");
                 });
 
-            modelBuilder.Entity("DentalLocal.Domain.Entities.Currency", b =>
+            modelBuilder.Entity("DentalLocal.Domain.Entities.ClinicSchedule", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
-                        .HasColumnName("code");
-
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
-                    b.Property<decimal>("ExchangeRateToBase")
-                        .HasColumnType("numeric(12,4)")
-                        .HasColumnName("exchange_rate_to_base");
+                    b.Property<int>("DayOfWeek")
+                        .HasColumnType("integer")
+                        .HasColumnName("day_of_week");
 
-                    b.Property<bool>("IsBase")
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time")
+                        .HasColumnName("end_time");
+
+                    b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("is_base");
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("name");
-
-                    b.Property<string>("Symbol")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
-                        .HasColumnName("symbol");
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time")
+                        .HasColumnName("start_time");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
                     b.HasKey("Id")
-                        .HasName("pk_currencies");
+                        .HasName("pk_clinic_schedules");
 
-                    b.HasIndex("Code")
+                    b.HasIndex("DayOfWeek")
                         .IsUnique()
-                        .HasDatabaseName("ix_currencies_code");
+                        .HasDatabaseName("ix_clinic_schedules_day_of_week");
 
-                    b.ToTable("currencies", "dental");
+                    b.ToTable("clinic_schedules", "dental");
                 });
 
             modelBuilder.Entity("DentalLocal.Domain.Entities.Debt", b =>
@@ -332,7 +322,10 @@ namespace DentalLocal.Persistence.Migrations
                         .IsUnique()
                         .HasDatabaseName("ix_debts_visit_id");
 
-                    b.ToTable("debts", "dental");
+                    b.ToTable("debts", "dental", t =>
+                        {
+                            t.HasCheckConstraint("ck_debts_remaining_amount_bounds", "remaining_amount >= 0 AND remaining_amount <= original_amount");
+                        });
                 });
 
             modelBuilder.Entity("DentalLocal.Domain.Entities.DiscountHistory", b =>
@@ -560,6 +553,12 @@ namespace DentalLocal.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.HasKey("Id")
                         .HasName("pk_materials");
 
@@ -583,6 +582,12 @@ namespace DentalLocal.Persistence.Migrations
                     b.Property<Guid>("MaterialId")
                         .HasColumnType("uuid")
                         .HasColumnName("material_id");
+
+                    b.Property<decimal>("PricePerUnitSnapshot")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(12,2)")
+                        .HasDefaultValue(0m)
+                        .HasColumnName("price_per_unit_snapshot");
 
                     b.Property<decimal>("QuantityUsed")
                         .HasColumnType("numeric(10,2)")
@@ -878,6 +883,12 @@ namespace DentalLocal.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.Property<Guid>("VisitId")
                         .HasColumnType("uuid")
                         .HasColumnName("visit_id");
@@ -1171,6 +1182,12 @@ namespace DentalLocal.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.HasKey("Id")
                         .HasName("pk_tooth_states");
 
@@ -1287,6 +1304,12 @@ namespace DentalLocal.Persistence.Migrations
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.Property<Guid?>("VisitId")
                         .HasColumnType("uuid")
@@ -1480,6 +1503,16 @@ namespace DentalLocal.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("diagnosis");
 
+                    b.Property<decimal>("DiscountPercent")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(5,2)")
+                        .HasDefaultValue(0m)
+                        .HasColumnName("discount_percent");
+
+                    b.Property<string>("DiscountReason")
+                        .HasColumnType("text")
+                        .HasColumnName("discount_reason");
+
                     b.Property<string>("DoctorName")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -1523,6 +1556,12 @@ namespace DentalLocal.Persistence.Migrations
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.Property<DateOnly>("VisitDate")
                         .HasColumnType("date")

@@ -1,4 +1,4 @@
-@inject ApiClient Api
+﻿@inject ApiClient Api
 @inject ISnackbar Snackbar
 @inject DraftAutosaveService Drafts
 @implements IAsyncDisposable
@@ -8,7 +8,7 @@
     <DialogContent>
         @if (!string.IsNullOrWhiteSpace(_patientAllergies))
         {
-            <MudAlert Severity="Severity.Warning" Icon="@Icons.Material.Filled.WarningAmber" Class="mb-3">
+            <MudAlert Severity="Severity.Warning" Icon="@LucideIcons.AlertTriangle" Class="mb-3">
                 <b>Аллергии пациента:</b> @_patientAllergies
             </MudAlert>
         }
@@ -26,7 +26,7 @@
                         <MudSelect T="Guid" @bind-Value="item.ProcedureId" Label="Процедура" Dense="true">
                             @foreach (var p in _procedures)
                             {
-                                <MudSelectItem Value="@p.Id">@p.Name (@p.Price.ToString("N0") сум)</MudSelectItem>
+                                <MudSelectItem Value="@p.Id">@p.Name (@p.Price.ToString("N0") сомони)</MudSelectItem>
                             }
                         </MudSelect>
                     </MudItem>
@@ -40,13 +40,13 @@
                         <MudNumericField T="int" @bind-Value="item.Quantity" Label="Кол." Dense="true" Min="1" />
                     </MudItem>
                     <MudItem xs="1" Class="d-flex align-center">
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small"
+                        <MudIconButton Icon="@LucideIcons.Trash" Size="Size.Small"
                                        OnClick="@(() => RemoveItem(item))" />
                     </MudItem>
                 </MudGrid>
             }
 
-            <MudButton StartIcon="@Icons.Material.Filled.Add" Size="Size.Small"
+            <MudButton StartIcon="@LucideIcons.Plus" Size="Size.Small"
                        OnClick="AddItem" Class="mb-3">Добавить процедуру</MudButton>
 
             <MudTextField @bind-Value="_notes" Label="Заметки врача" Lines="3" Class="mb-2" />

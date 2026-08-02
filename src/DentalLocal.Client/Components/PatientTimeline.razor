@@ -1,4 +1,4 @@
-@inject ApiClient Api
+﻿@inject ApiClient Api
 @inject ISnackbar Snackbar
 
 @if (_isLoading)
@@ -71,11 +71,11 @@ else
 
     private string GetIcon(string icon) => icon switch
     {
-        "Icons.Material.Filled.Event" => Icons.Material.Filled.Event,
-        "Icons.Material.Filled.Payments" => Icons.Material.Filled.Payments,
-        "Icons.Material.Filled.Undo" => Icons.Material.Filled.Undo,
-        "Icons.Material.Filled.HealthAndSafety" => Icons.Material.Filled.HealthAndSafety,
-        "Icons.Material.Filled.AttachFile" => Icons.Material.Filled.AttachFile,
-        _ => Icons.Material.Filled.Circle
+        "LucideIcons.Calendar" => LucideIcons.Calendar,
+        "LucideIcons.Wallet" => LucideIcons.Wallet,
+        "LucideIcons.Undo2" => LucideIcons.Undo2,
+        "LucideIcons.ShieldCheck" => LucideIcons.ShieldCheck,
+        "LucideIcons.Paperclip" => LucideIcons.Paperclip,
+        _ => LucideIcons.Circle
     };
 }

@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" msdata:Ordinal="0" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="1" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="2" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Nav_Dashboard" xml:space="preserve"><value>Dashboard</value></data>
+  <data name="Nav_Patients" xml:space="preserve"><value>Patients</value></data>
+  <data name="Nav_Calendar" xml:space="preserve"><value>Calendar</value></data>
+  <data name="Nav_Debtors" xml:space="preserve"><value>Debtors</value></data>
+  <data name="Nav_Inventory" xml:space="preserve"><value>Inventory</value></data>
+  <data name="Nav_Procedures" xml:space="preserve"><value>Procedures</value></data>
+  <data name="Nav_Analytics" xml:space="preserve"><value>Analytics</value></data>
+  <data name="Nav_More" xml:space="preserve"><value>More</value></data>
+  <data name="Nav_NotesSearch" xml:space="preserve"><value>Search notes</value></data>
+  <data name="Nav_Settings" xml:space="preserve"><value>Settings</value></data>
+  <data name="Page_Dashboard_Title" xml:space="preserve"><value>Dashboard</value></data>
+  <data name="Page_Patients_Title" xml:space="preserve"><value>Patients</value></data>
+  <data name="Page_Calendar_Title" xml:space="preserve"><value>Appointment calendar</value></data>
+  <data name="Page_Calendar_Subtitle" xml:space="preserve"><value>Weekly visit schedule</value></data>
+  <data name="Page_Debtors_Title" xml:space="preserve"><value>Debtors</value></data>
+  <data name="Page_Inventory_Title" xml:space="preserve"><value>Inventory</value></data>
+  <data name="Page_Procedures_Title" xml:space="preserve"><value>Procedures</value></data>
+  <data name="Page_Analytics_Title" xml:space="preserve"><value>Analytics</value></data>
+  <data name="Page_Analytics_Subtitle" xml:space="preserve"><value>Financial metrics and doctor workload</value></data>
+  <data name="Page_Settings_Title" xml:space="preserve"><value>Settings</value></data>
+  <data name="Page_NotesSearch_Title" xml:space="preserve"><value>Search notes</value></data>
+  <data name="Login_EnterCode" xml:space="preserve"><value>Enter access code</value></data>
+  <data name="Login_SignIn" xml:space="preserve"><value>Sign in</value></data>
+  <data name="Login_RetryIn" xml:space="preserve"><value>Retry in {0} sec</value></data>
+  <data name="Common_Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Common_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Common_Export" xml:space="preserve"><value>Export to Excel</value></data>
+  <data name="Common_Apply" xml:space="preserve"><value>Apply</value></data>
+  <data name="Dashboard_TotalPatients" xml:space="preserve"><value>Total patients</value></data>
+  <data name="Dashboard_ActivePatientsSuffix" xml:space="preserve"><value>{0} active</value></data>
+  <data name="Dashboard_VisitsToday" xml:space="preserve"><value>Visits today</value></data>
+  <data name="Dashboard_ScheduledAppointments" xml:space="preserve"><value>Appointments scheduled</value></data>
+  <data name="Dashboard_RevenueToday" xml:space="preserve"><value>Revenue today</value></data>
+  <data name="Dashboard_Currency" xml:space="preserve"><value>TJS</value></data>
+  <data name="Dashboard_TotalDebt" xml:space="preserve"><value>Total debt</value></data>
+  <data name="Dashboard_DebtorsSuffix" xml:space="preserve"><value>{0} debtors</value></data>
+  <data name="Dashboard_RevenueChartTitle" xml:space="preserve"><value>Revenue trend (last 12 months)</value></data>
+  <data name="Dashboard_NoRevenueData" xml:space="preserve"><value>No revenue data</value></data>
+  <data name="Dashboard_UpcomingVisits" xml:space="preserve"><value>Upcoming visits (7 days)</value></data>
+  <data name="Dashboard_ColumnTime" xml:space="preserve"><value>Time</value></data>
+  <data name="Dashboard_ColumnPatient" xml:space="preserve"><value>Patient</value></data>
+  <data name="Dashboard_ColumnDoctor" xml:space="preserve"><value>Doctor</value></data>
+  <data name="Dashboard_ColumnAmount" xml:space="preserve"><value>Amount</value></data>
+  <data name="Dashboard_NoUpcomingVisits" xml:space="preserve"><value>No upcoming visits</value></data>
+  <data name="Dashboard_TopProcedures" xml:space="preserve"><value>Top procedures</value></data>
+  <data name="Dashboard_NoProcedureData" xml:space="preserve"><value>No procedure data</value></data>
+  <data name="Dashboard_WorkloadTitle" xml:space="preserve"><value>Doctor workload (last 30 days)</value></data>
+  <data name="Dashboard_VisitsInPeriod" xml:space="preserve"><value>Visits in period</value></data>
+  <data name="Dashboard_CancelledPercent" xml:space="preserve"><value>Cancelled, %</value></data>
+  <data name="Dashboard_IdlePercent" xml:space="preserve"><value>Idle vs. schedule, %</value></data>
+  <data name="Dashboard_NoWorkloadData" xml:space="preserve"><value>No workload data</value></data>
+  <data name="Dashboard_Heatmap" xml:space="preserve"><value>Day/hour heatmap</value></data>
+  <data name="Dashboard_AvgDurationByProcedure" xml:space="preserve"><value>Average duration by procedure type</value></data>
+  <data name="Dashboard_ColumnProcedure" xml:space="preserve"><value>Procedure</value></data>
+  <data name="Dashboard_ColumnAvgDurationMinutes" xml:space="preserve"><value>Avg. duration, min</value></data>
+  <data name="Dashboard_ExportFailed" xml:space="preserve"><value>Export failed: {0}</value></data>
+  <data name="Dashboard_LoadFailed" xml:space="preserve"><value>Failed to load dashboard: {0}</value></data>
+  <data name="Greeting_Morning" xml:space="preserve"><value>Good morning</value></data>
+  <data name="Greeting_Day" xml:space="preserve"><value>Good afternoon</value></data>
+  <data name="Greeting_Evening" xml:space="preserve"><value>Good evening</value></data>
+  <data name="Greeting_Night" xml:space="preserve"><value>Good night</value></data>
+  <data name="Greeting_WithDoctor" xml:space="preserve"><value>{0}, Dr. {1}</value></data>
+  <data name="Day_Mon" xml:space="preserve"><value>Mon</value></data>
+  <data name="Day_Tue" xml:space="preserve"><value>Tue</value></data>
+  <data name="Day_Wed" xml:space="preserve"><value>Wed</value></data>
+  <data name="Day_Thu" xml:space="preserve"><value>Thu</value></data>
+  <data name="Day_Fri" xml:space="preserve"><value>Fri</value></data>
+  <data name="Day_Sat" xml:space="preserve"><value>Sat</value></data>
+  <data name="Day_Sun" xml:space="preserve"><value>Sun</value></data>
+  <data name="Common_ColumnPhone" xml:space="preserve"><value>Phone</value></data>
+  <data name="Common_ColumnStatus" xml:space="preserve"><value>Status</value></data>
+  <data name="Common_RowsPerPage" xml:space="preserve"><value>Per page:</value></data>
+  <data name="Common_PagerInfoFormat" xml:space="preserve"><value>{first_item}-{last_item} of {all_items}</value></data>
+  <data name="Patients_Subtitle" xml:space="preserve"><value>Clinic patient database</value></data>
+  <data name="Patients_NewPatient" xml:space="preserve"><value>New patient</value></data>
+  <data name="Patients_SearchPlaceholder" xml:space="preserve"><value>Search by name, phone, card No.</value></data>
+  <data name="Patients_ShowArchived" xml:space="preserve"><value>Show archived</value></data>
+  <data name="Patients_InactiveFilter" xml:space="preserve"><value>Inactive (6+ months)</value></data>
+  <data name="Patients_ColumnCardNumber" xml:space="preserve"><value>Card No.</value></data>
+  <data name="Patients_ColumnFullName" xml:space="preserve"><value>Full name</value></data>
+  <data name="Patients_ColumnAge" xml:space="preserve"><value>Age</value></data>
+  <data name="Patients_ColumnLastVisit" xml:space="preserve"><value>Last visit</value></data>
+  <data name="Patients_NoVisitsYet" xml:space="preserve"><value>No visits yet</value></data>
+  <data name="Patients_Open" xml:space="preserve"><value>Open</value></data>
+  <data name="Patients_EmptyInactiveTitle" xml:space="preserve"><value>No inactive patients</value></data>
+  <data name="Patients_EmptyInactiveDescription" xml:space="preserve"><value>All patients have visited within the last 6 months.</value></data>
+  <data name="Patients_ArchivedSuffix" xml:space="preserve"><value>(archived)</value></data>
+  <data name="Patients_EmptyTitle" xml:space="preserve"><value>No patients found</value></data>
+  <data name="Patients_EmptyDescription" xml:space="preserve"><value>Adjust the search filters or add a new patient.</value></data>
+  <data name="Debtors_Subtitle" xml:space="preserve"><value>Patient debts and repayments</value></data>
+  <data name="Debtors_AddPatient" xml:space="preserve"><value>Add patient</value></data>
+  <data name="Debtors_SearchPlaceholder" xml:space="preserve"><value>Search by patient name or phone</value></data>
+  <data name="Debtors_StatusLabel" xml:space="preserve"><value>Debt status</value></data>
+  <data name="Debtors_StatusAll" xml:space="preserve"><value>All debts</value></data>
+  <data name="Debtors_StatusOpen" xml:space="preserve"><value>Open</value></data>
+  <data name="Debtors_StatusClosed" xml:space="preserve"><value>Closed</value></data>
+  <data name="Debtors_ColumnPatient" xml:space="preserve"><value>Patient</value></data>
+  <data name="Debtors_ColumnBirthDate" xml:space="preserve"><value>Date of birth</value></data>
+  <data name="Debtors_ColumnDebtAmount" xml:space="preserve"><value>Debt amount</value></data>
+  <data name="Debtors_ColumnAge" xml:space="preserve"><value>Age</value></data>
+  <data name="Debtors_ColumnDetails" xml:space="preserve"><value>Details</value></data>
+  <data name="Debtors_DaysSuffix" xml:space="preserve"><value>d.</value></data>
+  <data name="Debtors_ChipOpen" xml:space="preserve"><value>Open</value></data>
+  <data name="Debtors_ChipClosed" xml:space="preserve"><value>Closed</value></data>
+  <data name="Debtors_PayButton" xml:space="preserve"><value>Pay</value></data>
+  <data name="Debtors_EmptyTitle" xml:space="preserve"><value>No debts found</value></data>
+  <data name="Debtors_EmptyDescription" xml:space="preserve"><value>All patients have settled up, or adjust the filter.</value></data>
+  <data name="Debtors_ExportFailed" xml:space="preserve"><value>Export failed: {0}</value></data>
+  <data name="Debtors_PayDialogTitle" xml:space="preserve"><value>Debt repayment</value></data>
+  <data name="Calendar_WaitingList" xml:space="preserve"><value>Waiting list</value></data>
+  <data name="Calendar_BookAppointment" xml:space="preserve"><value>Book appointment</value></data>
+  <data name="Calendar_BookDialogTitle" xml:space="preserve"><value>Book appointment (step by step)</value></data>
+  <data name="Calendar_WeekView" xml:space="preserve"><value>Week view</value></data>
+  <data name="Calendar_DoctorFilterLabel" xml:space="preserve"><value>Filter by doctor</value></data>
+  <data name="Calendar_AllDoctors" xml:space="preserve"><value>All doctors</value></data>
+  <data name="Calendar_DoctorLabel" xml:space="preserve"><value>Doctor: {0}</value></data>
+  <data name="Calendar_LoadFailed" xml:space="preserve"><value>Failed to load calendar: {0}</value></data>
+  <data name="Calendar_VisitMoved" xml:space="preserve"><value>Visit rescheduled.</value></data>
+  <data name="Calendar_MoveFailed" xml:space="preserve"><value>Failed to reschedule visit: {0}</value></data>
+  <data name="Calendar_VisitDialogTitle" xml:space="preserve"><value>Visit</value></data>
+  <data name="Settings_Subtitle" xml:space="preserve"><value>General settings, security, backups</value></data>
+  <data name="Settings_TabGeneral" xml:space="preserve"><value>General</value></data>
+  <data name="Settings_DoctorName" xml:space="preserve"><value>Doctor's full name</value></data>
+  <data name="Settings_ClinicName" xml:space="preserve"><value>Clinic name</value></data>
+  <data name="Settings_Currency" xml:space="preserve"><value>Currency</value></data>
+  <data name="Settings_ThemeLabel" xml:space="preserve"><value>Theme</value></data>
+  <data name="Settings_ThemeLight" xml:space="preserve"><value>Light</value></data>
+  <data name="Settings_ThemeDark" xml:space="preserve"><value>Dark</value></data>
+  <data name="Settings_AccentBlue" xml:space="preserve"><value>Blue</value></data>
+  <data name="Settings_AccentTeal" xml:space="preserve"><value>Teal</value></data>
+  <data name="Settings_CustomAccentLabel" xml:space="preserve"><value>Custom accent color</value></data>
+  <data name="Settings_ColorPickerLabel" xml:space="preserve"><value>Color</value></data>
+  <data name="Settings_ResetAccent" xml:space="preserve"><value>Reset to default</value></data>
+  <data name="Settings_LanguageLabel" xml:space="preserve"><value>Interface language</value></data>
+  <data name="Settings_BackupTimeLabel" xml:space="preserve"><value>Auto backup time (HH:mm)</value></data>
+  <data name="Settings_BackupRetentionLabel" xml:space="preserve"><value>Keep backups, days</value></data>
+  <data name="Settings_AutoLockLabel" xml:space="preserve"><value>Auto-lock after, min</value></data>
+  <data name="Settings_Enable3DOdontogram" xml:space="preserve"><value>3D odontogram</value></data>
+  <data name="Settings_TabSecurity" xml:space="preserve"><value>Security</value></data>
+  <data name="Settings_OldCodeLabel" xml:space="preserve"><value>Current access code</value></data>
+  <data name="Settings_NewCodeLabel" xml:space="preserve"><value>New access code</value></data>
+  <data name="Settings_NewCodeConfirmLabel" xml:space="preserve"><value>Repeat new code</value></data>
+  <data name="Settings_ChangeCodeButton" xml:space="preserve"><value>Change access code</value></data>
+  <data name="Settings_TabBackups" xml:space="preserve"><value>Backups</value></data>
+  <data name="Settings_BackupsTitle" xml:space="preserve"><value>Database backups</value></data>
+  <data name="Settings_CreateBackupNow" xml:space="preserve"><value>Create now</value></data>
+  <data name="Settings_ColumnFile" xml:space="preserve"><value>File</value></data>
+  <data name="Settings_ColumnCreated" xml:space="preserve"><value>Created</value></data>
+  <data name="Settings_ColumnSize" xml:space="preserve"><value>Size</value></data>
+  <data name="Settings_ColumnTrigger" xml:space="preserve"><value>Trigger</value></data>
+  <data name="Settings_ColumnNote" xml:space="preserve"><value>Note</value></data>
+  <data name="Settings_BackupValid" xml:space="preserve"><value>Verified</value></data>
+  <data name="Settings_BackupInvalid" xml:space="preserve"><value>Not verified</value></data>
+  <data name="Settings_ValidateBackupTitle" xml:space="preserve"><value>Verify integrity</value></data>
+  <data name="Settings_RestoreBackupTitle" xml:space="preserve"><value>Restore</value></data>
+  <data name="Settings_NoBackups" xml:space="preserve"><value>No backups have been created yet</value></data>
+  <data name="Settings_TabAuditLog" xml:space="preserve"><value>Audit log</value></data>
+  <data name="Settings_ColumnDate" xml:space="preserve"><value>Date</value></data>
+  <data name="Settings_ColumnAction" xml:space="preserve"><value>Action</value></data>
+  <data name="Settings_ColumnEntity" xml:space="preserve"><value>Entity</value></data>
+  <data name="Settings_ColumnDetails" xml:space="preserve"><value>Details</value></data>
+  <data name="Settings_NoAuditLogs" xml:space="preserve"><value>No audit records yet</value></data>
+  <data name="Settings_TabSchedule" xml:space="preserve"><value>Work schedule</value></data>
+  <data name="Settings_ScheduleDescription" xml:space="preserve"><value>The doctor's working hours by day of week. Booking outside the schedule only triggers a warning, it does not block the visit.</value></data>
+  <data name="Settings_ScheduleStart" xml:space="preserve"><value>Start</value></data>
+  <data name="Settings_ScheduleEnd" xml:space="preserve"><value>End</value></data>
+  <data name="Settings_DayMonday" xml:space="preserve"><value>Monday</value></data>
+  <data name="Settings_DayTuesday" xml:space="preserve"><value>Tuesday</value></data>
+  <data name="Settings_DayWednesday" xml:space="preserve"><value>Wednesday</value></data>
+  <data name="Settings_DayThursday" xml:space="preserve"><value>Thursday</value></data>
+  <data name="Settings_DayFriday" xml:space="preserve"><value>Friday</value></data>
+  <data name="Settings_DaySaturday" xml:space="preserve"><value>Saturday</value></data>
+  <data name="Settings_DaySunday" xml:space="preserve"><value>Sunday</value></data>
+  <data name="Settings_ScheduleTimeInvalid" xml:space="preserve"><value>End time must be later than start time.</value></data>
+  <data name="Settings_ScheduleSaved" xml:space="preserve"><value>Schedule for {0} saved.</value></data>
+  <data name="Settings_ScheduleLoadFailed" xml:space="preserve"><value>Failed to load doctor's schedule: {0}</value></data>
+  <data name="Settings_LoadFailed" xml:space="preserve"><value>Error loading settings: {0}</value></data>
+  <data name="Settings_ColorRequired" xml:space="preserve"><value>Please specify a color.</value></data>
+  <data name="Settings_AccentApplied" xml:space="preserve"><value>Accent color applied.</value></data>
+  <data name="Settings_SavedApplyingLanguage" xml:space="preserve"><value>Settings saved. Applying interface language...</value></data>
+  <data name="Settings_Saved" xml:space="preserve"><value>Settings saved.</value></data>
+  <data name="Settings_SaveFailed" xml:space="preserve"><value>Failed to save settings: {0}</value></data>
+  <data name="Settings_CodeMismatch" xml:space="preserve"><value>The new code and confirmation do not match.</value></data>
+  <data name="Settings_CodeChanged" xml:space="preserve"><value>Access code changed.</value></data>
+  <data name="Settings_ChangeCodeFailed" xml:space="preserve"><value>Failed to change code: {0}</value></data>
+  <data name="Settings_BackupsLoadFailed" xml:space="preserve"><value>Error loading backups: {0}</value></data>
+  <data name="Settings_AuditLoadFailed" xml:space="preserve"><value>Error loading audit log: {0}</value></data>
+  <data name="Settings_BackupCreated" xml:space="preserve"><value>Backup created.</value></data>
+  <data name="Settings_BackupCreateFailed" xml:space="preserve"><value>Failed to create backup: {0}</value></data>
+  <data name="Settings_BackupRestored" xml:space="preserve"><value>Database restored from backup.</value></data>
+  <data name="Settings_BackupRestoreFailed" xml:space="preserve"><value>Failed to restore backup: {0}</value></data>
+  <data name="Settings_BackupValidOk" xml:space="preserve"><value>Backup is intact.</value></data>
+  <data name="Settings_BackupCorrupted" xml:space="preserve"><value>Backup is corrupted!</value></data>
+  <data name="Settings_BackupValidateFailed" xml:space="preserve"><value>Failed to verify backup: {0}</value></data>
+  <data name="Settings_BackupInProgress" xml:space="preserve"><value>The operation is running in the background, this may take a while...</value></data>
+  <data name="Settings_BackupJobFailed" xml:space="preserve"><value>The operation failed: {0}</value></data>
+  <data name="Settings_UnitMb" xml:space="preserve"><value>MB</value></data>
+  <data name="Settings_UnitKb" xml:space="preserve"><value>KB</value></data>
+  <data name="Settings_UnitByte" xml:space="preserve"><value>B</value></data>
+  <data name="Settings_TriggerDaily" xml:space="preserve"><value>Daily (auto)</value></data>
+  <data name="Settings_TriggerBeforeUpdate" xml:space="preserve"><value>Before update</value></data>
+  <data name="Settings_TriggerManual" xml:space="preserve"><value>Manual</value></data>
+  <data name="Settings_TriggerBeforeRestore" xml:space="preserve"><value>Before restore</value></data>
+</root>

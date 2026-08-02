@@ -8,12 +8,12 @@
             <MudSelect T="Guid" @bind-Value="_procedureId" Label="Процедура" Required="true" Class="mb-3">
                 @foreach (var procedure in Procedures.Where(p => p.IsActive))
                 {
-                    <MudSelectItem Value="procedure.Id">@procedure.Name (@procedure.Price.ToString("N0") сум)</MudSelectItem>
+                    <MudSelectItem Value="procedure.Id">@procedure.Name (@procedure.Price.ToString("N0") сомони)</MudSelectItem>
                 }
             </MudSelect>
 
             <MudNumericField T="short?" @bind-Value="_toothNumber" Label="Зуб (FDI, необязательно)" Dense="true" Class="mb-3" />
-            <MudNumericField T="decimal" @bind-Value="_estimatedPrice" Label="Ориентировочная цена (сум)" Required="true" Min="0" Format="N0" Class="mb-3" />
+            <MudNumericField T="decimal" @bind-Value="_estimatedPrice" Label="Ориентировочная цена (сомони)" Required="true" Min="0" Format="N0" Class="mb-3" />
         </MudForm>
 
         @if (_errorMessage is not null)

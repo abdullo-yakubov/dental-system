@@ -16,6 +16,7 @@ namespace DentalLocal.Infrastructure.Auth;
 public sealed class HmacTokenService(IServiceScopeFactory scopeFactory) : ITokenService
 {
     private static readonly TimeSpan TokenLifetime = TimeSpan.FromHours(12);
+    private static readonly TimeSpan FileLinkLifetime = TimeSpan.FromMinutes(5);
 
     private byte[]? _secret;
     private readonly SemaphoreSlim _secretLock = new(1, 1);
@@ -66,6 +67,40 @@ public sealed class HmacTokenService(IServiceScopeFactory scopeFactory) : IToken
 
     private static byte[] ComputeSignature(byte[] secret, long expiryUnixSeconds) =>
         HMACSHA256.HashData(secret, Encoding.UTF8.GetBytes(expiryUnixSeconds.ToString()));
+
+    public async Task<(string Signature, DateTimeOffset ExpiresAt)> IssueFileLinkAsync(Guid fileId, CancellationToken cancellationToken = default)
+    {
+        var secret = await GetSecretAsync(cancellationToken);
+        var expiresAt = DateTimeOffset.UtcNow.Add(FileLinkLifetime);
+        var expiryUnixSeconds = expiresAt.ToUnixTimeSeconds();
+        var signature = ComputeFileLinkSignature(secret, fileId, expiryUnixSeconds);
+
+        return (Convert.ToBase64String(signature), expiresAt);
+    }
+
+    public async Task<bool> ValidateFileLinkAsync(Guid fileId, long expiryUnixSeconds, string signature, CancellationToken cancellationToken = default)
+    {
+        if (DateTimeOffset.FromUnixTimeSeconds(expiryUnixSeconds) < DateTimeOffset.UtcNow)
+            return false;
+
+        byte[] providedSignature;
+        try
+        {
+            providedSignature = Convert.FromBase64String(signature);
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+
+        var secret = await GetSecretAsync(cancellationToken);
+        var expectedSignature = ComputeFileLinkSignature(secret, fileId, expiryUnixSeconds);
+
+        return CryptographicOperations.FixedTimeEquals(providedSignature, expectedSignature);
+    }
+
+    private static byte[] ComputeFileLinkSignature(byte[] secret, Guid fileId, long expiryUnixSeconds) =>
+        HMACSHA256.HashData(secret, Encoding.UTF8.GetBytes($"file:{fileId:N}:{expiryUnixSeconds}"));
 
     private async Task<byte[]> GetSecretAsync(CancellationToken cancellationToken)
     {

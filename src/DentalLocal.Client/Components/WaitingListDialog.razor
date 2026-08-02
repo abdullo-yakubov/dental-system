@@ -1,4 +1,4 @@
-@inject ApiClient Api
+﻿@inject ApiClient Api
 @inject ISnackbar Snackbar
 
 <MudDialog>
@@ -18,7 +18,7 @@
                                          ResetValueOnEmptyText="true"
                                          CoerceText="true"
                                          CoerceValue="false"
-                                         AdornmentIcon="@Icons.Material.Filled.Search" />
+                                         AdornmentIcon="@LucideIcons.Search" />
                     </MudItem>
                     <MudItem xs="6">
                         <MudDatePicker @bind-Date="_dateFrom" Label="Желаемая дата с" />
@@ -63,7 +63,7 @@
                     </MudTd>
                 </RowTemplate>
                 <NoRecordsContent>
-                    <EmptyState Icon="@Icons.Material.Filled.HourglassEmpty" Title="Лист ожидания пуст" />
+                    <EmptyState Icon="@LucideIcons.Hourglass" Title="Лист ожидания пуст" />
                 </NoRecordsContent>
             </MudTable>
         </MudStack>

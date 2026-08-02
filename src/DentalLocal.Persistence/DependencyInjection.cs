@@ -3,6 +3,7 @@ using DentalLocal.Persistence.Repositories;
 using DentalLocal.Persistence.Seed;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 
 namespace DentalLocal.Persistence;
 
@@ -10,9 +11,11 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddPersistence(this IServiceCollection services, string connectionString)
     {
+        var effectiveConnectionString = ApplyTimeouts(connectionString);
+
         services.AddDbContext<DentalDbContext>(options =>
             options
-                .UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", DentalDbContext.Schema))
+                .UseNpgsql(effectiveConnectionString, npgsql => npgsql.MigrationsHistoryTable("__ef_migrations_history", DentalDbContext.Schema))
                 .UseSnakeCaseNamingConvention());
 
         services.AddScoped<IPatientRepository, PatientRepository>();
@@ -35,17 +38,35 @@ public static class DependencyInjection
         services.AddScoped<IMaterialUsageRepository, MaterialUsageRepository>();
         services.AddScoped<IReminderRepository, ReminderRepository>();
         services.AddScoped<ITreatmentPlanRepository, TreatmentPlanRepository>();
-        services.AddScoped<ICurrencyRepository, CurrencyRepository>();
         services.AddScoped<IDiscountHistoryRepository, DiscountHistoryRepository>();
         services.AddScoped<IWaitingListRepository, WaitingListRepository>();
         services.AddScoped<IPrescriptionRepository, PrescriptionRepository>();
         services.AddScoped<IWarrantyRepository, WarrantyRepository>();
         services.AddScoped<IDoctorScheduleRepository, DoctorScheduleRepository>();
+        services.AddScoped<IClinicScheduleRepository, ClinicScheduleRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<DentalLocal.Application.Interfaces.IDashboardService, Services.DashboardService>();
+        services.AddScoped<DentalLocal.Application.Common.IDatabaseMigrator, Services.DatabaseMigrator>();
 
         services.AddScoped<DbSeeder>();
 
         return services;
+    }
+
+    /// <summary>
+    /// Гарантирует таймауты подключения/команд/пула и серверные session-level timeout'ы,
+    /// не полагаясь на то, что appsettings/user-secrets их когда-либо зададут.
+    /// </summary>
+    private static string ApplyTimeouts(string connectionString)
+    {
+        var builder = new NpgsqlConnectionStringBuilder(connectionString)
+        {
+            Timeout = 15,
+            CommandTimeout = 30,
+            MaxPoolSize = 20,
+            Options = "-c statement_timeout=30000 -c lock_timeout=5000 -c idle_in_transaction_session_timeout=60000"
+        };
+
+        return builder.ConnectionString;
     }
 }

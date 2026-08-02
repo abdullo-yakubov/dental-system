@@ -5,6 +5,8 @@ using DentalLocal.Application.Common;
 using DentalLocal.Domain.Entities;
 using DentalLocal.Domain.Enums;
 using DentalLocal.Domain.Repositories;
+using DentalLocal.Infrastructure.Security;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -14,9 +16,22 @@ namespace DentalLocal.Infrastructure.Services;
 
 public class BackupService : IBackupService
 {
+    // Формат файла бэкапа v2: magic(4)="DLB2" + version(1)=2 + salt(16) + nonce(12) + ciphertext(N) + tag(16),
+    // AES-256-GCM (аутентифицированное шифрование), ключ через PBKDF2-SHA256 600 000 итераций.
+    // Старые бэкапы (без magic-заголовка) читаются по legacy-формату: salt(16)+iv(16)+AES-256-CBC,
+    // PBKDF2 10 000 итераций — только для обратной совместимости при восстановлении, новые бэкапы
+    // в этом формате больше не создаются.
+    private static readonly byte[] FormatMagic = Encoding.ASCII.GetBytes("DLB2");
+    private const byte FormatVersion = 2;
+    private const int Pbkdf2Iterations = 600_000;
+    private const string LegacyAutoBackupPassword = "dental_auto_backup";
+
     private readonly IConfiguration _configuration;
     private readonly IHostEnvironment _env;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IMachineSecretProvider _machineSecretProvider;
+    private readonly IDatabaseMigrator _databaseMigrator;
+    private readonly IMemoryCache _memoryCache;
     private readonly ILogger<BackupService> _logger;
 
     private string _pgsqlPath = string.Empty;
@@ -30,14 +45,26 @@ public class BackupService : IBackupService
         IConfiguration configuration,
         IHostEnvironment env,
         IUnitOfWork unitOfWork,
+        IMachineSecretProvider machineSecretProvider,
+        IDatabaseMigrator databaseMigrator,
+        IMemoryCache memoryCache,
         ILogger<BackupService> logger)
     {
         _configuration = configuration;
         _env = env;
         _unitOfWork = unitOfWork;
+        _machineSecretProvider = machineSecretProvider;
+        _databaseMigrator = databaseMigrator;
+        _memoryCache = memoryCache;
         _logger = logger;
         InitializeParams();
     }
+
+    /// <summary>
+    /// Пароль для шифрования/расшифровки автоматических (не PIN-защищённых) бэкапов — берётся
+    /// из машинного секрета (DPAPI, привязан к устройству), а не из строки в исходном коде.
+    /// </summary>
+    private string GetAutoBackupPassword() => Convert.ToBase64String(_machineSecretProvider.GetOrCreateAutoBackupSecret());
 
     private void InitializeParams()
     {
@@ -161,30 +188,12 @@ public class BackupService : IBackupService
                 throw new InvalidOperationException($"pg_dump failed with exit code {process.ExitCode}: {stderr}");
             }
 
-            // 2. Encrypt pg_dump file
-            byte[] salt = RandomNumberGenerator.GetBytes(16);
-            byte[] iv = RandomNumberGenerator.GetBytes(16);
-
-            var encryptionPassword = string.IsNullOrEmpty(pin) ? "dental_auto_backup" : pin;
-            using (var deriveBytes = new Rfc2898DeriveBytes(encryptionPassword, salt, 10000, HashAlgorithmName.SHA256))
-            {
-                byte[] key = deriveBytes.GetBytes(32);
-
-                using var aes = Aes.Create();
-                aes.Key = key;
-                aes.IV = iv;
-
-                using var encryptor = aes.CreateEncryptor();
-                using var fsOut = new FileStream(absolutePath, FileMode.Create, FileAccess.Write);
-                
-                // Write header (salt + iv)
-                await fsOut.WriteAsync(salt, cancellationToken);
-                await fsOut.WriteAsync(iv, cancellationToken);
-
-                using var cryptoStream = new CryptoStream(fsOut, encryptor, CryptoStreamMode.Write);
-                using var fsIn = new FileStream(tempRawFile, FileMode.Open, FileAccess.Read);
-                await fsIn.CopyToAsync(cryptoStream, cancellationToken);
-            }
+            // 2. Encrypt pg_dump file (AES-256-GCM, PBKDF2-SHA256 600k итераций; ключ для
+            // автобэкапов — из машинного секрета, а не из строки в исходном коде)
+            var encryptionPassword = string.IsNullOrEmpty(pin) ? GetAutoBackupPassword() : pin;
+            byte[] plaintext = await File.ReadAllBytesAsync(tempRawFile, cancellationToken);
+            byte[] encrypted = EncryptBytes(plaintext, encryptionPassword);
+            await File.WriteAllBytesAsync(absolutePath, encrypted, cancellationToken);
 
             // 3. Write SHA256 of the encrypted file
             byte[] fileBytes = await File.ReadAllBytesAsync(absolutePath, cancellationToken);
@@ -229,32 +238,46 @@ public class BackupService : IBackupService
 
         try
         {
-            // 3. Decrypt file
-            bool decrypted = false;
-            try
-            {
-                await DecryptFileAsync(absolutePath, tempRawFile, pin, cancellationToken);
-                decrypted = true;
-            }
-            catch (CryptographicException)
+            // 3. Decrypt file: сначала пробуем PIN пользователя (ручные бэкапы), затем машинный
+            // секрет (автобэкапы). Формат файла определяется по magic-заголовку — новые (AES-GCM)
+            // и старые (AES-CBC, до перехода на AES-GCM) бэкапы поддерживаются одновременно.
+            byte[] fileBytes = await File.ReadAllBytesAsync(absolutePath, cancellationToken);
+            var isNewFormat = fileBytes.Length >= FormatMagic.Length && fileBytes.AsSpan(0, FormatMagic.Length).SequenceEqual(FormatMagic);
+
+            byte[]? plaintext = null;
+            foreach (var candidatePassword in new[] { pin, isNewFormat ? GetAutoBackupPassword() : LegacyAutoBackupPassword })
             {
                 try
                 {
-                    _logger.LogInformation("Decryption with provided PIN failed. Retrying with auto-backup password fallback...");
-                    await DecryptFileAsync(absolutePath, tempRawFile, "dental_auto_backup", cancellationToken);
-                    decrypted = true;
+                    plaintext = isNewFormat
+                        ? DecryptBytesNewFormat(fileBytes, candidatePassword)
+                        : DecryptBytesLegacyFormat(fileBytes, candidatePassword);
+                    break;
                 }
-                catch
+                catch (CryptographicException)
                 {
-                    throw new CryptographicException("Неверный PIN-код или поврежденный файл резервной копии.");
+                    // пробуем следующего кандидата
                 }
             }
 
-            // 4. Terminate other connections to 'dental' database and drop/recreate
+            if (plaintext is null)
+            {
+                throw new CryptographicException("Неверный PIN-код или поврежденный файл резервной копии.");
+            }
+
+            await File.WriteAllBytesAsync(tempRawFile, plaintext, cancellationToken);
+
+            // 4. Освобождаем весь пул соединений Npgsql ДО терминации сессий и DROP DATABASE — иначе
+            // пул может выдать соединение к базе, которая уже удалена/пересоздаётся, и следующий
+            // запрос упадёт с "database does not exist" или зависнет на явно занятой блокировке.
+            NpgsqlConnection.ClearAllPools();
+
             _logger.LogInformation("Terminating active connections and dropping database '{Database}'...", _dbName);
             await RecreateDatabaseAsync(cancellationToken);
 
-            // 5. Restore DB using pg_restore
+            // 5. Restore DB using pg_restore. --clean --if-exists — на случай, если в целевой БД
+            // (созданной заново на шаге 4) уже есть объекты; --if-exists подавляет предупреждения,
+            // если чистить нечего.
             var pgRestoreExe = Path.Combine(_pgsqlPath, "bin", "pg_restore.exe");
             if (!File.Exists(pgRestoreExe))
             {
@@ -262,7 +285,7 @@ public class BackupService : IBackupService
             }
 
             _logger.LogInformation("Running pg_restore onto database '{Database}'...", _dbName);
-            var args = $"-h 127.0.0.1 -p {_port} -U {_username} -d {_dbName} -v \"{tempRawFile}\"";
+            var args = $"-h 127.0.0.1 -p {_port} -U {_username} -d {_dbName} -v --clean --if-exists \"{tempRawFile}\"";
             var processInfo = new ProcessStartInfo
             {
                 FileName = pgRestoreExe,
@@ -289,10 +312,24 @@ public class BackupService : IBackupService
                 throw new InvalidOperationException($"pg_restore failed with exit code {process.ExitCode}: {stderr}");
             }
 
+            // 6. Восстановленный дамп мог быть снят на более старой версии схемы — прогоняем миграции
+            // поверх него, затем сбрасываем IMemoryCache целиком: иначе в кэше остаются настройки/
+            // справочники от базы, которая только что была подменена (см. промпт 7 аудита).
+            NpgsqlConnection.ClearAllPools();
+            await _databaseMigrator.MigrateAsync(cancellationToken);
+            if (_memoryCache is MemoryCache concreteCache)
+            {
+                concreteCache.Compact(1.0);
+            }
+
             _logger.LogInformation("Database restore completed successfully.");
         }
         finally
         {
+            // Пул мог быть заполнен соединениями к промежуточному состоянию БД (до/во время restore) —
+            // очищаем его при любом исходе, чтобы последующие запросы не подхватили протухшее соединение.
+            NpgsqlConnection.ClearAllPools();
+
             if (File.Exists(tempRawFile))
             {
                 File.Delete(tempRawFile);
@@ -323,29 +360,84 @@ public class BackupService : IBackupService
         }
     }
 
-    private async Task DecryptFileAsync(string srcPath, string destPath, string password, CancellationToken cancellationToken)
+    private static byte[] EncryptBytes(byte[] plaintext, string password)
     {
-        using var fsIn = new FileStream(srcPath, FileMode.Open, FileAccess.Read);
-        byte[] salt = new byte[16];
-        byte[] iv = new byte[16];
+        byte[] salt = RandomNumberGenerator.GetBytes(16);
+        byte[] nonce = RandomNumberGenerator.GetBytes(12);
+        byte[] key = Rfc2898DeriveBytes.Pbkdf2(password, salt, Pbkdf2Iterations, HashAlgorithmName.SHA256, 32);
 
-        int bytesRead = await fsIn.ReadAsync(salt.AsMemory(0, 16), cancellationToken);
-        if (bytesRead < 16) throw new InvalidDataException("Invalid backup file header (salt too short).");
+        byte[] ciphertext = new byte[plaintext.Length];
+        byte[] tag = new byte[16];
+        using (var aesGcm = new AesGcm(key, 16))
+        {
+            aesGcm.Encrypt(nonce, plaintext, ciphertext, tag);
+        }
 
-        bytesRead = await fsIn.ReadAsync(iv.AsMemory(0, 16), cancellationToken);
-        if (bytesRead < 16) throw new InvalidDataException("Invalid backup file header (IV too short).");
+        using var output = new MemoryStream(FormatMagic.Length + 1 + salt.Length + nonce.Length + ciphertext.Length + tag.Length);
+        output.Write(FormatMagic);
+        output.WriteByte(FormatVersion);
+        output.Write(salt);
+        output.Write(nonce);
+        output.Write(ciphertext);
+        output.Write(tag);
+        return output.ToArray();
+    }
 
-        using var deriveBytes = new Rfc2898DeriveBytes(password, salt, 10000, HashAlgorithmName.SHA256);
-        byte[] key = deriveBytes.GetBytes(32);
+    /// <summary>Расшифровывает бэкап формата v2 (AES-256-GCM). Бросает CryptographicException при неверном пароле/повреждении.</summary>
+    private static byte[] DecryptBytesNewFormat(byte[] fileBytes, string password)
+    {
+        var offset = FormatMagic.Length + 1;
+        if (fileBytes.Length < offset + 16 + 12 + 16)
+        {
+            throw new CryptographicException("Файл резервной копии повреждён или имеет неверный формат.");
+        }
+
+        var salt = fileBytes.AsSpan(offset, 16).ToArray();
+        offset += 16;
+        var nonce = fileBytes.AsSpan(offset, 12).ToArray();
+        offset += 12;
+        var ciphertextLength = fileBytes.Length - offset - 16;
+        var ciphertext = fileBytes.AsSpan(offset, ciphertextLength).ToArray();
+        offset += ciphertextLength;
+        var tag = fileBytes.AsSpan(offset, 16).ToArray();
+
+        var key = Rfc2898DeriveBytes.Pbkdf2(password, salt, Pbkdf2Iterations, HashAlgorithmName.SHA256, 32);
+        var plaintext = new byte[ciphertextLength];
+        using var aesGcm = new AesGcm(key, 16);
+        aesGcm.Decrypt(nonce, ciphertext, tag, plaintext);
+        return plaintext;
+    }
+
+    /// <summary>
+    /// Расшифровывает бэкапы старого формата (salt(16)+iv(16)+AES-256-CBC, PBKDF2 10 000 итераций),
+    /// созданные до перехода на AES-GCM. Оставлен только для чтения существующих файлов —
+    /// новые бэкапы в этом формате не создаются.
+    /// </summary>
+    private static byte[] DecryptBytesLegacyFormat(byte[] fileBytes, string password)
+    {
+        if (fileBytes.Length < 32)
+        {
+            throw new CryptographicException("Файл резервной копии повреждён или имеет неверный формат.");
+        }
+
+        var salt = fileBytes.AsSpan(0, 16).ToArray();
+        var iv = fileBytes.AsSpan(16, 16).ToArray();
+        var ciphertext = fileBytes.AsSpan(32).ToArray();
+
+        byte[] key = Rfc2898DeriveBytes.Pbkdf2(password, salt, 10000, HashAlgorithmName.SHA256, 32);
 
         using var aes = Aes.Create();
         aes.Key = key;
         aes.IV = iv;
 
         using var decryptor = aes.CreateDecryptor();
-        using var cryptoStream = new CryptoStream(fsIn, decryptor, CryptoStreamMode.Read);
-        using var fsOut = new FileStream(destPath, FileMode.Create, FileAccess.Write);
-        await cryptoStream.CopyToAsync(fsOut, cancellationToken);
+        using var output = new MemoryStream();
+        using (var cryptoStream = new CryptoStream(output, decryptor, CryptoStreamMode.Write))
+        {
+            cryptoStream.Write(ciphertext);
+        }
+
+        return output.ToArray();
     }
 
     private async Task RecreateDatabaseAsync(CancellationToken cancellationToken)

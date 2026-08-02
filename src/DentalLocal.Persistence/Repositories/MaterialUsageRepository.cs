@@ -12,4 +12,10 @@ public class MaterialUsageRepository(DentalDbContext context) : RepositoryBase<M
             .Where(mu => mu.VisitId == visitId)
             .OrderBy(mu => mu.UsedAt)
             .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<MaterialUsage>> GetByVisitIdsAsync(IReadOnlyCollection<Guid> visitIds, CancellationToken cancellationToken = default) =>
+        await Set.AsNoTracking()
+            .Include(mu => mu.Material)
+            .Where(mu => visitIds.Contains(mu.VisitId))
+            .ToListAsync(cancellationToken);
 }

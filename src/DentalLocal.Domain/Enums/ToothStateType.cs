@@ -17,4 +17,7 @@ public enum ToothStateType : short
     Bridge = 12,
     Missing = 13,
     Deciduous = 14,
+
+    /// <summary>Молочный зуб выпал/сменился постоянным (см. промпт 31 аудита — смена прикуса).</summary>
+    Exfoliated = 15,
 }

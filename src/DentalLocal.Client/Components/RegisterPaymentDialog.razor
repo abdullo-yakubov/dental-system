@@ -1,11 +1,12 @@
 @inject ApiClient Api
 @inject ISnackbar Snackbar
+@inject IStringLocalizer<SharedResource> Loc
 
 <MudDialog>
     <TitleContent>Принять оплату</TitleContent>
     <DialogContent>
         <MudForm @ref="_form">
-            <MudNumericField T="decimal" @bind-Value="_amount" Label="Сумма оплаты (сум)"
+            <MudNumericField T="decimal" @bind-Value="_amount" Label="@($"Сумма оплаты ({Loc["Dashboard_Currency"]})")"
                              Required="true" Min="1" Max="RemainingAmount" Format="N0" Class="mb-2" />
 
             <MudStack Row="true" Spacing="2" Class="mb-3">
@@ -56,6 +57,10 @@
     private string? _errorMessage;
     private bool _isBusy;
 
+    // Один ключ на всё время жизни диалога — повторный клик или повторная отправка после сетевой
+    // ошибки используют тот же ключ, поэтому сервер не создаёт второй Payment (см. промпт 17 аудита).
+    private readonly Guid _idempotencyKey = Guid.NewGuid();
+
     protected override void OnParametersSet()
     {
         _amount = RemainingAmount;
@@ -82,8 +87,8 @@
         try
         {
             var request = new RegisterPaymentRequest(VisitId, PatientId, _amount, _method, _kind, _note);
-            var payment = await Api.RegisterPaymentAsync(request);
-            Snackbar.Add($"Оплата на сумму {payment.Amount.ToString("N0")} сум успешно принята.", Severity.Success);
+            var payment = await Api.RegisterPaymentAsync(request, _idempotencyKey);
+            Snackbar.Add($"Оплата на сумму {payment.Amount.ToString("N0")} {Loc["Dashboard_Currency"]} успешно принята.", Severity.Success);
             MudDialog.Close(DialogResult.Ok(payment));
         }
         catch (ApiException ex)

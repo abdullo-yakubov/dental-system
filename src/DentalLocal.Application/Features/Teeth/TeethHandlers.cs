@@ -3,6 +3,7 @@ using DentalLocal.Application.Common;
 using DentalLocal.Domain.Entities;
 using DentalLocal.Domain.Enums;
 using DentalLocal.Domain.Repositories;
+using DentalLocal.Shared.Common;
 using DentalLocal.Shared.Contracts.Teeth;
 using DentalLocal.Shared.Enums;
 using FluentValidation;
@@ -113,8 +114,8 @@ public sealed class UpdateToothStatusCommandValidator : AbstractValidator<Update
     public UpdateToothStatusCommandValidator()
     {
         RuleFor(x => x.PatientId).NotEmpty();
-        RuleFor(x => x.ToothNumber).InclusiveBetween((short)11, (short)85)
-            .WithMessage("Некорректный номер зуба (FDI: 11-85).");
+        RuleFor(x => x.ToothNumber).Must(n => DentalConstants.AllToothNumbers.Contains(n))
+            .WithMessage("Некорректный номер зуба по FDI.");
     }
 }
 
@@ -151,7 +152,41 @@ public sealed class UpdateToothStatusCommandHandler(IUnitOfWork unitOfWork, IMap
         await unitOfWork.AuditLogs.AddAsync(
             AuditLog.Create("TOOTH_UPDATED", "ToothState", tooth.Id, null), cancellationToken);
 
+        await ExfoliateDeciduousPredecessorAsync(request.PatientId, request.ToothNumber, request.VisitId, unitOfWork, cancellationToken);
+
         return Result.Success(mapper.Map<ToothStateDto>(tooth));
+    }
+
+    /// <summary>
+    /// Смена прикуса (см. промпт 31 аудита): если для зуба, который сейчас обновили, есть молочный
+    /// предшественник в той же позиции (11↔51 и т.д.) и у него ещё есть запись в ToothStates, не
+    /// помеченная Exfoliated/Extracted/Missing — считаем, что он выпал, и переводим его в Exfoliated
+    /// с записью в историю. Одонтограмма не должна показывать активными молочный и постоянный зуб
+    /// одной позиции одновременно.
+    /// </summary>
+    private static async Task ExfoliateDeciduousPredecessorAsync(
+        Guid patientId, short toothNumber, Guid? visitId, IUnitOfWork unitOfWork, CancellationToken cancellationToken)
+    {
+        if (!DentalConstants.DeciduousPredecessorByPermanentTooth.TryGetValue(toothNumber, out var predecessorNumber))
+            return;
+
+        var predecessor = await unitOfWork.ToothStates.GetAsync(patientId, predecessorNumber, cancellationToken);
+        if (predecessor is null)
+            return;
+
+        if (predecessor.State is Domain.Enums.ToothStateType.Exfoliated
+            or Domain.Enums.ToothStateType.Extracted
+            or Domain.Enums.ToothStateType.Missing)
+        {
+            return;
+        }
+
+        var oldState = predecessor.ChangeState(Domain.Enums.ToothStateType.Exfoliated);
+        await unitOfWork.ToothStateHistory.AddAsync(
+            ToothStateHistory.Create(
+                patientId, predecessorNumber, oldState, Domain.Enums.ToothStateType.Exfoliated,
+                visitId, "Автоматически: сменился постоянным зубом."),
+            cancellationToken);
     }
 }
 
@@ -170,15 +205,17 @@ public sealed record AddToothSurfaceRecordCommand(
 
 public sealed class AddToothSurfaceRecordCommandValidator : AbstractValidator<AddToothSurfaceRecordCommand>
 {
-    private static readonly string[] ValidSurfaceCodes = ["M", "D", "O", "B", "L"];
+    // "I" (режущий край) добавлен для 3D-одонтограммы (§6/§7 ТЗ на 3D) — 2D-режим
+    // по-прежнему всегда передаёт "O" и для окклюзионной, и для режущей поверхности.
+    private static readonly string[] ValidSurfaceCodes = ["M", "D", "O", "I", "B", "L"];
 
     public AddToothSurfaceRecordCommandValidator()
     {
         RuleFor(x => x.PatientId).NotEmpty();
-        RuleFor(x => x.ToothNumber).InclusiveBetween((short)11, (short)85)
-            .WithMessage("Некорректный номер зуба (FDI: 11-85).");
+        RuleFor(x => x.ToothNumber).Must(n => DentalConstants.AllToothNumbers.Contains(n))
+            .WithMessage("Некорректный номер зуба по FDI.");
         RuleFor(x => x.SurfaceCode).Must(c => ValidSurfaceCodes.Contains(c))
-            .WithMessage("Некорректный код поверхности (допустимо: M, D, O, B, L).");
+            .WithMessage("Некорректный код поверхности (допустимо: M, D, O, I, B, L).");
         RuleFor(x => x.Diagnosis).MaximumLength(255);
     }
 }
@@ -196,6 +233,18 @@ public sealed class AddToothSurfaceRecordCommandHandler(IUnitOfWork unitOfWork, 
         var domainStatus = (Domain.Enums.ToothStateType)(short)request.Status;
 
         var tooth = await unitOfWork.ToothStates.GetAsync(request.PatientId, request.ToothNumber, cancellationToken);
+
+        // Клиническая осмысленность (см. промпт 29 аудита): на удалённый/отсутствующий зуб нельзя
+        // завести новую лечебную запись — только явный перевод в Implant (зуб восстановлен имплантом).
+        if (tooth is not null
+            && tooth.State is Domain.Enums.ToothStateType.Extracted or Domain.Enums.ToothStateType.Missing
+            && domainStatus != Domain.Enums.ToothStateType.Implant)
+        {
+            return Result.Failure<ToothSurfaceHistoryDto>(Error.Validation(
+                "ToothSurface.ToothNotTreatable",
+                "Зуб отмечен как удалённый/отсутствующий — лечение возможно только через перевод в статус «Имплант»."));
+        }
+
         if (tooth is null)
         {
             tooth = ToothState.Create(request.PatientId, request.ToothNumber, domainStatus);

@@ -15,7 +15,7 @@ public class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
         builder.Property(a => a.OccurredAt).IsRequired();
         builder.Property(a => a.Action).HasMaxLength(100).IsRequired();
         builder.Property(a => a.Entity).HasMaxLength(100);
-        builder.Property(a => a.DetailsJson).HasColumnType("jsonb").HasColumnName("details");
+        builder.Property(a => a.DetailsJson).HasColumnType("text").HasColumnName("details");
 
         builder.HasIndex(a => a.OccurredAt);
         builder.HasIndex(a => a.Action);

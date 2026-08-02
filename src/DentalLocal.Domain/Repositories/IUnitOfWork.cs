@@ -22,11 +22,11 @@ public interface IUnitOfWork
     IMaterialUsageRepository MaterialUsages { get; }
     IReminderRepository Reminders { get; }
     ITreatmentPlanRepository TreatmentPlans { get; }
-    ICurrencyRepository Currencies { get; }
     IDiscountHistoryRepository DiscountHistory { get; }
     IWaitingListRepository WaitingList { get; }
     IPrescriptionRepository Prescriptions { get; }
     IWarrantyRepository Warranties { get; }
+    IClinicScheduleRepository ClinicSchedules { get; }
     IDoctorScheduleRepository DoctorSchedules { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

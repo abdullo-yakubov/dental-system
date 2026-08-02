@@ -1,5 +1,17 @@
 html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family: 'Inter', 'Segoe UI Variable', -apple-system, 'SF Pro Display', 'Segoe UI', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, h5, h6, .mud-typography-h1, .mud-typography-h2, .mud-typography-h3,
+.mud-typography-h4, .mud-typography-h5, .mud-typography-h6 {
+    letter-spacing: -0.02em;
+    font-weight: 650;
+}
+
+body, .mud-typography-body1, .mud-typography-body2 {
+    line-height: 1.6;
 }
 
 h1:focus {
@@ -290,37 +302,49 @@ code {
     color: var(--mud-palette-text-secondary);
 }
 
-/* ── Design tokens (тема/акцент читаются из data-theme / data-accent на <html>) ─────── */
+/* ── Design tokens (тема/акцент читаются из data-theme / data-accent на <html>) ───────
+   Премиум-минимализм: чистые непрозрачные поверхности, тонкие границы, мягкие тени —
+   без блюра/прозрачности. Имена переменных (--app-glass-*) сохранены для совместимости
+   со всеми местами, где они уже используются, но теперь описывают плоскую поверхность. */
 :root {
-    --app-radius-sm: 10px;
-    --app-radius-md: 14px;
-    --app-radius-lg: 20px;
-    --app-glass-blur: 16px;
-    --app-transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    --app-radius-sm: 8px;
+    --app-radius-md: 12px;
+    --app-radius-lg: 16px;
+    --app-glass-blur: 0px;
+    --app-transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --app-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --app-shadow-sm: 0 1px 2px rgba(17, 19, 24, 0.05);
+    --app-shadow-md: 0 1px 2px rgba(17, 19, 24, 0.04), 0 4px 12px -2px rgba(17, 19, 24, 0.06);
+    --app-shadow-elevated: 0 2px 6px rgba(17, 19, 24, 0.05), 0 12px 28px -8px rgba(17, 19, 24, 0.12), 0 24px 48px -16px rgba(17, 19, 24, 0.10);
+    --app-focus-ring: 0 0 0 3px;
 }
 
 :root, [data-theme="light"] {
-    --app-glass-bg: rgba(255, 255, 255, 0.6);
-    --app-glass-border: rgba(255, 255, 255, 0.35);
-    --app-glass-shadow: 0 8px 32px rgba(20, 30, 60, 0.10);
-    --app-page-bg-1: #eef3fb;
-    --app-page-bg-2: #dbe6f6;
-    --app-skeleton-base: #e6ebf3;
-    --app-skeleton-shine: #f5f8fc;
+    --app-glass-bg: #ffffff;
+    --app-glass-border: rgba(17, 19, 24, 0.08);
+    --app-glass-shadow: var(--app-shadow-md);
+    --app-page-bg-1: #fafafb;
+    --app-page-bg-2: #f1f2f5;
+    --app-skeleton-base: #edeef1;
+    --app-skeleton-shine: #f8f8fa;
+    --app-accent-emerald: #10b981;
+    --app-focus-color: rgba(47, 111, 237, 0.35);
 }
 
 [data-theme="dark"] {
-    --app-glass-bg: rgba(27, 32, 44, 0.55);
-    --app-glass-border: rgba(255, 255, 255, 0.08);
-    --app-glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
-    --app-page-bg-1: #10131b;
-    --app-page-bg-2: #171c27;
-    --app-skeleton-base: #1f2530;
-    --app-skeleton-shine: #2a3140;
+    --app-glass-bg: #16171c;
+    --app-glass-border: rgba(243, 244, 246, 0.08);
+    --app-glass-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 16px -4px rgba(0, 0, 0, 0.5);
+    --app-page-bg-1: #0b0c0f;
+    --app-page-bg-2: #101114;
+    --app-skeleton-base: #1d1f26;
+    --app-skeleton-shine: #262832;
+    --app-accent-emerald: #4ade80;
+    --app-focus-color: rgba(94, 149, 240, 0.45);
 }
 
 html, body {
-    background: linear-gradient(160deg, var(--app-page-bg-1) 0%, var(--app-page-bg-2) 100%);
+    background: var(--app-page-bg-1);
     transition: background var(--app-transition);
 }
 
@@ -328,15 +352,80 @@ html, body {
     scrollbar-width: thin;
 }
 
-/* ── Glassmorphism utility classes ───────────────────────────────────────── */
+/* ── Accessibility: visible focus ring everywhere (WCAG 2.4.7), keyboard-only ────── */
+:focus-visible {
+    outline: none !important;
+    box-shadow: var(--app-focus-ring) var(--app-focus-color) !important;
+    border-radius: var(--app-radius-sm);
+}
+
+/* ── Minimum 44px hit targets for icon buttons (WCAG 2.5.5) ──────────────────────── */
+.mud-icon-button-root {
+    min-width: 44px !important;
+    min-height: 44px !important;
+}
+
+/* ── Icon sizing: fixed steps of 4 (16/20/24/32px), aligned to text baseline ─────── */
+.mud-icon-root {
+    vertical-align: -0.125em;
+}
+
+.mud-icon-size-small {
+    font-size: 20px !important;
+}
+
+.mud-icon-size-medium {
+    font-size: 24px !important;
+}
+
+.mud-icon-size-large {
+    font-size: 32px !important;
+}
+
+.mud-nav-link {
+    min-height: 44px;
+}
+
+/* ── Surfaces: flat card, subtle border, soft shadow, gentle lift on hover ───────── */
 .glass-card, .glass-panel {
     background: var(--app-glass-bg);
-    backdrop-filter: blur(var(--app-glass-blur));
-    -webkit-backdrop-filter: blur(var(--app-glass-blur));
     border: 1px solid var(--app-glass-border);
     border-radius: var(--app-radius-md);
     box-shadow: var(--app-glass-shadow);
-    transition: transform var(--app-transition), box-shadow var(--app-transition), background var(--app-transition);
+    transition: box-shadow var(--app-transition), border-color var(--app-transition), background var(--app-transition);
+}
+
+.glass-card:hover {
+    box-shadow: var(--app-shadow-elevated);
+}
+
+/* ── Elevated surfaces: modals, popovers, dropdowns — deeper multi-layer shadow ─ */
+.mud-dialog, .mud-popover, .mud-menu, .mud-picker-container, .mud-snackbar {
+    box-shadow: var(--app-shadow-elevated) !important;
+    border-radius: var(--app-radius-md) !important;
+}
+
+.mud-dialog {
+    background: var(--app-glass-bg) !important;
+    border: 1px solid var(--app-glass-border);
+}
+
+/* ── Buttons: 8px radius, smooth press feedback ──────────────────────────── */
+.mud-button-root {
+    border-radius: var(--app-radius-sm) !important;
+    text-transform: none !important;
+    min-height: 40px;
+    transition: transform var(--app-transition), box-shadow var(--app-transition), background-color var(--app-transition), opacity var(--app-transition) !important;
+}
+
+.mud-button-root:active {
+    transform: scale(0.97);
+}
+
+/* ── Cards: 12px radius everywhere by default ────────────────────────────── */
+.mud-paper, .mud-card {
+    border-radius: var(--app-radius-md) !important;
+    transition: box-shadow var(--app-transition), background var(--app-transition) !important;
 }
 
 /* MudGrid внутри вкладки применяет отрицательный margin для компенсации gutter у MudItem;
@@ -345,22 +434,14 @@ html, body {
     overflow: hidden;
 }
 
-.glass-card:hover {
-    transform: translateY(-2px);
-}
-
 .app-bar-glass {
     background: var(--app-glass-bg) !important;
-    backdrop-filter: blur(var(--app-glass-blur));
-    -webkit-backdrop-filter: blur(var(--app-glass-blur));
     border-bottom: 1px solid var(--app-glass-border);
     color: var(--mud-palette-text-primary) !important;
 }
 
 .app-drawer-glass {
     background: var(--app-glass-bg) !important;
-    backdrop-filter: blur(var(--app-glass-blur));
-    -webkit-backdrop-filter: blur(var(--app-glass-blur));
     border-right: 1px solid var(--app-glass-border);
 }
 
@@ -370,11 +451,30 @@ html, body {
 
 .hover-card:hover {
     transform: translateY(-3px);
-    box-shadow: var(--mud-elevation-8);
+    box-shadow: var(--app-shadow-elevated);
 }
 
 .border-radius-12 {
     border-radius: 12px !important;
+}
+
+/* ── App shell chrome ─────────────────────────────────────────────────────── */
+.app-logo {
+    height: 32px;
+    width: 32px;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-right: 12px;
+}
+
+.app-nav .mud-nav-link {
+    border-radius: var(--app-radius-sm);
+    margin-bottom: 2px;
+    transition: background-color var(--app-transition), color var(--app-transition);
+}
+
+.app-nav .mud-nav-link.active {
+    font-weight: 600;
 }
 
 /* ── Page enter animation ─────────────────────────────────────────────────── */

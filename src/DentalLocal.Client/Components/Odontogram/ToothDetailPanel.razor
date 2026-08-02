@@ -1,4 +1,4 @@
-@inject ApiClient Api
+﻿@inject ApiClient Api
 @inject ISnackbar Snackbar
 @using DentalLocal.Shared.Contracts.Icd
 
@@ -15,7 +15,11 @@
             }
         </CardHeaderContent>
         <CardHeaderActions>
-            <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="() => OnClose?.Invoke()" />
+            @if (OnShowHistory is not null)
+            {
+                <MudIconButton Icon="@LucideIcons.History" Title="История зуба" OnClick="() => OnShowHistory.Invoke()" />
+            }
+            <MudIconButton Icon="@LucideIcons.X" OnClick="() => OnClose?.Invoke()" aria-label="Закрыть" />
         </CardHeaderActions>
     </MudCardHeader>
     <MudCardContent>
@@ -54,6 +58,7 @@
     [Parameter] public IReadOnlyList<int>? MultiToothNumbers { get; set; }
     [Parameter] public Func<Task>? OnStateSaved { get; set; }
     [Parameter] public Action? OnClose { get; set; }
+    [Parameter] public Action? OnShowHistory { get; set; }
 
     private ToothStateType _status;
     private string? _diagnosis;
@@ -119,6 +124,7 @@
         "M" => "медиальная",
         "D" => "дистальная",
         "O" => "окклюзионная/режущая",
+        "I" => "режущий край",
         "B" => "вестибулярная (щёчная)",
         "L" => "нёбная/язычная",
         _ => code

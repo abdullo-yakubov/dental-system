@@ -19,10 +19,15 @@ public static class DependencyInjection
         services.AddSingleton<ILoginAttemptTracker, InMemoryLoginAttemptTracker>();
         services.AddMemoryCache();
 
+        // Порядок регистрации = порядок вложенности (первый — самый внешний):
+        // Logging -> Performance -> Validation -> Transaction -> AuditLogging -> Handler.
+        // AuditLogging — самый внутренний из behavior'ов: должен выполниться до SaveChangesAsync,
+        // который вызывает TransactionBehavior, чтобы запись аудита попала в ту же транзакцию.
         services.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+        services.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(PerformanceBehavior<,>));
         services.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(TransactionBehavior<,>));
-        services.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(PerformanceBehavior<,>));
+        services.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(AuditLoggingBehavior<,>));
 
         return services;
     }

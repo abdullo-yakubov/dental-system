@@ -1,0 +1,21 @@
+{
+  "name": "teeth-model-generator",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Процедурный генератор анатомической 3D-модели зубного ряда (.glb) для DentalLocal. Запускается один раз при разработке; в рантайме приложения геометрия не строится.",
+  "bin": {
+    "teeth-model-generator": "./src/index.js"
+  },
+  "scripts": {
+    "generate": "node src/index.js --adult --child",
+    "check": "node src/index.js --adult --check"
+  },
+  "dependencies": {
+    "@gltf-transform/core": "^4.4.2",
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "gltf-validator": "^2.0.0-dev.3.10"
+  }
+}
