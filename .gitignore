@@ -4,7 +4,7 @@ obj/
 .vs/
 Data/
 Logs/
-Backups/
+/Backups/
 Files/
 node_modules/
 *.received.*

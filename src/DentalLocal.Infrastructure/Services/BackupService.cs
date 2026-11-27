@@ -306,8 +306,7 @@ public class BackupService : IBackupService
             var stderr = await process.StandardError.ReadToEndAsync(cancellationToken);
             await process.WaitForExitAsync(cancellationToken);
 
-            // Note: pg_restore might exit with code 1 for minor warnings, but we check standard error or expect 0
-            if (process.ExitCode != 0 && process.ExitCode != 1)
+            if (process.ExitCode != 0)
             {
                 throw new InvalidOperationException($"pg_restore failed with exit code {process.ExitCode}: {stderr}");
             }

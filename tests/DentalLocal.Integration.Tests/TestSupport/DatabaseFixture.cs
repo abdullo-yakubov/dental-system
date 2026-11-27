@@ -17,8 +17,8 @@ namespace DentalLocal.Integration.Tests.TestSupport;
 /// </summary>
 public sealed class DatabaseFixture : IAsyncLifetime
 {
-    private PostgreSqlContainer _container = null!;
-    private ServiceProvider _provider = null!;
+    private PostgreSqlContainer? _container;
+    private ServiceProvider? _provider;
 
     public async Task InitializeAsync()
     {
@@ -48,11 +48,13 @@ public sealed class DatabaseFixture : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await _provider.DisposeAsync();
-        await _container.DisposeAsync();
+        if (_provider is not null)
+            await _provider.DisposeAsync();
+        if (_container is not null)
+            await _container.DisposeAsync();
     }
 
-    public IServiceScope CreateScope() => _provider.CreateScope();
+    public IServiceScope CreateScope() => _provider!.CreateScope();
 
     public IMediator CreateMediator(IServiceScope scope) => scope.ServiceProvider.GetRequiredService<IMediator>();
 }
