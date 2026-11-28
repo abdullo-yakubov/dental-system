@@ -2,26 +2,26 @@ bin/
 obj/
 *.user
 .vs/
-Data/
-Logs/
-Backups/
-Files/
+/Data/
+/Logs/
+/Backups/
+/Files/
 node_modules/
 *.received.*
 
 # Unused root directories removed on 2026-08-01
-Cache/
-Exports/
-Imports/
-Reports/
-Settings/
+/Cache/
+/Exports/
+/Imports/
+/Reports/
+/Settings/
 build_output.txt
 build_output.log
 
 # Runtime and generated outputs
-Temp/
-Database/data/
-Database/pgsql/
+/Temp/
+/Database/data/
+/Database/pgsql/
 installer/build/
 installer/output/
 *.log

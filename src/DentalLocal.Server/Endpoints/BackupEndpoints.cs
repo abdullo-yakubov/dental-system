@@ -27,8 +27,11 @@ public static class BackupEndpoints
         });
 
         // POST /api/v1/backups/restore -> 202 Accepted { jobId }, статус см. GET /api/v1/jobs/{jobId}
-        group.MapPost("/restore", async (RestoreBackupRequest request, ISender sender, CancellationToken ct) =>
+        group.MapPost("/restore", async (RestoreBackupRequest request, ISender sender, IConfiguration configuration, CancellationToken ct) =>
         {
+            if (!configuration.GetValue<bool>("BackupSettings:EnableRestore"))
+                return Results.Problem(title: "Восстановление отключено до проверки на отдельной базе.", statusCode: 503);
+
             var result = await sender.Send(new RestoreBackupCommand(request.Pin, request.BackupFileName), ct);
             return result.ToAcceptedResult();
         });

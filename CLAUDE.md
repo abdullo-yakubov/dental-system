@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Source of truth for requirements
 
-The actual source of truth is **the code** plus `docs/TZ_Files_Structure.md`. `docs/TZ_Original_Vision.md` (formerly `TZ_Dental_System.md`) is the original spec — kept for historical context only, explicitly marked as such in its own header, and not to be treated as current requirements. Decisions where the code intentionally diverges from that original vision are recorded as they come up in `docs/ADR/`. Known diffs between the original vision and the actual code:
+The actual source of truth is **the code**. This checkout does not contain the previously referenced `docs/TZ_Files_Structure.md`, `docs/TZ_Original_Vision.md`, or `docs/ADR/` files. Current architecture and limitations are recorded in `docs/ARCHITECTURE.md` and `docs/KNOWN_LIMITATIONS.md`. The historical notes below may describe earlier design intentions and must be checked against source before use. Known diffs between the original vision and the actual code:
 - Spec says .NET 9; code targets **net10.0** (net10.0-windows for the Launcher).
 - Spec describes a Blazor WebAssembly **Hosted** model (Client and Server in one solution/process). In dev, Client and Server run as **separate processes** (see the comment in `src/DentalLocal.Client/Program.cs`) with CORS configured on the Server for this; the installer build (`installer/build.ps1`) now produces the final hosted layout by publishing the Client and copying its `wwwroot` into the Server's `wwwroot` (`Server/Program.cs` already calls `UseBlazorFrameworkFiles()`/`UseStaticFiles()`/`MapFallbackToFile("index.html")` for this).
 - Spec calls the API-hosting layer `WebApi`; the actual project is named `DentalLocal.Server`.

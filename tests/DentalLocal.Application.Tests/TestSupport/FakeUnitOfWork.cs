@@ -26,6 +26,8 @@ public sealed class FakeUnitOfWork : IUnitOfWork
     public readonly List<WaitingList> WaitingListData = [];
     public readonly List<Prescription> PrescriptionsData = [];
     public readonly List<Warranty> WarrantiesData = [];
+    public readonly List<BackupRecord> BackupRecordsData = [];
+    public readonly List<AppSetting> AppSettingsData = [];
 
     public IPatientRepository Patients => new FakePatientRepository(PatientsData);
     public IVisitRepository Visits => new FakeVisitRepository(VisitsData);
@@ -42,8 +44,8 @@ public sealed class FakeUnitOfWork : IUnitOfWork
     public IIcd11CodeRepository Icd11Codes => throw new NotImplementedException();
     public IPatientFileRepository PatientFiles => throw new NotImplementedException();
     public IAppointmentRepository Appointments => throw new NotImplementedException();
-    public IBackupRecordRepository BackupRecords => throw new NotImplementedException();
-    public IAppSettingRepository AppSettings => throw new NotImplementedException();
+    public IBackupRecordRepository BackupRecords => new FakeBackupRecordRepository(BackupRecordsData);
+    public IAppSettingRepository AppSettings => new FakeAppSettingRepository(AppSettingsData);
     public IMaterialRepository Materials => new FakeMaterialRepository(MaterialsData);
     public IMaterialUsageRepository MaterialUsages => new FakeMaterialUsageRepository(MaterialUsagesData);
     public IReminderRepository Reminders => new FakeReminderRepository(RemindersData);
